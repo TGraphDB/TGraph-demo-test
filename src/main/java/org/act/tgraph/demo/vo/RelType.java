@@ -1,4 +1,4 @@
-package org.act.neo4j.temporal.demo.vo;
+package org.act.tgraph.demo.vo;
 
 import org.neo4j.graphdb.RelationshipType;
 

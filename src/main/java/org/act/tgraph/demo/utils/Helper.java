@@ -1,6 +1,6 @@
-package org.act.neo4j.temporal.demo.utils;
+package org.act.tgraph.demo.utils;
 
-import org.act.neo4j.temporal.demo.Config;
+import org.act.tgraph.demo.Config;
 
 import java.io.File;
 import java.util.Arrays;

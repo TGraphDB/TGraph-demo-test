@@ -1,14 +1,15 @@
-package org.act.neo4j.temporal.demo;
+package org.act.tgraph.demo;
 
-import org.act.neo4j.temporal.demo.utils.Helper;
-import org.act.neo4j.temporal.demo.utils.TransactionWrapper;
-import org.act.neo4j.temporal.demo.vo.Cross;
-import org.act.neo4j.temporal.demo.vo.RelType;
-import org.act.neo4j.temporal.demo.vo.RoadChain;
-import org.act.neo4j.temporal.demo.vo.TemporalStatus;
+import org.act.tgraph.demo.utils.Helper;
+import org.act.tgraph.demo.utils.TransactionWrapper;
+import org.act.tgraph.demo.vo.Cross;
+import org.act.tgraph.demo.vo.RelType;
+import org.act.tgraph.demo.vo.RoadChain;
+import org.act.tgraph.demo.vo.TemporalStatus;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.tooling.GlobalGraphOperations;
+
 import org.slf4j.Logger;
 
 import java.io.BufferedReader;
@@ -30,7 +31,7 @@ public class DataImport {
         if (!dir.exists()){
             dir.mkdir();
         }else{
-            Helper.deleteAllFilesOfDir(dir);
+            Helper.deleteAllFilesOfDir( dir );
             dir.mkdir();
         }
     }
@@ -72,8 +73,8 @@ public class DataImport {
                     String line;
                     for (int lineCount = 0; (line = br.readLine()) != null; lineCount++) {
                         if (lineCount == 0) continue;
-                        TemporalStatus temporalStatus = new TemporalStatus(line);
-                        RoadChain roadChain = RoadChain.get(temporalStatus.gridId, temporalStatus.chainId);
+                        TemporalStatus temporalStatus = new TemporalStatus( line);
+                        RoadChain roadChain = RoadChain.get( temporalStatus.gridId, temporalStatus.chainId );
                         if (roadChain.getInNum() > 0 || roadChain.getOutNum() > 0) {
                             Relationship relationship = roadChain.getRelationship(db);
                             if (relationship != null) {
@@ -158,7 +159,7 @@ public class DataImport {
                             emptyOutCount++;
                         }
                         normalRoadCount++;
-                        Cross inCross = Cross.getStartCross(roadChain);
+                        Cross inCross = Cross.getStartCross( roadChain );
                         Cross outCross = Cross.getEndCross(roadChain);
                         Node inNode, outNode;
                         if (inCross.getNode(db) == null) {

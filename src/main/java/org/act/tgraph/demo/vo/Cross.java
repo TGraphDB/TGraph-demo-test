@@ -1,8 +1,9 @@
-package org.act.neo4j.temporal.demo.vo;
+package org.act.tgraph.demo.vo;
 
-import org.act.neo4j.temporal.demo.Config;
+import org.act.tgraph.demo.Config;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
+
 import org.slf4j.Logger;
 
 import java.util.*;

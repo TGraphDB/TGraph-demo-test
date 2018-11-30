@@ -1,7 +1,7 @@
-package org.act.neo4j.temporal.demo;
+package org.act.tgraph.demo;
 
-import org.act.neo4j.temporal.demo.driver.OperationProxy;
-import org.act.neo4j.temporal.demo.driver.real.Neo4jTemporalProxy;
+import org.act.tgraph.demo.driver.OperationProxy;
+import org.act.tgraph.demo.driver.real.Neo4jTemporalProxy;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

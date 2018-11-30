@@ -1,35 +1,35 @@
-package org.act.neo4j.temporal.demo.driver.real;
+package org.act.tgraph.demo.driver.real;
 
-import org.act.neo4j.temporal.demo.driver.OperationProxy;
-import org.act.neo4j.temporal.demo.driver.simulation.Aggregator;
+import org.act.temporalProperty.impl.InternalEntry;
+import org.act.temporalProperty.meta.ValueContentType;
+import org.act.tgraph.demo.driver.OperationProxy;
+import org.act.tgraph.demo.driver.simulation.Aggregator;
 import org.act.temporalProperty.util.Slice;
+
 import org.neo4j.graphdb.NotFoundException;
 import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.TGraphNoImplementationException;
-import org.neo4j.graphdb.TemporalPropertyRangeQuery;
+import org.neo4j.temporal.TemporalRangeQuery;
 
 /**
  * Created by song on 16-2-23.
  */
-public class Neo4jTemporalProxy implements OperationProxy {
+public class Neo4jTemporalProxy implements OperationProxy
+{
     @Override
     public String getAggregate(PropertyContainer container, String key, final int from, int to, Aggregator aggregator) {
-        return (String) container.getTemporalProperties(key, from, to, new TemporalPropertyRangeQuery() {
-            @Override
-            public void setValueType(String valueType) {
-
-            }
+        return (String) container.getTemporalProperty(key, from, to, new TemporalRangeQuery() {
 
             @Override
-            public void onCallBatch(Slice batchValue)
+            public void setValueType( ValueContentType valueType )
             {
-                //FIXME TGraph: Not Implement.
-                throw new TGraphNoImplementationException();
-
+                //
             }
 
             @Override
-            public void onCall(int time, Slice value) {
+            public void onNewEntry( InternalEntry entry )
+            {
+                Slice value = entry.getValue();
                 byte[] bytes = value.getBytes();
                 System.out.println(bytes.length+":"+bytes);
                 int i = value.getInt(0);
@@ -37,18 +37,10 @@ public class Neo4jTemporalProxy implements OperationProxy {
             }
 
             @Override
-            public boolean onTimePoint(int time, Object value)
+            public Object onReturn()
             {
-                System.out.println(value);
-                return true;
+                return null;
             }
-
-            @Override
-            public Object onReturn() {
-                System.out.println("return");
-                return new Slice(from);
-            }
-
         });
 
     }
@@ -74,9 +66,7 @@ public class Neo4jTemporalProxy implements OperationProxy {
         try {
             pContainer.setTemporalProperty(key, time, value);
         }catch (NotFoundException e) {
-            if (e.getMessage().contains("Dynamic property not exist!")) {
-                pContainer.createTemporalProperty(key,time,4,value);
-            }
+
         }
     }
 }

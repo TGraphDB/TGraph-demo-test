@@ -1,12 +1,14 @@
-package org.act.neo4j.temporal.demo.driver.simulation;
+package org.act.tgraph.demo.driver.simulation;
 
-import org.act.neo4j.temporal.demo.driver.OperationProxy;
+import org.act.tgraph.demo.driver.OperationProxy;
+
 import org.neo4j.graphdb.PropertyContainer;
 
 /**
  * Created by song on 16-2-27.
  */
-public class ArraySimulationProxy implements OperationProxy{
+public class ArraySimulationProxy implements OperationProxy
+{
 
     @Override
     public Object getAggregate(PropertyContainer container, String key, int from, int to, Aggregator aggregator) {

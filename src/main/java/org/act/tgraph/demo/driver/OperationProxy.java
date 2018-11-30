@@ -1,6 +1,6 @@
-package org.act.neo4j.temporal.demo.driver;
+package org.act.tgraph.demo.driver;
 
-import org.act.neo4j.temporal.demo.driver.simulation.Aggregator;
+import org.act.tgraph.demo.driver.simulation.Aggregator;
 import org.neo4j.graphdb.PropertyContainer;
 
 /**

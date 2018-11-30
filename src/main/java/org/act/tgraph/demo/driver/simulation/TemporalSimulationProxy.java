@@ -1,6 +1,7 @@
-package org.act.neo4j.temporal.demo.driver.simulation;
+package org.act.tgraph.demo.driver.simulation;
 
-import org.act.neo4j.temporal.demo.driver.OperationProxy;
+import org.act.tgraph.demo.driver.OperationProxy;
+
 import org.neo4j.graphdb.PropertyContainer;
 
 import java.util.ArrayList;
@@ -11,7 +12,8 @@ import java.util.List;
 /**
  * Created by song on 16-2-3.
  */
-public class Neo4jKVSimulationProxy implements OperationProxy {
+public class TemporalSimulationProxy implements OperationProxy
+{
     public void set(PropertyContainer propertyContainer, String name, int time, Object value){
         String key = name+":"+time;
         propertyContainer.setProperty(key, value);
@@ -21,7 +23,7 @@ public class Neo4jKVSimulationProxy implements OperationProxy {
         if (hasCharIn(name, ":")) {
             throw new RuntimeException("property name should not contains ':'");
         }
-        List<Integer> timeList = new ArrayList<>();
+        List<Integer> timeList = new ArrayList<Integer>();
         String keyToGet = name + ":" + time;
         for (String key : propertyContainer.getPropertyKeys()) {
             if (keyToGet.equals(key)) {
@@ -91,7 +93,7 @@ public class Neo4jKVSimulationProxy implements OperationProxy {
         if (hasCharIn(name, ":")) {
             throw new RuntimeException("property name should not contains ':'");
         }
-        List<TimestampProperty> timeList = new ArrayList<>();
+        List<TimestampProperty> timeList = new ArrayList<TimestampProperty>();
         for (String key : propertyContainer.getPropertyKeys()) {
             if (key.startsWith(name + ":")) {
                 int time = Integer.valueOf(key.substring(name.length() + 1));

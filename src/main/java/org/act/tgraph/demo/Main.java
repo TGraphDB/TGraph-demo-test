@@ -1,4 +1,4 @@
-package org.act.neo4j.temporal.demo;
+package org.act.tgraph.demo;
 
 import org.junit.internal.TextListener;
 import org.junit.runner.*;

@@ -1,6 +1,6 @@
-package org.act.neo4j.temporal.demo.algo;
+package org.act.tgraph.demo.algo;
 
-import org.act.neo4j.temporal.demo.utils.TransactionWrapper;
+import org.act.tgraph.demo.utils.TransactionWrapper;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;

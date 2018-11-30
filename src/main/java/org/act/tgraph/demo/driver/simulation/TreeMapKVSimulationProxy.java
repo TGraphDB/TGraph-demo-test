@@ -1,7 +1,7 @@
-package org.act.neo4j.temporal.demo.driver.simulation;
+package org.act.tgraph.demo.driver.simulation;
 
-import org.act.neo4j.temporal.demo.driver.OperationProxy;
-import org.act.neo4j.temporal.demo.utils.Helper;
+import org.act.tgraph.demo.driver.OperationProxy;
+
 import org.neo4j.graphdb.NotFoundException;
 import org.neo4j.graphdb.PropertyContainer;
 
@@ -14,7 +14,8 @@ import java.util.Base64;
 /**
  * Created by song on 16-2-26.
  */
-public class TreeMapKVSimulationProxy implements OperationProxy {
+public class TreeMapKVSimulationProxy implements OperationProxy
+{
     @Override
     public String getAggregate(PropertyContainer container, String key, int from, int to, Aggregator aggregator) {
         TreeMap<Integer,Integer> value = decode(container.getProperty(key));

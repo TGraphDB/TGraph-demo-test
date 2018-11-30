@@ -1,4 +1,4 @@
-package org.act.neo4j.temporal.demo.vo;
+package org.act.tgraph.demo.vo;
 
 import java.util.ArrayList;
 import java.util.List;

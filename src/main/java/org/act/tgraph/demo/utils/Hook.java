@@ -1,4 +1,4 @@
-package org.act.neo4j.temporal.demo.utils;
+package org.act.tgraph.demo.utils;
 
 /**
  * Created by song on 16-5-12.
