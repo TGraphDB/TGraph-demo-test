@@ -1,7 +1,7 @@
 package org.act.temporal.test.multiThread.clients;
 
-import org.act.neo4j.temporal.demo.Config;
-import org.act.neo4j.temporal.demo.driver.OperationProxy;
+import org.act.tgraph.demo.Config;
+import org.act.tgraph.demo.driver.OperationProxy;
 import org.act.temporal.test.utils.Monitor;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.slf4j.Logger;

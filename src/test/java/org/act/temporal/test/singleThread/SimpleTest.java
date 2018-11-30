@@ -1,9 +1,9 @@
 package org.act.temporal.test.singleThread;
 
-import org.act.neo4j.temporal.demo.vo.RelType;
-import org.act.neo4j.temporal.demo.Config;
-import org.act.neo4j.temporal.demo.driver.simulation.Aggregator;
-import org.act.neo4j.temporal.demo.driver.simulation.ArraySimulationProxy;
+import org.act.tgraph.demo.vo.RelType;
+import org.act.tgraph.demo.Config;
+import org.act.tgraph.demo.driver.simulation.Aggregator;
+import org.act.tgraph.demo.driver.simulation.ArraySimulationProxy;
 import org.act.temporal.test.utils.DataImportor;
 import org.act.temporal.test.utils.Helper;
 import org.junit.After;
@@ -198,10 +198,10 @@ public class SimpleTest {
         try (Transaction tx = config.db.beginTx()) {
             for(Relationship r: GlobalGraphOperations.at(config.db).getAllRelationships()){
                 long id = r.getId();
-                Integer v1 = (Integer) r.getDynPropertyPointValue("travel-time",1011082355);
-                Integer v2 = (Integer) r.getDynPropertyPointValue("full-status",1011082355);
-                Integer v3 = (Integer) r.getDynPropertyPointValue("vehicle-count",1011082355);
-                Integer v4 = (Integer) r.getDynPropertyPointValue("segment-count",1011082355);
+                Integer v1 = (Integer) r.getTemporalProperty("travel-time",1011082355);
+                Integer v2 = (Integer) r.getTemporalProperty("full-status",1011082355);
+                Integer v3 = (Integer) r.getTemporalProperty("vehicle-count",1011082355);
+                Integer v4 = (Integer) r.getTemporalProperty("segment-count",1011082355);
 
                 if(v1==null && v2==null && v3==null && v4==null){
                     nulCount++;

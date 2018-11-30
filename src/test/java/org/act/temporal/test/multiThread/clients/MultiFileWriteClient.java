@@ -1,9 +1,9 @@
 package org.act.temporal.test.multiThread.clients;
 
-import org.act.neo4j.temporal.demo.vo.RoadChain;
-import org.act.neo4j.temporal.demo.vo.TemporalStatus;
-import org.act.neo4j.temporal.demo.Config;
-import org.act.neo4j.temporal.demo.driver.OperationProxy;
+import org.act.tgraph.demo.vo.RoadChain;
+import org.act.tgraph.demo.vo.TemporalStatus;
+import org.act.tgraph.demo.Config;
+import org.act.tgraph.demo.driver.OperationProxy;
 import org.act.temporal.test.utils.Helper;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Relationship;

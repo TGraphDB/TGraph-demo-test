@@ -1,6 +1,6 @@
 package org.act.temporal.test.multiThread.clients;
 
-import org.act.neo4j.temporal.demo.Config;
+import org.act.tgraph.demo.Config;
 import org.act.temporal.test.vo.Line;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;

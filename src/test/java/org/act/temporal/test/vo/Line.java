@@ -1,7 +1,6 @@
 package org.act.temporal.test.vo;
 
-import org.act.neo4j.temporal.demo.vo.RoadChain;
-import org.act.neo4j.temporal.demo.vo.TemporalStatus;
+import org.act.tgraph.demo.vo.RoadChain;
 
 /**
  * Created by song on 16-2-26.

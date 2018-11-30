@@ -1,7 +1,5 @@
 package org.act.temporal.test.vo;
 
-import org.act.neo4j.temporal.demo.vo.TemporalStatus;
-
 /**
  * Created by song on 16-2-27.
  */

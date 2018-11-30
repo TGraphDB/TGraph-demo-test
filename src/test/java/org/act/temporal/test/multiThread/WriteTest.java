@@ -1,6 +1,6 @@
 package org.act.temporal.test.multiThread;
 
-import org.act.neo4j.temporal.demo.Config;
+import org.act.tgraph.demo.Config;
 import org.act.temporal.test.multiThread.clients.ConsumerWriteClient;
 import org.act.temporal.test.multiThread.clients.ReadFileServer;
 import org.act.temporal.test.utils.DataImportor;
