@@ -3,8 +3,14 @@ package org.act.tgraph.demo;
 import org.act.tgraph.demo.driver.OperationProxy;
 import org.act.tgraph.demo.driver.real.Neo4jTemporalProxy;
 import org.neo4j.graphdb.GraphDatabaseService;
+
+import org.act.tgraph.demo.utils.DataDownloader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 
 /**
  * Created by song on 16-2-24.
@@ -24,25 +30,19 @@ public class Config {
 
 
     public Config(){
-
-        if (System.getProperty("os.name").toLowerCase().contains("windows")){
-            dataPathNetwork = "D:\\TGraph\\demo\\roaddata\\data\\traffic-data-demo\\Topo.csv";
-            dataPathDir = "D:\\TGraph\\demo\\roaddata\\data\\traffic-data-demo";
-            dataPathFile = "D:\\TGraph\\demo\\roaddata\\data\\traffic-data-demo";
-            dbPath = "D:\\TGraph\\demo\\runtime\\test";
-        }else{
-            if(System.getProperty("user.name").equals("root")){
-                dataPathNetwork = "/mnt/Topo.csv";
-                dataPathDir = "/mnt/neo4jtest";
-                dataPathFile = "/mnt/temporal.data";
-                dbPath = "/mnt/neo4j-temporal-test";
-            }else {
-                dataPathNetwork = "/home/song/project/going/neo4j/doc/traffic-data-demo/Topo.csv";
-                dataPathDir = "/home/song/project/going/neo4j/doc/traffic-data-demo/";
-                dataPathFile = "/home/song/project/going/neo4j/doc/traffic-data-demo/temporal.data";
-                dbPath = "/home/song/tmp/neo4j-temporal-demo-algorithm";
-            }
+        File tmpDir = new File( System.getProperty( "java.io.tmpdir" ));
+        File dataDir = new File(tmpDir, "traffic-data");
+        File dbDir = new File(tmpDir, "tgraph-db");
+        try{
+            if ( !dataDir.exists() ) Files.createDirectory(dataDir.toPath());
+            dataPathNetwork = DataDownloader.getTopo( dataDir );
+            DataDownloader.getTrafficData(dataPathDir);
+            if ( !dbDir.exists() ) Files.createDirectory(dbDir.toPath());
+        }catch ( IOException e ){
+            e.printStackTrace();
+            throw new RuntimeException( e );
         }
+        dbPath = dbDir.getAbsolutePath();
 //        neo4jConfigFile = new File(Config.class.getResource("neo4j.config").toURI()).getAbsolutePath();
         logger = LoggerFactory.getLogger("");
     }

@@ -53,7 +53,6 @@ public class DataImportor {
             importFileTemporalData(config.proxy , i, totalPartCount);
             logger.info("done");
         }
-
     }
 
 
