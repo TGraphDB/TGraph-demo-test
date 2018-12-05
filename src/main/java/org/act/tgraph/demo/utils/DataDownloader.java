@@ -27,7 +27,7 @@ public class DataDownloader
     private static Logger log = LoggerFactory.getLogger("test");
 
     private static String urlHeader = "http://amitabha.water-crystal.org/TGraphDemo/";
-    private static String topoFileName = "Topo.csv.gz";
+    private static String topoFileName = "Topo.csv.tar.gz";
     private static String[] fileList = new String[]{
             "20101104.tar.gz",
             "20101105.tar.gz",
@@ -36,8 +36,7 @@ public class DataDownloader
             "20101108.tar.gz" };
     private static long[] fileSize = new long[]{67805801};
 
-    private static File download( String url, File dir ) throws IOException {
-        File out = new File(dir, url.substring(url.length()-8));
+    private static File download( String url, File out ) throws IOException {
         if(out.exists() && out.isFile()){
             return out;
         }
@@ -63,16 +62,15 @@ public class DataDownloader
         }
         List<File> result = new ArrayList<>();
         try (InputStream gzi = new GzipCompressorInputStream(new BufferedInputStream(new FileInputStream(input)));
-             ArchiveInputStream i = new TarArchiveInputStream(gzi)) {
+             ArchiveInputStream i = new TarArchiveInputStream(gzi))
+        {
             ArchiveEntry entry = null;
             while ((entry = i.getNextEntry()) != null) {
                 if (!i.canReadEntryData(entry)) {
                     log.warn("can not read entry");
                     continue;
                 }
-                String FILE_PATH_SEPARATOR = "\\";
-                String name = targetDir.getAbsolutePath()+ FILE_PATH_SEPARATOR +entry.getName();
-                File f = new File(name);
+                File f = new File(targetDir, entry.getName());
                 if (entry.isDirectory()) {
                     if (!f.isDirectory() && !f.mkdirs()) {
                         throw new IOException("failed to create directory " + f);
@@ -106,7 +104,7 @@ public class DataDownloader
     {
         File topoFile = new File(tmpDir, "Topo.csv");
         if(!topoFile.exists()){
-            File out = download( urlHeader + topoFileName, tmpDir );
+            File out = download( urlHeader + topoFileName, topoFile );
             decompressTarGZip( out, tmpDir );
         }
         return topoFile.getAbsolutePath();
@@ -117,7 +115,7 @@ public class DataDownloader
         File dataDir = new File(dataPathDir);
         for ( String fileName : fileList )
         {
-            File out = download( urlHeader + fileName, dataDir );
+            File out = download( urlHeader + fileName, new File(dataDir, fileName) );
             decompressTarGZip( out, dataDir );
         }
     }

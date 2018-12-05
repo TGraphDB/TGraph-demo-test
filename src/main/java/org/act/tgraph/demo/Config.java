@@ -33,10 +33,12 @@ public class Config {
         File tmpDir = new File( System.getProperty( "java.io.tmpdir" ));
         File dataDir = new File(tmpDir, "traffic-data");
         File dbDir = new File(tmpDir, "tgraph-db");
+        dataPathDir = dataDir.getAbsolutePath();
         try{
             if ( !dataDir.exists() ) Files.createDirectory(dataDir.toPath());
             dataPathNetwork = DataDownloader.getTopo( dataDir );
             DataDownloader.getTrafficData(dataPathDir);
+
             if ( !dbDir.exists() ) Files.createDirectory(dbDir.toPath());
         }catch ( IOException e ){
             e.printStackTrace();
