@@ -53,7 +53,7 @@ public class Neo4jFunctionTest
         }
 
         try ( Transaction ignored = db.beginTx();
-              Result result = db.execute( "match (n) where n.tp = TV(1~4:16, 5~8:9) return n, n.name" ) ) //n.name = 'my node' AND
+              Result result = db.execute( "match (n) where n.tp ~= TV(1~4:16, 5~8:9) return n, n.name" ) ) //n.name = 'my node' AND
         {
             System.out.println(result.resultAsString());
 //            while ( result.hasNext() )
