@@ -5,12 +5,17 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
+import org.neo4j.graphdb.DynamicLabel;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
+import org.neo4j.graphdb.schema.IndexDefinition;
 
 /**
  * Created by song on 2018-07-26.
@@ -18,7 +23,7 @@ import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 public class Neo4jFunctionTest
 {
     @Test
-    public void cypherTest() throws IOException
+    public void basicCypherTest() throws IOException
     {
         GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase( new File( System.getProperty( "java.io.tmpdir" ), "TGRAPH-db" ) );
         try (Transaction tx = db.beginTx()){
@@ -64,6 +69,68 @@ public class Neo4jFunctionTest
 //                    System.out.println( column.getKey() + ": " + column.getValue() + "; " );
 //                }
 //            }
+        }
+    }
+
+    @Test
+    public void cypherIndexTest() throws IOException
+    {
+        GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase( new File( System.getProperty( "java.io.tmpdir" ), "TGRAPH-db" ) );
+        try (Transaction tx = db.beginTx()){
+            for (Node node: db.getAllNodes()){
+                node.delete();
+            }
+            tx.success();
+        }
+
+        Label label = DynamicLabel.label( "Neo4j" );
+        try ( Transaction tx = db.beginTx())
+        {
+            for(int i=0;i<10;i++)
+            {
+                Node myNode = db.createNode( label );
+                myNode.setProperty( "name", "neo4j"+i );
+                myNode.setTemporalProperty( "tp", 1, 4, i );
+                myNode.setTemporalProperty( "tp", 6, 8, i );
+            }
+            tx.success();
+        }
+
+//        IndexDefinition indexId;
+//        try (Transaction tx = db.beginTx())
+//        {
+//            indexId = db.schema().indexFor( label ).on( "name" ).create();
+//            tx.success();
+//        }
+
+//        try (Transaction tx = db.beginTx())
+//        {
+//            db.schema().awaitIndexOnline( indexId, 10, TimeUnit.SECONDS );
+//            tx.success();
+//        }
+
+//        try (Transaction tx = db.beginTx())
+//        {
+//            try(ResourceIterator<Node> nodes = db.findNodes( label, "name", "neo4j4" )){
+//                while(nodes.hasNext()){
+//                    Node n = nodes.next();
+//                    System.out.println(n.getProperty( "name" ));
+//                }
+//            }
+//            tx.success();
+//        }
+
+        try ( Transaction tx = db.beginTx();
+              Result result = db.execute( "CREATE TEMPORAL MinMax INDEX ON (tp) DURING 2 ~ 8 " ))
+        {
+            System.out.println(result.resultAsString());
+            tx.success();
+        }
+
+        try ( Transaction ignored = db.beginTx();
+              Result result = db.execute( "MATCH (n:Neo4j) WHERE n.tp ~= TV(1~4:5) RETURN n" ))
+        {
+            System.out.println(result.resultAsString());
         }
     }
 }
