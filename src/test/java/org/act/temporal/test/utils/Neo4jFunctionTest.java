@@ -133,4 +133,36 @@ public class Neo4jFunctionTest
             System.out.println(result.resultAsString());
         }
     }
+
+
+    @Test
+    public void cypherAggrTest() throws IOException
+    {
+        GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase( new File( System.getProperty( "java.io.tmpdir" ), "TGRAPH-db" ) );
+        try (Transaction tx = db.beginTx()){
+            for (Node node: db.getAllNodes()){
+                node.delete();
+            }
+            tx.success();
+        }
+
+        Label label = DynamicLabel.label( "Neo4j" );
+        try ( Transaction tx = db.beginTx())
+        {
+            for(int i=0;i<10;i++)
+            {
+                Node myNode = db.createNode( label );
+                myNode.setProperty( "name", "neo4j"+i );
+                myNode.setTemporalProperty( "tp", 1, 4, i );
+                myNode.setTemporalProperty( "tp", 6, 8, i );
+            }
+            tx.success();
+        }
+
+        try ( Transaction ignored = db.beginTx();
+              Result result = db.execute( "MATCH (n:Neo4j) WHERE n.tp ~= TV(1~4:5) RETURN TAGGRMIN(n.tp, 1, 20)" ))
+        {
+            System.out.println(result.resultAsString());
+        }
+    }
 }
