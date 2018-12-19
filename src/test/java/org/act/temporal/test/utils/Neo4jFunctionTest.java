@@ -160,7 +160,7 @@ public class Neo4jFunctionTest
         }
 
         try ( Transaction ignored = db.beginTx();
-              Result result = db.execute( "MATCH (n:Neo4j) WHERE n.tp ~= TV(1~4:5) RETURN TAGGRMIN(n.tp, 1, 20)" ))
+              Result result = db.execute( "MATCH (n:Neo4j) WHERE n.tp ~= TV(1~4:5) RETURN TAGGRMIN(n.tp, 10, 20)" ))
         {
             System.out.println(result.resultAsString());
         }
