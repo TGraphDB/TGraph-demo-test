@@ -12,7 +12,7 @@ import java.util.*;
  * Created by song on 16-1-22.
  */
 public class Cross {
-    private static Logger logger = new Config().logger;
+//    private static Logger logger = new Config().logger;
     private static int count=0;
     private final static Map<RoadChain,Cross> endCrossOfRoad = new HashMap<>();
     private final static Map<RoadChain,Cross> startCrossOfRoad = new HashMap<>();

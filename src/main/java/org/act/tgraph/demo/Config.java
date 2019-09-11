@@ -36,9 +36,9 @@ public class Config {
         dataPathDir = dataDir.getAbsolutePath();
         try{
             if ( !dataDir.exists() ) Files.createDirectory(dataDir.toPath());
-            dataPathNetwork = DataDownloader.getTopo( dataDir );
-            DataDownloader.getTrafficData(dataPathDir);
-
+//            dataPathNetwork = DataDownloader.getTopo( dataDir );
+//            DataDownloader.getTrafficData(dataPathDir);
+//
             if ( !dbDir.exists() ) Files.createDirectory(dbDir.toPath());
         }catch ( IOException e ){
             e.printStackTrace();
