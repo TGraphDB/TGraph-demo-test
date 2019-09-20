@@ -62,8 +62,7 @@ public enum PhysicalEnv {
     private static StringBuilder oshi = new StringBuilder();
     public static void main(String[] args) {
 
-        Logger logger = Config.Default.logger;
-        logger.info("Initializing System...");
+        System.out.println("Initializing System...");
         SystemInfo si = new SystemInfo();
 
         HardwareAbstractionLayer hal = si.getHardware();
@@ -71,51 +70,51 @@ public enum PhysicalEnv {
 
         printOperatingSystem(os);
 
-        logger.info("Checking computer system...");
+        System.out.println("Checking computer system...");
         printComputerSystem(hal.getComputerSystem());
 
-        logger.info("Checking Processor...");
+        System.out.println("Checking Processor...");
         printProcessor(hal.getProcessor());
 
-        logger.info("Checking Memory...");
+        System.out.println("Checking Memory...");
         printMemory(hal.getMemory());
 
-        logger.info("Checking CPU...");
+        System.out.println("Checking CPU...");
         printCpu(hal.getProcessor());
 
-        logger.info("Checking Processes...");
+        System.out.println("Checking Processes...");
         printProcesses(os, hal.getMemory());
 
-        logger.info("Checking Sensors...");
+        System.out.println("Checking Sensors...");
         printSensors(hal.getSensors());
 
-        logger.info("Checking Power sources...");
+        System.out.println("Checking Power sources...");
         printPowerSources(hal.getPowerSources());
 
-        logger.info("Checking Disks...");
+        System.out.println("Checking Disks...");
         printDisks(hal.getDiskStores());
 
-        logger.info("Checking File System...");
+        System.out.println("Checking File System...");
         printFileSystem(os.getFileSystem());
 
-        logger.info("Checking Network interfaces...");
+        System.out.println("Checking Network interfaces...");
         printNetworkInterfaces(hal.getNetworkIFs());
 
-        logger.info("Checking Network parameters...");
+        System.out.println("Checking Network parameters...");
         printNetworkParameters(os.getNetworkParams());
 
         // hardware: displays
-        logger.info("Checking Displays...");
+        System.out.println("Checking Displays...");
         printDisplays(hal.getDisplays());
 
         // hardware: USB devices
-        logger.info("Checking USB Devices...");
+        System.out.println("Checking USB Devices...");
         printUsbDevices(hal.getUsbDevices(true));
 
-        logger.info("Checking Sound Cards...");
+        System.out.println("Checking Sound Cards...");
         printSoundCards(hal.getSoundCards());
 
-        logger.info("Printing Operating System and Hardware Info:{}{}", '\n', oshi);
+        System.out.println("Printing Operating System and Hardware Info:\n" + oshi);
     }
 
     private static void printOperatingSystem(final OperatingSystem os) {
