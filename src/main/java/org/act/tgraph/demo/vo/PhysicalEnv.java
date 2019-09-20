@@ -118,38 +118,38 @@ public enum PhysicalEnv {
     }
 
     private static void printOperatingSystem(final OperatingSystem os) {
-        oshi.append(String.valueOf(os));
-        oshi.append("Booted: " + Instant.ofEpochSecond(os.getSystemBootTime()));
-        oshi.append("Uptime: " + FormatUtil.formatElapsedSecs(os.getSystemUptime()));
-        oshi.append("Running with" + (os.isElevated() ? "" : "out") + " elevated permissions.");
+        System.out.println(String.valueOf(os));
+        System.out.println("Booted: " + Instant.ofEpochSecond(os.getSystemBootTime()));
+        System.out.println("Uptime: " + FormatUtil.formatElapsedSecs(os.getSystemUptime()));
+        System.out.println("Running with" + (os.isElevated() ? "" : "out") + " elevated permissions.");
     }
 
     private static void printComputerSystem(final ComputerSystem computerSystem) {
-        oshi.append("system: " + computerSystem.toString());
-        oshi.append(" firmware: " + computerSystem.getFirmware().toString());
-        oshi.append(" baseboard: " + computerSystem.getBaseboard().toString());
+        System.out.println("system: " + computerSystem.toString());
+        System.out.println("|--firmware: " + computerSystem.getFirmware().toString());
+        System.out.println("|--baseboard: " + computerSystem.getBaseboard().toString());
     }
 
     private static void printProcessor(CentralProcessor processor) {
-        oshi.append(processor.toString());
+        System.out.println(processor.toString());
     }
 
     private static void printMemory(GlobalMemory memory) {
-        oshi.append("Memory(total/available): " + memory.getTotal()+"/"+memory.getAvailable());
+        System.out.println("Memory(total/available): " + memory.getTotal()+"/"+memory.getAvailable());
         VirtualMemory vm = memory.getVirtualMemory();
-        oshi.append("Swap(total/used):" + vm.getSwapTotal()+"/"+vm.getSwapUsed());
+        System.out.println("Swap(total/used):" + vm.getSwapTotal()+"/"+vm.getSwapUsed());
     }
 
     private static void printCpu(CentralProcessor processor) {
-        oshi.append("Context Switches/Interrupts: " + processor.getContextSwitches() + " / " + processor.getInterrupts());
+        System.out.println("Context Switches/Interrupts: " + processor.getContextSwitches() + " / " + processor.getInterrupts());
 
         long[] prevTicks = processor.getSystemCpuLoadTicks();
         long[][] prevProcTicks = processor.getProcessorCpuLoadTicks();
-        oshi.append("CPU, IOWait, and IRQ ticks @ 0 sec:" + Arrays.toString(prevTicks));
+        System.out.println("CPU, IOWait, and IRQ ticks @ 0 sec:" + Arrays.toString(prevTicks));
         // Wait a second...
         Util.sleep(1000);
         long[] ticks = processor.getSystemCpuLoadTicks();
-        oshi.append("CPU, IOWait, and IRQ ticks @ 1 sec:" + Arrays.toString(ticks));
+        System.out.println("CPU, IOWait, and IRQ ticks @ 1 sec:" + Arrays.toString(ticks));
         long user = ticks[TickType.USER.getIndex()] - prevTicks[TickType.USER.getIndex()];
         long nice = ticks[TickType.NICE.getIndex()] - prevTicks[TickType.NICE.getIndex()];
         long sys = ticks[TickType.SYSTEM.getIndex()] - prevTicks[TickType.SYSTEM.getIndex()];
@@ -160,13 +160,13 @@ public enum PhysicalEnv {
         long steal = ticks[TickType.STEAL.getIndex()] - prevTicks[TickType.STEAL.getIndex()];
         long totalCpu = user + nice + sys + idle + iowait + irq + softirq + steal;
 
-        oshi.append(String.format(
+        System.out.println(String.format(
                 "User: %.1f%% Nice: %.1f%% System: %.1f%% Idle: %.1f%% IOwait: %.1f%% IRQ: %.1f%% SoftIRQ: %.1f%% Steal: %.1f%%",
                 100d * user / totalCpu, 100d * nice / totalCpu, 100d * sys / totalCpu, 100d * idle / totalCpu,
                 100d * iowait / totalCpu, 100d * irq / totalCpu, 100d * softirq / totalCpu, 100d * steal / totalCpu));
-        oshi.append(String.format("CPU load: %.1f%%", processor.getSystemCpuLoadBetweenTicks(prevTicks) * 100));
+        System.out.println(String.format("CPU load: %.1f%%", processor.getSystemCpuLoadBetweenTicks(prevTicks) * 100));
         double[] loadAverage = processor.getSystemLoadAverage(3);
-        oshi.append("CPU load averages:" + (loadAverage[0] < 0 ? " N/A" : String.format(" %.2f", loadAverage[0]))
+        System.out.println("CPU load averages:" + (loadAverage[0] < 0 ? " N/A" : String.format(" %.2f", loadAverage[0]))
                 + (loadAverage[1] < 0 ? " N/A" : String.format(" %.2f", loadAverage[1]))
                 + (loadAverage[2] < 0 ? " N/A" : String.format(" %.2f", loadAverage[2])));
         // per core CPU
@@ -175,14 +175,14 @@ public enum PhysicalEnv {
         for (double avg : load) {
             procCpu.append(String.format(" %.1f%%", avg * 100));
         }
-        oshi.append(procCpu.toString());
+        System.out.println(procCpu.toString());
         long freq = processor.getVendorFreq();
         if (freq > 0) {
-            oshi.append("Vendor Frequency: " + FormatUtil.formatHertz(freq));
+            System.out.println("Vendor Frequency: " + FormatUtil.formatHertz(freq));
         }
         freq = processor.getMaxFreq();
         if (freq > 0) {
-            oshi.append("Max Frequency: " + FormatUtil.formatHertz(freq));
+            System.out.println("Max Frequency: " + FormatUtil.formatHertz(freq));
         }
         long[] freqs = processor.getCurrentFreq();
         if (freqs[0] > 0) {
@@ -193,19 +193,19 @@ public enum PhysicalEnv {
                 }
                 sb.append(FormatUtil.formatHertz(freqs[i]));
             }
-            oshi.append(sb.toString());
+            System.out.println(sb.toString());
         }
     }
 
     private static void printProcesses(OperatingSystem os, GlobalMemory memory) {
-        oshi.append("Processes: " + os.getProcessCount() + ", Threads: " + os.getThreadCount());
+        System.out.println("Processes: " + os.getProcessCount() + ", Threads: " + os.getThreadCount());
         // Sort by highest CPU
         List<OSProcess> procs = Arrays.asList(os.getProcesses(5, ProcessSort.CPU));
 
-        oshi.append("   PID  %CPU %MEM       VSZ       RSS Name");
+        System.out.println("   PID  %CPU %MEM       VSZ       RSS Name");
         for (int i = 0; i < procs.size() && i < 5; i++) {
             OSProcess p = procs.get(i);
-            oshi.append(String.format(" %5d %5.1f %4.1f %9s %9s %s", p.getProcessID(),
+            System.out.println(String.format(" %5d %5.1f %4.1f %9s %9s %s", p.getProcessID(),
                     100d * (p.getKernelTime() + p.getUserTime()) / p.getUpTime(),
                     100d * p.getResidentSetSize() / memory.getTotal(), FormatUtil.formatBytes(p.getVirtualSize()),
                     FormatUtil.formatBytes(p.getResidentSetSize()), p.getName()));
@@ -213,27 +213,26 @@ public enum PhysicalEnv {
     }
 
     private static void printSensors(Sensors sensors) {
-        oshi.append("Sensors:\n");
-        oshi.append(" cpu temperature:" + sensors.getCpuTemperature());
-        oshi.append(" cpu voltage:" + sensors.getCpuVoltage());
-        oshi.append(" cpu fan speed:" + Arrays.toString(sensors.getFanSpeeds()));
+        System.out.println("Sensors:");
+        System.out.println(" cpu temperature:" + sensors.getCpuTemperature());
+        System.out.println(" cpu voltage:" + sensors.getCpuVoltage());
+        System.out.println(" cpu fan speed:" + Arrays.toString(sensors.getFanSpeeds()));
     }
 
     private static void printPowerSources(PowerSource[] powerSources) {
-        StringBuilder sb = new StringBuilder("Power Sources: ");
+        System.out.println("Power Sources: ");
         if (powerSources.length == 0) {
-            sb.append("Unknown");
+            System.out.println("Unknown");
         }
         for (PowerSource powerSource : powerSources) {
-            sb.append("\n ").append(powerSource.toString());
+            System.out.println(powerSource.toString());
         }
-        oshi.append(sb.toString());
     }
 
     private static void printDisks(HWDiskStore[] diskStores) {
-        oshi.append("Disks:");
+        System.out.println("Disks:");
         for (HWDiskStore disk : diskStores) {
-            oshi.append(" " + disk.getName() + " " + disk.getModel() + " "+disk.getSerial()+" "+
+            System.out.println(" " + disk.getName() + " " + disk.getModel() + " "+disk.getSerial()+" "+
                     "Transfer time: "+disk.getTransferTime()+" "+
                     "Queue length: "+disk.getCurrentQueueLength()+" "+
                     "Read Bytes: "+disk.getReadBytes()+" "+
@@ -244,23 +243,23 @@ public enum PhysicalEnv {
 
             HWPartition[] partitions = disk.getPartitions();
             for (HWPartition part : partitions) {
-                oshi.append(" |-- " + part.toString());
+                System.out.println(" |-- " + part.toString());
             }
         }
 
     }
 
     private static void printFileSystem(FileSystem fileSystem) {
-        oshi.append("File System:");
+        System.out.println("File System:");
 
-        oshi.append(String.format(" File Descriptors: %d/%d", fileSystem.getOpenFileDescriptors(),
+        System.out.println(String.format(" File Descriptors: %d/%d", fileSystem.getOpenFileDescriptors(),
                 fileSystem.getMaxFileDescriptors()));
 
         OSFileStore[] fsArray = fileSystem.getFileStores();
         for (OSFileStore fs : fsArray) {
             long usable = fs.getUsableSpace();
             long total = fs.getTotalSpace();
-            oshi.append(String.format(
+            System.out.println(String.format(
                     " %s (%s) [%s] %s of %s free (%.1f%%), %s of %s files free (%.1f%%) is %s "
                             + (fs.getLogicalVolume() != null && fs.getLogicalVolume().length() > 0 ? "[%s]" : "%s")
                             + " and is mounted at %s",
@@ -280,34 +279,34 @@ public enum PhysicalEnv {
         for (NetworkIF net : networkIFs) {
             sb.append("\n ").append(net.getName()+" Speed:" + net.getSpeed());
         }
-        oshi.append(sb.toString());
+        System.out.println(sb.toString());
     }
 
     private static void printNetworkParameters(NetworkParams networkParams) {
-        oshi.append("Network parameters:\n " + networkParams.toString());
+        System.out.println("Network parameters:\n " + networkParams.toString());
     }
 
     private static void printDisplays(Display[] displays) {
-        oshi.append("Displays:");
+        System.out.println("Displays:");
         int i = 0;
         for (Display display : displays) {
-            oshi.append(" Display " + i + ":");
-            oshi.append(String.valueOf(display));
+            System.out.println(" Display " + i + ":");
+            System.out.println(String.valueOf(display));
             i++;
         }
     }
 
     private static void printUsbDevices(UsbDevice[] usbDevices) {
-        oshi.append("USB Devices:");
+        System.out.println("USB Devices:");
         for (UsbDevice usbDevice : usbDevices) {
-            oshi.append(String.valueOf(usbDevice));
+            System.out.println(String.valueOf(usbDevice));
         }
     }
 
     private static void printSoundCards(SoundCard[] cards) {
-        oshi.append("Sound Cards:");
+        System.out.println("Sound Cards:");
         for (SoundCard card : cards) {
-            oshi.append(" " + String.valueOf(card.getName()));
+            System.out.println(" " + String.valueOf(card.getName()));
         }
     }
 
