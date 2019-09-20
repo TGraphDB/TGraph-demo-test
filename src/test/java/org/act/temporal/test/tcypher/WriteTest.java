@@ -1,12 +1,12 @@
 package org.act.temporal.test.tcypher;
 
-import org.act.tgraph.demo.utils.ProcessForkRunner;
-import com.aliyun.openservices.aliyun.log.producer.LogProducer;
 import com.aliyun.openservices.aliyun.log.producer.Producer;
-import com.aliyun.openservices.aliyun.log.producer.ProducerConfig;
-import com.aliyun.openservices.aliyun.log.producer.ProjectConfig;
-
-import org.act.tgraph.demo.utils.TCypherTestServer;
+import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
+import com.aliyun.openservices.log.common.LogItem;
+import org.act.temporalProperty.impl.InternalEntry;
+import org.act.temporalProperty.meta.ValueContentType;
+import org.act.tgraph.demo.Config;
+import org.act.tgraph.demo.utils.TimeMonitor;
 import org.act.tgraph.demo.vo.Cross;
 import org.act.tgraph.demo.vo.RelType;
 import org.act.tgraph.demo.vo.RoadChain;
@@ -17,42 +17,46 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
+import org.neo4j.temporal.TemporalRangeQuery;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 import java.io.*;
 import java.net.Socket;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
+import java.text.MessageFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class WriteTest {
-    private static String dbPath = "/media/song/test/db-network-only";
+    private static String testName = getTestName("server-write-S-prop");
+    private static String host = "localhost";
+
+    private static volatile boolean complete = false;
 
     public static void main(String[] args){
+        if(args.length<7){
+            System.out.println("need valid params.");
+            return;
+        }
+        testName = getTestName(args[0]);
+        String dbPath = args[1];
+        host = args[2];
+        int threadCnt = Integer.parseInt(args[3]);
+        int queryPerTx = Integer.parseInt(args[4]);
+        int totalDataSize = Integer.parseInt(args[5]);
+        String dataFilePath = args[6];
         try {
+            System.out.println("testName: "+testName+"\nDBPath: "+dbPath+"\nHost: "+host+"\nThread Num: "+threadCnt+
+                    "\nQ/Tx: "+queryPerTx+"\nTotal line send: "+totalDataSize+"\nData path: "+ dataFilePath);
             GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase(new File(dbPath));
             Map<String, Long> roadMap = buildRoadIDMap(db);
             db.shutdown();
-//            System.out.println("id map built.");
-
-            WriteTest t = new WriteTest();
-            int waitingQueueSize = 1000;
-            int maxThreadCnt = 4;
-            t.startServer(maxThreadCnt, waitingQueueSize);
-
-            Thread.sleep(20_000);
-//            System.out.println("starting client.");
-
-            int queryPerTx = 4;
-            int totalDataSize = 20000;
-            startClient(totalDataSize, queryPerTx, roadMap);
-
-        } catch (IOException | ParseException | InterruptedException e) {
+            System.out.println("id map built.");
+            startClient(dataFilePath, totalDataSize, threadCnt, queryPerTx, roadMap);
+        } catch (IOException | ParseException | InterruptedException | ProducerException e) {
             e.printStackTrace();
         }
 
@@ -63,92 +67,125 @@ public class WriteTest {
         return Math.toIntExact(timeParser.parse("20"+s).getTime()/1000);
     }
 
-    private static void startClient(int totalDataSize, int statementPerTx, Map<String, Long> roadMap) throws IOException, ParseException {
-        Socket client = new Socket("127.0.0.1", 8438);
-        client.setSoTimeout(8000);
-        client.setTcpNoDelay(true);
-        PrintWriter output = new PrintWriter(client.getOutputStream(), true);
-        String dataPath = "/media/song/test/data-set/beijing-traffic/TGraph/temporal.data1456550604218.data";
-        BufferedReader br = new BufferedReader(new FileReader(dataPath));
-        BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+    private static String getTestName(String name){
+        SimpleDateFormat ft = new SimpleDateFormat ("yyyyMMdd_HHmm");
+        return name + "-" + ft.format(new Date());
+    }
 
-//        for(int i=0;i<358616; i++) in.readLine();
+    private static void startClient(String dataPath, int totalDataSize, int threadCnt, int statementPerTx, Map<String, Long> roadMap) throws IOException, ParseException, InterruptedException, ProducerException {
+        BlockingQueue<String> queue = new ArrayBlockingQueue<>(2000);
+        List<Thread> threads = new LinkedList<>();
+        for(int i=0; i<threadCnt; i++) {
+            Thread t = new SendingThread(host, 8438, queue);
+            threads.add(t);
+            t.setDaemon(true);
+            t.start();
+        }
+        queue.put("TOPIC:"+testName);
 
         long lineSendCnt = 0;
-        try {
-            while (lineSendCnt < totalDataSize) {
-                String[] data = new String[statementPerTx];
-                for (int i = 0; i < statementPerTx ; i++) {
-                    String s = br.readLine();
-                    if (s != null){
-                        data[i] = s;
-                        lineSendCnt++;
+        try(BufferedReader br = new BufferedReader(new FileReader(dataPath)))
+        {
+            String s;
+            List<String> dataInOneTx = new LinkedList<>();
+            do{
+                s = br.readLine();
+                if(s!=null) {
+                    lineSendCnt++;
+                    dataInOneTx.add(s);
+                    if (dataInOneTx.size() == statementPerTx) {
+                        queue.put(dataLines2tCypher(dataInOneTx, roadMap));
+                        dataInOneTx.clear();
                     }
+                }else{
+                    queue.put(dataLines2tCypher(dataInOneTx, roadMap));
+                    dataInOneTx.clear();
                 }
-                String query = dataLines2tCypher(data, roadMap);
-                output.println(query);
-                String response = in.readLine();
-                while("SERVER BUSY".equals(response)){
-                    Thread.sleep(10);
-                    output.println(query);
-                    response = in.readLine();
-                }
+                if (lineSendCnt % 400 == 0)
+                    System.out.println("reading " + lineSendCnt + " lines. queue size: " + queue.size());
             }
-            output.println("EXIT");
-        }catch (SocketException | InterruptedException ignored){
-        }catch (SocketTimeoutException e){
-            System.err.println("Server no response for 8 seconds, maybe error.");
+            while (lineSendCnt < totalDataSize && s!=null);
         }
+        while(queue.size()>0) {
+            Thread.sleep(10000);
+            System.out.println("queue size: "+queue.size());
+        }
+        complete = true;
+        for(Thread t : threads) t.join();
+        Config.Default.onlineLogger.close();
         System.out.println("Client exit. send "+ lineSendCnt+" lines.");
     }
 
-    private void startServer(int maxThreadCnt, int waitingQueueSize) throws IOException {
-        ProcessForkRunner mvnProcessBuilder = new ProcessForkRunner("/home/song/bin/apache-maven-3.3.1/bin/mvn", "/home/song/project/TGraph/source-code/public-test");
-        mvnProcessBuilder.addArg("test").addArg("-Dtest=org.act.temporal.test.tcypher.WriteTest#runTestServer");
-        mvnProcessBuilder.addArg("-DargLine='-Xms1g -Xmx12g'");
-        mvnProcessBuilder.addEnv("tcnt", String.valueOf(maxThreadCnt));
-        mvnProcessBuilder.addEnv("qsize", String.valueOf(waitingQueueSize));
-        final Process process = mvnProcessBuilder.startProcess();
-        new Thread(()->{
-            String line;
-            BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            while(true){
-                try {
-                    line = br.readLine();
-                    if (line == null) break;
-                    System.out.println(line);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+    private static class SendingThread extends Thread{
+        Socket client;
+        BufferedReader in;
+        PrintWriter output;
+        BlockingQueue<String> queue;
+        SendingThread(String host, int port, BlockingQueue<String> queue) throws IOException {
+            this.queue = queue;
+            client = new Socket(host, port);
+            client.setSoTimeout(8000);
+            client.setTcpNoDelay(true);
+            in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+            output = new PrintWriter(client.getOutputStream(), true);
+        }
+
+        public void run(){
             try {
-                process.waitFor();
-            } catch (InterruptedException e) {
+                Producer logger = Config.Default.onlineLogger;
+                TimeMonitor timeMonitor = new TimeMonitor();
+                timeMonitor.begin("Log");
+                while(!complete){
+                    timeMonitor.mark("Log", "Read query");
+                    long previousLogT = timeMonitor.duration("Log");
+                    String query;
+                    try {
+                        query = queue.poll(2, TimeUnit.SECONDS);
+                        if(query==null || query.equals("GOT")) continue;
+                    } catch (InterruptedException e) {
+                        continue;
+                    }
+                    timeMonitor.mark("Read query", "Send query");
+                    output.println(query);
+                    timeMonitor.mark("Send query", "Wait result");
+                    String[] result;
+                    try {
+                        String response = in.readLine();
+                        timeMonitor.mark("Wait result", "Log");
+                        result = response.split("AMITABHA");
+                    } catch (IOException e) {
+                        System.out.println("Server close connection.");
+                        break;
+                    }
+                    LogItem log = new LogItem();
+                    log.PushBack("c_read_t", String.valueOf(timeMonitor.duration("Read query")));
+                    log.PushBack("c_send_t", String.valueOf(timeMonitor.duration("Send query")));
+                    log.PushBack("c_send_tE", String.valueOf(timeMonitor.endT("Send query")));
+                    log.PushBack("c_wait_t", String.valueOf(timeMonitor.duration("Wait result")));
+                    log.PushBack("c_plog_t", String.valueOf(previousLogT));
+                    log.PushBack("s_receive_tE", result[2]);
+                    log.PushBack("s_tx_t", result[4]);
+                    log.PushBack("s_psend_t", result[3]);
+                    log.PushBack("s_tx_success", result[0]);
+                    log.PushBack("s_result_size", result[1]);
+                    log.PushBack("thread", Thread.currentThread().getName());
+                    log.PushBack("tx_data_cnt", String.valueOf(result.length - 5));
+                    try {
+                        logger.send("tgraph-demo-test", "tgraph-log", testName, "sjh-ubuntu1804", log);
+                    } catch (InterruptedException | ProducerException e) {
+                        e.printStackTrace();
+                    }
+                }
+                in.close();
+                output.close();
+                client.close();
+                System.out.println("client connection close.");
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-        }).start();
+            System.out.println("client thread exit.");
+        }
     }
-
-    /**
-     * this runs in another process.
-     * @throws IOException
-     */
-    @Test
-    public void runTestServer() throws IOException {
-//        System.getenv().forEach((k, v) -> {
-//            System.out.println(k + ":" + v);
-//        });
-//        System.getProperties().forEach((k, v) -> {
-//            System.out.println(k + ":" + v);
-//        });
-//        System.out.println(Runtime.getRuntime().maxMemory());
-        int maxConcurrentCnt = Integer.parseInt(System.getenv("tcnt"));
-        int waitingQueueSize = Integer.parseInt(System.getenv("qsize"));
-        TCypherTestServer server = new TCypherTestServer(maxConcurrentCnt, waitingQueueSize, getLogger(), dbPath);
-        server.start();
-        System.out.println("Server started");
-    }
-
 
     public void importNetwork2db() throws IOException {
 
@@ -213,7 +250,7 @@ public class WriteTest {
         db.shutdown();
     }
 
-    private static Map<String, Long> buildRoadIDMap(GraphDatabaseService db) throws IOException {
+    private static Map<String, Long> buildRoadIDMap(GraphDatabaseService db) {
         Map<String, Long> map = new HashMap<>(130000);
         try(Transaction tx = db.beginTx()){
             for(Relationship r: GlobalGraphOperations.at(db).getAllRelationships()){
@@ -227,27 +264,60 @@ public class WriteTest {
         return map;
     }
 
-    private static String dataLines2tCypher(String[] lines, Map<String, Long> roadMap) throws ParseException {
+    private static String dataLines2tCypher(List<String> lines, Map<String, Long> roadMap) throws ParseException {
         StringBuilder sb = new StringBuilder();
         for (String line : lines) {
             String[] arr = line.split(":");
             int time = parseTime(arr[0]);
             String[] d = arr[2].split(",");
-            sb
-                    .append("MATCH ()-[r:ROAD_TO]->() WHERE r.id=").append(roadMap.get(arr[1])).append(" SET ")
-                    .append("r.travel_time=TV(").append(time).append("~NOW:").append(d[0]).append("),")
-                    .append("r.full_status=TV(").append(time).append("~NOW:").append(d[1]).append("),")
-                    .append("r.vehicle_count=TV(").append(time).append("~NOW:").append(d[2]).append("),")
-                    .append("r.segment_count=TV(").append(time).append("~NOW:").append(d[3]).append(");");
+//            String q = "MATCH ()-[r:ROAD_TO]->() WHERE r.id={0} SET " +
+//                    "r.travel_time=TV({1}~NOW:{2}), " +
+//                    "r.full_status=TV({1}~NOW:{3}), " +
+//                    "r.vehicle_count=TV({1}~NOW:{4}), " +
+//                    "r.segment_count=TV({1}~NOW:{5});";
+//            String qq = MessageFormat.format(q, roadMap.get(arr[1]), String.valueOf(time), d[0], d[1], d[2], d[3]);
+            String q = "MATCH ()-[r:ROAD_TO]->() WHERE r.id={0} SET " +
+                    "r.travel_time_{1}={2}, " +
+                    "r.full_status_{1}={3}, " +
+                    "r.vehicle_count_{1}={4}, " +
+                    "r.segment_count_{1}={5};";
+            String qq = MessageFormat.format(q, String.valueOf(roadMap.get(arr[1])), String.format("%d",time), d[0], d[1], d[2], d[3]);
+            sb.append(qq);
         }
-        return sb.toString();
+        return sb.substring(0, sb.length()-1);
     }
 
-    private static Producer getLogger(){
-        ProducerConfig pConf = new ProducerConfig();
-        pConf.setIoThreadCount( 1 ); // one thread to upload
-        Producer producer = new LogProducer( pConf );
-        producer.putProjectConfig(new ProjectConfig("tgraph-demo-test", "cn-beijing.log.aliyuncs.com", "LTAIeA55PGyOpgZs", "H0XzCznABsioSI4TQpwXblH269eBm6"));
-        return producer;
+    @Test
+    public void tCypherTest(){
+//        GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase(new File(dbPath));
+//        Runtime.getRuntime().addShutdownHook(new Thread(db::shutdown));
+//        try(Transaction tx = db.beginTx()){
+////            System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE r.id=1 RETURN r.travel_time").resultAsString());
+//            System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE r.grid_id=595640 AND r.chain_id=30003 SET r.travel_time=TV(100~NOW:30)").resultAsString());
+//            tx.success();
+//        }
+//        try(Transaction tx = db.beginTx()){
+//            Relationship r = db.getRelationshipById(1);
+//            for(String key : r.getPropertyKeys()){
+//                System.out.println(key+": "+r.getProperty(key));
+//            }
+//            r.getTemporalProperty("travel_time", 0, Integer.MAX_VALUE - 4, new TemporalRangeQuery() {
+//                @Override
+//                public void setValueType(ValueContentType valueType) {
+//                    System.out.println(valueType);
+//                }
+//
+//                @Override
+//                public void onNewEntry(InternalEntry entry) {
+//                    System.out.print(entry.getKey().getStartTime()+":["+entry.getKey().getValueType()+"]"+entry.getValue().toString());
+//                }
+//
+//                @Override
+//                public Object onReturn() {
+//                    return null;
+//                }
+//            });
+//            tx.success();
+//        }
     }
 }
