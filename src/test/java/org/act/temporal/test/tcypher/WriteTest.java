@@ -3,8 +3,6 @@ package org.act.temporal.test.tcypher;
 import com.aliyun.openservices.aliyun.log.producer.Producer;
 import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
 import com.aliyun.openservices.log.common.LogItem;
-import org.act.temporalProperty.impl.InternalEntry;
-import org.act.temporalProperty.meta.ValueContentType;
 import org.act.tgraph.demo.Config;
 import org.act.tgraph.demo.utils.TimeMonitor;
 import org.act.tgraph.demo.vo.Cross;
@@ -17,7 +15,6 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
-import org.neo4j.temporal.TemporalRangeQuery;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 import java.io.*;
@@ -30,12 +27,28 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+/**
+ *  create by sjh at 2019-09-10
+ *
+ *  Test TGraph Server TCypher 'property set' performance.
+ */
 public class WriteTest {
     private static String testName = getTestName("server-write-S-prop");
-    private static String host = "localhost";
+    private static String serverHost = "localhost";
 
     private static volatile boolean complete = false;
 
+    /**
+     *
+     * has 7 arguments:
+     * 1. [testName] name of the test. time and git info is auto appended.
+     * 2. [dbPath] path of the TGraph database to get relationship id.
+     * 3. [serverHost] hostname of TGraph (TCypher) server.
+     * 4. [threadCount] number of threads to send queries.
+     * 5. [queryPerTransaction] number of TCypher queries executed in one transaction.
+     * 6. [totalDataSize] number of lines to read from data file.
+     * 7. [dataFilePath] should be like '/media/song/test/data-set/beijing-traffic/TGraph/byday/100501'
+     */
     public static void main(String[] args){
         if(args.length<7){
             System.out.println("need valid params.");
@@ -43,14 +56,20 @@ public class WriteTest {
         }
         testName = getTestName(args[0]);
         String dbPath = args[1];
-        host = args[2];
+        serverHost = args[2];
         int threadCnt = Integer.parseInt(args[3]);
         int queryPerTx = Integer.parseInt(args[4]);
         int totalDataSize = Integer.parseInt(args[5]);
         String dataFilePath = args[6];
+
+        System.out.println("testName: "+testName);
+        System.out.println("DBPath: "+dbPath);
+        System.out.println("Host: "+ serverHost);
+        System.out.println("Thread Num: "+threadCnt);
+        System.out.println("Q/Tx: "+queryPerTx);
+        System.out.println("Total line send: "+totalDataSize);
+        System.out.println("Data path: "+ dataFilePath);
         try {
-            System.out.println("testName: "+testName+"\nDBPath: "+dbPath+"\nHost: "+host+"\nThread Num: "+threadCnt+
-                    "\nQ/Tx: "+queryPerTx+"\nTotal line send: "+totalDataSize+"\nData path: "+ dataFilePath);
             GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase(new File(dbPath));
             Map<String, Long> roadMap = buildRoadIDMap(db);
             db.shutdown();
@@ -63,8 +82,8 @@ public class WriteTest {
     }
 
     private static SimpleDateFormat timeParser = new SimpleDateFormat("yyyyMMddHHmm");
-    private static int parseTime(String s) throws ParseException {
-        return Math.toIntExact(timeParser.parse("20"+s).getTime()/1000);
+    private static int parseTime(String yearMonthDay, String hourAndMinute) throws ParseException {
+        return Math.toIntExact(timeParser.parse("20"+yearMonthDay+hourAndMinute).getTime()/1000);
     }
 
     private static String getTestName(String name){
@@ -76,12 +95,14 @@ public class WriteTest {
         BlockingQueue<String> queue = new ArrayBlockingQueue<>(2000);
         List<Thread> threads = new LinkedList<>();
         for(int i=0; i<threadCnt; i++) {
-            Thread t = new SendingThread(host, 8438, queue);
+            Thread t = new SendingThread(serverHost, 8438, queue);
             threads.add(t);
             t.setDaemon(true);
             t.start();
         }
         queue.put("TOPIC:"+testName);
+
+        String dataFileName = new File(dataPath).getName(); // also is time by day. format yyMMdd
 
         long lineSendCnt = 0;
         try(BufferedReader br = new BufferedReader(new FileReader(dataPath)))
@@ -94,11 +115,11 @@ public class WriteTest {
                     lineSendCnt++;
                     dataInOneTx.add(s);
                     if (dataInOneTx.size() == statementPerTx) {
-                        queue.put(dataLines2tCypher(dataInOneTx, roadMap));
+                        queue.put(dataLines2tCypher( dataFileName, dataInOneTx, roadMap));
                         dataInOneTx.clear();
                     }
                 }else{
-                    queue.put(dataLines2tCypher(dataInOneTx, roadMap));
+                    queue.put(dataLines2tCypher(dataFileName, dataInOneTx, roadMap));
                     dataInOneTx.clear();
                 }
                 if (lineSendCnt % 400 == 0)
@@ -264,11 +285,11 @@ public class WriteTest {
         return map;
     }
 
-    private static String dataLines2tCypher(List<String> lines, Map<String, Long> roadMap) throws ParseException {
+    private static String dataLines2tCypher(String dataFileName, List<String> lines, Map<String, Long> roadMap) throws ParseException {
         StringBuilder sb = new StringBuilder();
         for (String line : lines) {
             String[] arr = line.split(":");
-            int time = parseTime(arr[0]);
+            int time = parseTime(dataFileName, arr[0]);
             String[] d = arr[2].split(",");
 //            String q = "MATCH ()-[r:ROAD_TO]->() WHERE r.id={0} SET " +
 //                    "r.travel_time=TV({1}~NOW:{2}), " +

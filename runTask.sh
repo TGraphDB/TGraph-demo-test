@@ -43,7 +43,7 @@ function systemInfo() {
 function tcypherServerStart() {
     mvn -B clean compile exec:java \
         -Dexec.mainClass="org.act.tgraph.demo.utils.TCypherServer" \
-        -Dexec.args="$1 $2 $3 $4 $5 $6 $7"
+        -Dexec.args="$1"
 }
 
 
