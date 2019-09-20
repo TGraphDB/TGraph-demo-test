@@ -107,7 +107,7 @@ public class TCypherServer {
                     for (int i = 0; i < queries.length; i++) {
                         String query = queries[i];
                         Result result = db.execute(query);
-                        results[i] = result.resultAsString().replace("\n", "\\n");
+                        results[i] = result.resultAsString().replace("\n", "\\n").replace("\r", "\\r");
                         resultSize += results[i].length();
                     }
                     tx.success();

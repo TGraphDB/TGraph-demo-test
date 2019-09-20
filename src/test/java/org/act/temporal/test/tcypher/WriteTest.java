@@ -162,7 +162,7 @@ public class WriteTest {
                     String query;
                     try {
                         query = queue.poll(2, TimeUnit.SECONDS);
-                        if(query==null || query.equals("GOT")) continue;
+                        if(query==null) continue;
                     } catch (InterruptedException e) {
                         continue;
                     }
@@ -173,6 +173,7 @@ public class WriteTest {
                     try {
                         String response = in.readLine();
                         timeMonitor.mark("Wait result", "Log");
+                        if(response.equals("GOT")) continue;
                         result = response.split("AMITABHA");
                     } catch (IOException e) {
                         System.out.println("Server close connection.");
