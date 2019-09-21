@@ -3,13 +3,16 @@ package org.act.tgraph.demo.utils;
 
 import com.aliyun.openservices.aliyun.log.producer.Producer;
 import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
-import com.aliyun.openservices.log.common.LogItem;
+import com.eclipsesource.json.JsonArray;
+import com.eclipsesource.json.JsonObject;
 import com.sun.management.OperatingSystemMXBean;
 import org.act.tgraph.demo.Config;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
+import oshi.SystemInfo;
+import oshi.hardware.HWDiskStore;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -26,18 +29,16 @@ import java.util.List;
 
 public class TCypherServer {
     private final String dbPath;
-    private final String SEPARATOR;
 
     private final Producer logger;
     private GraphDatabaseService db;
     private volatile boolean shouldRun = true;
     private ServerSocket server;
-    private String testTopic;
     private final List<Thread> threads = Collections.synchronizedList(new LinkedList<>());
     private final String serverCodeVersion;
 
     public static void main(String[] args){
-        TCypherServer server = new TCypherServer("AMITABHA", Config.Default.onlineLogger, args[0]);
+        TCypherServer server = new TCypherServer(Config.Default.onlineLogger, args[0]);
 //        TCypherServer server = new TCypherServer("AMITABHA", Config.Default.onlineLogger, "/media/song/test/db-network-only");
         try {
             server.start();
@@ -46,11 +47,11 @@ public class TCypherServer {
         }
     }
 
-    public TCypherServer(String separator, Producer logger, String dbPath) {
-        this.SEPARATOR = separator;
+    public TCypherServer(Producer logger, String dbPath) {
         this.logger = logger;
         this.dbPath = dbPath;
         serverCodeVersion = Config.Default.gitStatus;
+        System.out.println("server code version: "+ serverCodeVersion);
     }
 
 
@@ -66,7 +67,8 @@ public class TCypherServer {
 //                e.printStackTrace();
 //            }
         }));
-        new MonitorThread().start();
+        MonitorThread monitor = new MonitorThread();
+        monitor.start();
 
         server = new ServerSocket(8438);
         System.out.println("waiting for client to connect.");
@@ -78,7 +80,7 @@ public class TCypherServer {
             }catch (SocketException ignore){ // closed from another thread.
                 break;
             }
-            Thread t = new ServerThread(client);
+            Thread t = new ServerThread(client, monitor);
             threads.add(t);
             System.out.println("GET one more client, currently "+threads.size()+" client");
             t.setDaemon(true);
@@ -120,39 +122,63 @@ public class TCypherServer {
     }
 
     private class MonitorThread extends Thread{
+        volatile ServerStatus serverStatus;
+
         public void run(){
             final OperatingSystemMXBean bean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
             Runtime runtime = Runtime.getRuntime();
             try {
+                long lastTime = System.currentTimeMillis();
+                long disksWrite = 0, disksRead=0;
                 while(shouldRun){
                     Thread.sleep(1_000);
-                    int activeConn = threads.size();
-                    if(activeConn==0) continue;
-                    long curMem = runtime.totalMemory() - runtime.freeMemory();
-                    double processCpuLoad = bean.getProcessCpuLoad();
-                    double systemCpuLoad = bean.getSystemCpuLoad();
-                    LogItem log = new LogItem();
-                    log.PushBack("timestamp", String.valueOf(System.currentTimeMillis()));
-                    log.PushBack("vm_memory", String.valueOf(curMem));
-                    log.PushBack("thread_cnt", String.valueOf(activeConn));
-                    if(!(processCpuLoad<0)) log.PushBack("process_load", String.valueOf(processCpuLoad));
-                    if(!(systemCpuLoad<0)) log.PushBack("system_load", String.valueOf(systemCpuLoad));
-                    logger.send("tgraph-demo-test", "tgraph-log", testTopic, "sjh-ubuntu1804", log);
+                    long curDisksWrite = 0, curDisksRead=0, curDiskQueueLen=0;
+                    HWDiskStore[] disks = new SystemInfo().getHardware().getDiskStores();
+                    for(HWDiskStore disk : disks){
+                        curDisksWrite += disk.getWriteBytes();
+                        curDisksRead += disk.getReadBytes();
+                        curDiskQueueLen += disk.getCurrentQueueLength();
+                    }
+                    long now = System.currentTimeMillis();
+                    ServerStatus s = new ServerStatus();
+                    s.activeConn = threads.size();
+                    s.curMem = runtime.totalMemory() - runtime.freeMemory();
+                    s.processCpuLoad = bean.getProcessCpuLoad();
+                    s.systemCpuLoad = bean.getSystemCpuLoad();
+                    s.diskWriteSpeed = (curDisksWrite - disksWrite)/(now-lastTime)*1000;
+                    s.diskReadSpeed = (curDisksRead - disksRead)/(now-lastTime)*1000;
+                    s.diskQueueLength = curDiskQueueLen;
+                    this.serverStatus = s;
+                    disksRead = curDisksRead;
+                    disksWrite = curDisksWrite;
                 }
-            } catch (InterruptedException | ProducerException e) {
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
     }
 
+    private class ServerStatus{
+        long time = System.currentTimeMillis();
+        int  activeConn;
+        long curMem;
+        long diskReadSpeed;
+        long diskWriteSpeed;
+        long diskQueueLength;
+        double processCpuLoad;
+        double systemCpuLoad;
+    }
+
     private class ServerThread extends Thread{
+        private final MonitorThread monitor;
         Socket client;
         BufferedReader fromClient;
         PrintStream toClient;
         long reqCnt = 0;
 
-        ServerThread(Socket client) throws IOException {
+        ServerThread(Socket client, MonitorThread monitor) throws IOException {
             this.client = client;
+            this.monitor = monitor;
             client.setTcpNoDelay(true);
             this.fromClient = new BufferedReader(new InputStreamReader(client.getInputStream()));
             this.toClient = new PrintStream(client.getOutputStream(), true);
@@ -191,9 +217,9 @@ public class TCypherServer {
                         System.out.println("client ask server gc.");
                         continue;
                     }else if(line.startsWith("TOPIC:")){
-                        testTopic = line.substring(6)+"-"+serverCodeVersion;
-                        System.out.println("topic changed to "+testTopic);
-                        toClient.println("GOT");
+                        String testTopic = line.substring(6);
+                        System.out.println("topic changed to "+ testTopic);
+                        toClient.println("Server code version:"+serverCodeVersion);
                         continue;
                     }
                     time.mark("Wait", "Transaction");
@@ -201,13 +227,13 @@ public class TCypherServer {
                     req.queries = line.split(";");
                     req.run();
                     time.mark("Transaction", "Send");
-                    toClient.println(
-                            req.success + SEPARATOR + req.resultSize + SEPARATOR +
-                                    time.endT("Wait") + SEPARATOR +
-                                    previousSendTime + SEPARATOR +
-                                    time.duration("Transaction") + SEPARATOR +
-                                    String.join(SEPARATOR, req.results)
-                    );
+                    String result = generateResult(
+                            req,
+                            time.endT("Wait"),
+                            previousSendTime,
+                            time.duration("Transaction"),
+                            monitor.serverStatus);
+                    toClient.println(result);
                     reqCnt++;
                 }
             } catch (IOException e) {
@@ -216,6 +242,36 @@ public class TCypherServer {
             threads.remove(this);
             System.out.println(Thread.currentThread().getName()+" exit. process "+reqCnt+" queries.");
         }
+
+        private String generateResult(Req req, long reqGotTime, long previousSendTime, long txTime, ServerStatus s) {
+            JsonObject obj = new JsonObject();
+            obj.add("success", req.success);
+            obj.add("resultSize", req.resultSize);
+            JsonArray results = new JsonArray();
+            for(String result : req.results){
+                results.add(result);
+            }
+            obj.add("results", results);
+
+            obj.add("t_ReqGot", reqGotTime);
+            obj.add("t_PreSend", previousSendTime);
+            obj.add("t_Tx", txTime);
+
+            obj.add("s_updateTime", s.time);
+            obj.add("s_memory", s.curMem);
+            obj.add("s_connCnt", s.activeConn);
+            obj.add("s_pCPU", s.processCpuLoad);
+            obj.add("s_CPU", s.systemCpuLoad);
+            obj.add("s_disk_qLen", s.diskQueueLength);
+            obj.add("s_disk_read", s.diskReadSpeed);
+            obj.add("s_disk_write", s.diskWriteSpeed);
+            return obj.toString();
+        }
     }
 
-}
+
+
+
+
+
+    }

@@ -3,6 +3,8 @@ package org.act.temporal.test.tcypher;
 import com.aliyun.openservices.aliyun.log.producer.Producer;
 import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
 import com.aliyun.openservices.log.common.LogItem;
+import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonObject;
 import org.act.tgraph.demo.Config;
 import org.act.tgraph.demo.utils.TimeMonitor;
 import org.act.tgraph.demo.vo.Cross;
@@ -78,7 +80,6 @@ public class WriteTest {
         } catch (IOException | ParseException | InterruptedException | ProducerException e) {
             e.printStackTrace();
         }
-
     }
 
     private static SimpleDateFormat timeParser = new SimpleDateFormat("yyyyMMddHHmm");
@@ -153,6 +154,7 @@ public class WriteTest {
 
         public void run(){
             try {
+                String serverCodeVersion = "";
                 Producer logger = Config.Default.onlineLogger;
                 TimeMonitor timeMonitor = new TimeMonitor();
                 timeMonitor.begin("Log");
@@ -169,29 +171,44 @@ public class WriteTest {
                     timeMonitor.mark("Read query", "Send query");
                     output.println(query);
                     timeMonitor.mark("Send query", "Wait result");
-                    String[] result;
+                    JsonObject result;
                     try {
                         String response = in.readLine();
                         timeMonitor.mark("Wait result", "Log");
-                        if(response.equals("GOT")) continue;
-                        result = response.split("AMITABHA");
+                        if(response==null) break;
+                        if(response.startsWith("Server code version:")){
+                            serverCodeVersion = response.substring(20);
+                            testName = testName + "-" + serverCodeVersion;
+                            continue;
+                        }
+                        result = Json.parse(response).asObject();
                     } catch (IOException e) {
                         System.out.println("Server close connection.");
                         break;
                     }
                     LogItem log = new LogItem();
+                    log.PushBack("c_thread", Thread.currentThread().getName());
                     log.PushBack("c_read_t", String.valueOf(timeMonitor.duration("Read query")));
                     log.PushBack("c_send_t", String.valueOf(timeMonitor.duration("Send query")));
                     log.PushBack("c_send_tE", String.valueOf(timeMonitor.endT("Send query")));
                     log.PushBack("c_wait_t", String.valueOf(timeMonitor.duration("Wait result")));
                     log.PushBack("c_plog_t", String.valueOf(previousLogT));
-                    log.PushBack("s_receive_tE", result[2]);
-                    log.PushBack("s_tx_t", result[4]);
-                    log.PushBack("s_psend_t", result[3]);
-                    log.PushBack("s_tx_success", result[0]);
-                    log.PushBack("s_result_size", result[1]);
-                    log.PushBack("thread", Thread.currentThread().getName());
-                    log.PushBack("tx_data_cnt", String.valueOf(result.length - 5));
+
+                    log.PushBack("s_receive_tE", String.valueOf(result.get("t_ReqGot").asLong()));
+                    log.PushBack("s_tx_t", String.valueOf(result.get("t_Tx").asLong()));
+                    log.PushBack("s_psend_t", String.valueOf(result.get("t_PreSend").asLong()));
+                    log.PushBack("s_tx_success", String.valueOf(result.get("success").asBoolean()));
+                    log.PushBack("s_tx_line_cnt", String.valueOf(result.get("results").asArray().size()));
+
+                    log.PushBack("v_update_t", String.valueOf(result.get("s_updateTime").asLong()));
+                    log.PushBack("v_memory", String.valueOf(result.get("s_memory").asLong()));
+                    log.PushBack("v_connCnt", String.valueOf(result.get("s_connCnt").asLong()));
+                    log.PushBack("v_pCPU", String.valueOf(result.get("s_pCPU").asDouble()));
+                    log.PushBack("v_CPU", String.valueOf(result.get("s_CPU").asDouble()));
+                    log.PushBack("v_disk_qLen", String.valueOf(result.get("s_disk_qLen").asLong()));
+                    log.PushBack("v_disk_read", String.valueOf(result.get("s_disk_read").asLong()));
+                    log.PushBack("v_disk_write", String.valueOf(result.get("s_disk_write").asLong()));
+
                     try {
                         logger.send("tgraph-demo-test", "tgraph-log", testName, "sjh-ubuntu1804", log);
                     } catch (InterruptedException | ProducerException e) {
