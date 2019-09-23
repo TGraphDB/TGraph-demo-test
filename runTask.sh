@@ -7,7 +7,7 @@
 # > ...
 
 unset PREPARE
-unset PREPARE_NEW
+unset IS_COMPILED
 unset PREPARE_TEST
 unset PREPARE_OLD
 unset PREPARE_TSC
@@ -17,37 +17,64 @@ export MAVEN_OPTS='-Xmx50g -Xms4g'
 # Debug options
 # export MAVEN_OPTS='-Xmx18g -Xms10g -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005'
 
-# Function: print system info of current machine (both hardware and software)
-# Example: unicity_new path-to-data.txt 200 3600 2 10 20
-# Explain:
-# 1. data set file: path-to-data.txt
-# 2. radius=200, timeInterval=3600, select 2 points, repeat 10 times, using 20 CPU core.
+
+# Function: print system info of current machine (both hardware and software), no argument needed.
 function systemInfo() {
-    if [ -z ${PREPARE_NEW+x} ]
+    if [ -z ${IS_COMPILED+x} ]
     then
-        PREPARE_NEW=' clean compile '
+        IS_COMPILED=' clean compile '
     else
-        PREPARE_NEW=''
+        IS_COMPILED=''
     fi
-    mvn -B ${PREPARE_NEW} exec:java \
+    mvn -B ${IS_COMPILED} exec:java \
         -Dexec.mainClass="org.act.tgraph.demo.vo.PhysicalEnv"
 }
 
 
 # Function: Start TGraph TCP Server which accept TCypher queries.
-# Example: tcypherServerStart path-to-db-dir 2016 11
-# Explain: download 201611 data to path-to-file.txt
-# Note:
-# 1. 201501-201507,201603-201610 data not exist
-# 2. download speed is 100MB/10minutes
+# Example: tcypherServerStart path-to-db-dir
+# Explain: path-to-db-dir is a TGraph DB folder which contains traffic demo road network topology
 function tcypherServerStart() {
     mvn -B clean compile exec:java \
         -Dexec.mainClass="org.act.tgraph.demo.utils.TCypherServer" \
         -Dexec.args="$1"
 }
 
+# Function: Test TGraph TCypher Server write performance.
+# Example: tcypherClientWriteTest /media/song/test/db-network-only-ro 192.168.1.141 8 10 200000 /media/song/test/data-set/beijing-traffic/TGraph/byday/100501
+# Explain:
+#  /media/song/test/db-network-only-ro is a TGraph DB folder which contains traffic demo road network topology
+#  192.168.1.141  is the TCypher Server hostname
+#  8 is the number of connections to the server(both server and client use one thread to process one connection
+#  10 is the number of Cypher queries per transaction
+#  200000 is the total number of data lines to send.(from the data file)
+#  /media/song/test/data-set/beijing-traffic/TGraph/byday/100501 is the path of the data file
+function tcypherClientWriteSpropTest() {
+    if [ -z ${IS_COMPILED+x} ]
+    then
+        IS_COMPILED=' clean test-compile '
+    else
+        IS_COMPILED=''
+    fi
+    mvn -B --offline ${IS_COMPILED} exec:java \
+        -Dexec.mainClass="org.act.temporal.test.tcypher.WriteStaticPropertyTest" \
+        -Dexec.classpathScope="test" \
+        -Dexec.args="$1 $2 $3 $4 $5 $6"
+}
 
-
+# Function: Test TGraph TCypher Server write performance. almost same as above but set temporal property.
+function tcypherClientWriteSpropTest() {
+    if [ -z ${IS_COMPILED+x} ]
+    then
+        IS_COMPILED=' clean test-compile '
+    else
+        IS_COMPILED=''
+    fi
+    mvn -B --offline ${IS_COMPILED} exec:java \
+        -Dexec.mainClass="org.act.temporal.test.tcypher.WriteTemporalPropertyTest" \
+        -Dexec.classpathScope="test" \
+        -Dexec.args="$1 $2 $3 $4 $5 $6"
+}
 
 
 
@@ -100,15 +127,6 @@ function extract_time() {
         -Dexec.mainClass="task.MaxOverlapTime" \
         -Dexec.args="$1 $2 $3 $4 $5"
 }
-
-
-for i in 1 2 3 4
-do
-	for j in 9 10 5
-	do
-		printf '';#echo $i $j
-	done
-done
 
 function test_code(){
     if [ -z ${PREPARE_TEST+x} ]
