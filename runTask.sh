@@ -26,7 +26,7 @@ function systemInfo() {
     else
         IS_COMPILED=''
     fi
-    mvn -B ${IS_COMPILED} exec:java \
+    mvn -B -o ${IS_COMPILED} exec:java \
         -Dexec.mainClass="org.act.tgraph.demo.vo.PhysicalEnv"
 }
 
@@ -35,7 +35,7 @@ function systemInfo() {
 # Example: tcypherServerStart path-to-db-dir
 # Explain: path-to-db-dir is a TGraph DB folder which contains traffic demo road network topology
 function tcypherServerStart() {
-    mvn -B clean compile exec:java \
+    mvn -B -o clean compile exec:java \
         -Dexec.mainClass="org.act.tgraph.demo.utils.TCypherServer" \
         -Dexec.args="$1"
 }
@@ -63,7 +63,7 @@ function tcypherClientWriteSpropTest() {
 }
 
 # Function: Test TGraph TCypher Server write performance. almost same as above but set temporal property.
-function tcypherClientWriteSpropTest() {
+function tcypherClientWriteTpropTest() {
     if [ -z ${IS_COMPILED+x} ]
     then
         IS_COMPILED=' clean test-compile '

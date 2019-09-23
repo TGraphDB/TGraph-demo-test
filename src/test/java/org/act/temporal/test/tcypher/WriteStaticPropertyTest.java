@@ -45,7 +45,7 @@ public class WriteStaticPropertyTest {
      * 6. [dataFilePath] should be like '/media/song/test/data-set/beijing-traffic/TGraph/byday/100501'
      */
     public static void main(String[] args){
-        if(args.length<7){
+        if(args.length<6){
             System.out.println("need valid params.");
             return;
         }
@@ -68,7 +68,7 @@ public class WriteStaticPropertyTest {
             db.shutdown();
             System.out.println("id map built.");
 
-            TCypherClient client = new TCypherClient(getTestName("cs-write-S-prop"), serverHost, threadCnt, 2000);
+            TCypherClient client = new TCypherClient("cs-write-S-prop", serverHost, threadCnt, 2000);
             client.start();
 
             String dataFileName = new File(dataFilePath).getName(); // also is time by day. format yyMMdd
@@ -103,11 +103,6 @@ public class WriteStaticPropertyTest {
     private static SimpleDateFormat timeParser = new SimpleDateFormat("yyyyMMddHHmm");
     private static int parseTime(String yearMonthDay, String hourAndMinute) throws ParseException {
         return Math.toIntExact(timeParser.parse("20"+yearMonthDay+hourAndMinute).getTime()/1000);
-    }
-
-    private static String getTestName(String name){
-        SimpleDateFormat ft = new SimpleDateFormat ("yyyyMMdd_HHmmss");
-        return name + "-" + ft.format(new Date());
     }
 
     public void importNetwork2db() throws IOException {
@@ -204,37 +199,5 @@ public class WriteStaticPropertyTest {
         return sb.substring(0, sb.length()-1);
     }
 
-    @Test
-    public void tCypherTest(){
-//        GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase(new File(dbPath));
-//        Runtime.getRuntime().addShutdownHook(new Thread(db::shutdown));
-//        try(Transaction tx = db.beginTx()){
-////            System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE r.id=1 RETURN r.travel_time").resultAsString());
-//            System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE r.grid_id=595640 AND r.chain_id=30003 SET r.travel_time=TV(100~NOW:30)").resultAsString());
-//            tx.success();
-//        }
-//        try(Transaction tx = db.beginTx()){
-//            Relationship r = db.getRelationshipById(1);
-//            for(String key : r.getPropertyKeys()){
-//                System.out.println(key+": "+r.getProperty(key));
-//            }
-//            r.getTemporalProperty("travel_time", 0, Integer.MAX_VALUE - 4, new TemporalRangeQuery() {
-//                @Override
-//                public void setValueType(ValueContentType valueType) {
-//                    System.out.println(valueType);
-//                }
-//
-//                @Override
-//                public void onNewEntry(InternalEntry entry) {
-//                    System.out.print(entry.getKey().getStartTime()+":["+entry.getKey().getValueType()+"]"+entry.getValue().toString());
-//                }
-//
-//                @Override
-//                public Object onReturn() {
-//                    return null;
-//                }
-//            });
-//            tx.success();
-//        }
-    }
+
 }

@@ -1,11 +1,15 @@
 package org.act.temporal.test.tcypher;
 
 import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
+import org.act.temporalProperty.impl.InternalEntry;
+import org.act.temporalProperty.meta.ValueContentType;
 import org.act.tgraph.demo.utils.TCypherClient;
+import org.junit.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
+import org.neo4j.temporal.TemporalRangeQuery;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 import java.io.BufferedReader;
@@ -36,16 +40,16 @@ public class WriteTemporalPropertyTest {
      */
 
     public static void main(String[] args){
-        if(args.length<7){
+        if(args.length<6){
             System.out.println("need valid params.");
             return;
         }
-        String dbPath = args[1];
-        String serverHost = args[2];
-        int threadCnt = Integer.parseInt(args[3]);
-        int queryPerTx = Integer.parseInt(args[4]);
-        int totalDataSize = Integer.parseInt(args[5]);
-        String dataFilePath = args[6];
+        String dbPath = args[0];
+        String serverHost = args[1];
+        int threadCnt = Integer.parseInt(args[2]);
+        int queryPerTx = Integer.parseInt(args[3]);
+        int totalDataSize = Integer.parseInt(args[4]);
+        String dataFilePath = args[5];
 
         System.out.println("DBPath: "+dbPath);
         System.out.println("Host: "+ serverHost);
@@ -58,7 +62,7 @@ public class WriteTemporalPropertyTest {
             Map<String, Long> roadMap = buildRoadIDMap(db);
             db.shutdown();
             System.out.println("id map built.");
-            TCypherClient client = new TCypherClient(getTestName("cs-write-T-prop"), serverHost, threadCnt, 2000);
+            TCypherClient client = new TCypherClient("cs-write-T-prop", serverHost, threadCnt, 2000);
             client.start();
 
             String dataFileName = new File(dataFilePath).getName(); // also is time by day. format yyMMdd
@@ -88,11 +92,6 @@ public class WriteTemporalPropertyTest {
         } catch (IOException | ParseException | InterruptedException | ProducerException e) {
             e.printStackTrace();
         }
-    }
-
-    private static String getTestName(String name){
-        SimpleDateFormat ft = new SimpleDateFormat ("yyyyMMdd_HHmmss");
-        return name + "-" + ft.format(new Date());
     }
 
     private static SimpleDateFormat timeParser = new SimpleDateFormat("yyyyMMddHHmm");
@@ -125,9 +124,44 @@ public class WriteTemporalPropertyTest {
                     "r.full_status=TV({1}~NOW:{3}), " +
                     "r.vehicle_count=TV({1}~NOW:{4}), " +
                     "r.segment_count=TV({1}~NOW:{5});";
-            String qq = MessageFormat.format(q, roadMap.get(arr[1]), String.valueOf(time), d[0], d[1], d[2], d[3]);
+            String qq = MessageFormat.format(q, String.valueOf(roadMap.get(arr[1])), String.valueOf(time), d[0], d[1], d[2], d[3]);
             sb.append(qq);
         }
         return sb.substring(0, sb.length()-1);
+    }
+
+    @Test
+    public void tCypherTest(){
+        GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase(new File("/media/song/test/db-network-only-ro"));
+        Runtime.getRuntime().addShutdownHook(new Thread(db::shutdown));
+        try(Transaction tx = db.beginTx()){
+//            System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE r.id=1 RETURN r.travel_time").resultAsString());
+            System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE r.grid_id=595640 AND r.chain_id=30003 SET r.travel_time=TV(100~NOW:30)").resultAsString());
+            tx.success();
+        }
+        try(Transaction tx = db.beginTx()){
+            Relationship r = db.getRelationshipById(1);
+            for(String key : r.getPropertyKeys()){
+                System.out.println(key+": "+r.getProperty(key));
+            }
+//            r.setTemporalProperty("travel_time", 400, 88);
+            r.getTemporalProperty("travel_time", 0, Integer.MAX_VALUE - 4, new TemporalRangeQuery() {
+                @Override
+                public void setValueType(ValueContentType valueType) {
+                    System.out.println(valueType);
+                }
+
+                @Override
+                public void onNewEntry(InternalEntry entry) {
+                    System.out.print(entry.getKey().getStartTime()+":["+entry.getKey().getValueType()+"]"+entry.getValue().toString());
+                }
+
+                @Override
+                public Object onReturn() {
+                    return null;
+                }
+            });
+            tx.success();
+        }
     }
 }
