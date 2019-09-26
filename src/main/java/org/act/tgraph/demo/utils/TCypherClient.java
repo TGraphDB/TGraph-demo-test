@@ -6,21 +6,10 @@ import com.aliyun.openservices.log.common.LogItem;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import org.act.tgraph.demo.Config;
-import org.act.tgraph.demo.vo.Cross;
-import org.act.tgraph.demo.vo.RelType;
-import org.act.tgraph.demo.vo.RoadChain;
-import org.junit.Test;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.Transaction;
-import org.neo4j.graphdb.factory.GraphDatabaseFactory;
-import org.neo4j.tooling.GlobalGraphOperations;
 
 import java.io.*;
 import java.net.Socket;
-import java.text.MessageFormat;
-import java.text.ParseException;
+import java.net.SocketTimeoutException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -38,7 +27,7 @@ public class TCypherClient {
     private final String serverHost;
     private final int threadCnt;
 
-    private long lineSendCnt = 0;
+    private long querySendCnt = 0;
     private volatile boolean complete = false;
     private BlockingQueue<String> queue;
     private List<Thread> threads;
@@ -75,18 +64,22 @@ public class TCypherClient {
 
     public void addQuery(String query) throws InterruptedException {
         queue.put(query);
-        lineSendCnt++;
+        querySendCnt++;
+        if(querySendCnt %400==0) System.out.println(querySendCnt +" query added.");
     }
 
     public void awaitSendDone() throws InterruptedException, ProducerException {
         while(queue.size()>0) {
+            if(threads.size()==0) {
+                break;
+            }
             Thread.sleep(10000);
             System.out.println("queue size: "+queue.size());
         }
         complete = true;
         for(Thread t : threads) t.join();
         Config.Default.onlineLogger.close();
-        System.out.println("Client exit. send "+ lineSendCnt+" lines.");
+        System.out.println("Client exit. send "+ querySendCnt +" lines.");
     }
 
     private class SendingThread extends Thread{
@@ -97,7 +90,7 @@ public class TCypherClient {
         SendingThread(String host, int port, BlockingQueue<String> queue) throws IOException {
             this.queue = queue;
             client = new Socket(host, port);
-            client.setSoTimeout(8000);
+//            client.setSoTimeout(8000);
             client.setTcpNoDelay(true);
             in = new BufferedReader(new InputStreamReader(client.getInputStream()));
             output = new PrintWriter(client.getOutputStream(), true);
@@ -138,6 +131,7 @@ public class TCypherClient {
                         result = Json.parse(response).asObject();
                     } catch (IOException e) {
                         System.out.println("Server close connection.");
+                        e.printStackTrace();
                         break;
                     }
                     LogItem log = new LogItem();

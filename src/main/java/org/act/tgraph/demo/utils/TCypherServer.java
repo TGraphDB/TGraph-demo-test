@@ -198,7 +198,7 @@ public class TCypherServer {
                     try {
                         line = fromClient.readLine();
                     }catch (SocketException ignore){// client close conn.
-                        System.out.println("client close connection.");
+                        System.out.println("closed by server.");
                         client.close();
                         break;
                     }
