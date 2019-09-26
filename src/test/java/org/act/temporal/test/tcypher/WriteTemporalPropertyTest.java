@@ -134,34 +134,38 @@ public class WriteTemporalPropertyTest {
     public void tCypherTest(){
         GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase(new File("/media/song/test/db-network-only-ro"));
         Runtime.getRuntime().addShutdownHook(new Thread(db::shutdown));
-        try(Transaction tx = db.beginTx()){
-//            System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE r.id=1 RETURN r.travel_time").resultAsString());
-            System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE r.grid_id=595640 AND r.chain_id=30003 SET r.travel_time=TV(100~NOW:30)").resultAsString());
-            tx.success();
-        }
-        try(Transaction tx = db.beginTx()){
-            Relationship r = db.getRelationshipById(1);
-            for(String key : r.getPropertyKeys()){
-                System.out.println(key+": "+r.getProperty(key));
+        long t = System.currentTimeMillis();
+        for(int i=0; i<100; i++) {
+            try (Transaction tx = db.beginTx()) {
+                System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE r.id=1 SET r.travel_time_100="+(30+i)).resultAsString());
+//            System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE r.id=1 SET r.travel_time=TV(100~NOW:30)").resultAsString());
+                tx.success();
             }
-//            r.setTemporalProperty("travel_time", 400, 88);
-            r.getTemporalProperty("travel_time", 0, Integer.MAX_VALUE - 4, new TemporalRangeQuery() {
-                @Override
-                public void setValueType(ValueContentType valueType) {
-                    System.out.println(valueType);
-                }
-
-                @Override
-                public void onNewEntry(InternalEntry entry) {
-                    System.out.print(entry.getKey().getStartTime()+":["+entry.getKey().getValueType()+"]"+entry.getValue().toString());
-                }
-
-                @Override
-                public Object onReturn() {
-                    return null;
-                }
-            });
-            tx.success();
         }
+        System.out.println(System.currentTimeMillis() - t);
+//        try(Transaction tx = db.beginTx()){
+//            Relationship r = db.getRelationshipById(1);
+//            for(String key : r.getPropertyKeys()){
+//                System.out.println(key+": "+r.getProperty(key));
+//            }
+////            r.setTemporalProperty("travel_time", 400, 88);
+//            r.getTemporalProperty("travel_time", 0, Integer.MAX_VALUE - 4, new TemporalRangeQuery() {
+//                @Override
+//                public void setValueType(ValueContentType valueType) {
+//                    System.out.println(valueType);
+//                }
+//
+//                @Override
+//                public void onNewEntry(InternalEntry entry) {
+//                    System.out.print(entry.getKey().getStartTime()+":["+entry.getKey().getValueType()+"]"+entry.getValue().toString());
+//                }
+//
+//                @Override
+//                public Object onReturn() {
+//                    return null;
+//                }
+//            });
+//            tx.success();
+//        }
     }
 }

@@ -1,4 +1,4 @@
-package org.act.temporal.test.utils;
+package org.act.tgraph;
 
 import com.aliyun.openservices.aliyun.log.producer.LogProducer;
 import com.aliyun.openservices.aliyun.log.producer.Producer;
@@ -10,17 +10,13 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.neo4j.graphdb.DynamicLabel;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Label;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.ResourceIterator;
-import org.neo4j.graphdb.Result;
-import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.schema.IndexDefinition;
 
@@ -124,7 +120,7 @@ public class TCypherFunctionTest
             log.PushBack( "tx_latency_millisecond", String.valueOf(curTime-txStartTime));
             //param 'topic' should be your test topic, and 'source' is the hardware environment id.
             // 'project' and 'logStore' is fixed.
-            producer.send("tgraph-demo-test", "tgraph-log", "tmp-test-2019.8.8-v3", "sjh-PC", log);
+            producer.send("tgraph-demo-test", "tgraph-log", "tmp-test-2019.8.8-v4", "sjh-PC", log);
         }
 
 
@@ -137,6 +133,70 @@ public class TCypherFunctionTest
         }
 
         producer.close(); //flush log to aliyun cloud.
+    }
+
+    @Test
+    public void writeCompareTest() throws IOException {
+        GraphDatabaseService db = initDB(false);
+        Runtime.getRuntime().addShutdownHook(new Thread(db::shutdown));
+
+//        RelationshipType rt = () -> "TMP";
+//        try(Transaction tx = db.beginTx()){
+//            List<Node> nodes = new ArrayList<>();
+//            for(int i=0; i<50; i++){
+//                nodes.add(db.createNode());
+//                if(i>0) nodes.get(i).createRelationshipTo(nodes.get(i-1), rt);
+//            }
+//            nodes.get(0).createRelationshipTo(nodes.get(49), rt);
+//            tx.success();
+//        }
+
+        int time = 0;
+        int NOW = Integer.MAX_VALUE - 4;
+        for(int i=0; i<1000; i++){
+            long txStartTime = System.currentTimeMillis();
+            try(Transaction tx = db.beginTx()){
+                for(int j=0; j<40; j++) {
+                    Node node = db.getNodeById(j);
+//                    node.setProperty("test_static_prop", time);
+//                    node.setTemporalProperty("test_travel_time", time, NOW, time+2);
+//                    db.execute("Match (n) WHERE n.id=" + j + " SET n.test_travel_time = TV("+time+"~"+NOW+":"+(time+2)+")");
+//                    db.execute("Match (n) WHERE n.id=" + j + " SET n.test_static_prop = "+time);
+//                    db.execute("Match ()-[r]->() WHERE r.id=" + j + " SET r.new_segment_count8834 = TV(" + time + "~" + NOW + ":" + (time+2) + ")");
+                    db.execute("Match ()-[r]->() WHERE r.id=" + j + " SET r.new_prop = " + time );
+                    time += 2;
+                }
+                tx.success();
+            }
+            long curTime = System.currentTimeMillis();
+            System.out.println(curTime - txStartTime);
+        }
+
+
+    }
+
+    @Test
+    public void jjk() throws IOException {
+        GraphDatabaseService db = initDB(false);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> db.shutdown()));
+
+        for(int i = 0;i<10; i++){
+            long start = System.currentTimeMillis();
+            try(Transaction tx = db.beginTx()){
+                for(int j = 0; j<40; j++){
+                    Relationship r = db.getRelationshipById(i);
+                    //r.setProperty("aa",j);
+                    //r.setTemporalProperty("segment_count",10001, 10002,j);
+                    //db.execute("Match () -[r{id:" + i + "}]- () SET r.segment_count = TV(" + 10000 + "~" + 10001 + ":" + j + ")");
+                    db.execute("Match () -[r{id:" + j + "}]- () SET r.new_segment_count = TV(" + (10005+i) + "~" + (10006+i) + ":" + i + ")");
+                    //db.execute("Match (r{id:"+j+"}) SET r.travel_time = "+i);
+                }
+                tx.success();
+            }
+            long end = System.currentTimeMillis();
+            System.out.println(end - start);
+        }
+
     }
 
     @Test
@@ -266,7 +326,8 @@ public class TCypherFunctionTest
 
     private GraphDatabaseService initDB(boolean fromScratch ) throws IOException
     {
-        File dir = new File( System.getProperty( "java.io.tmpdir" ), "TGRAPH-db" );
+//        File dir = new File( System.getProperty( "java.io.tmpdir" ), "TGRAPH-db" );
+        File dir = new File( "/media/song/test/testdb" );
         if ( fromScratch )
         {
             deleteFile( dir );

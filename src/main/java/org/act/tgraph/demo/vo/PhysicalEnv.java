@@ -232,8 +232,10 @@ public enum PhysicalEnv {
     private static void printDisks(HWDiskStore[] diskStores) {
         System.out.println("Disks:");
         for (HWDiskStore disk : diskStores) {
-            System.out.println(" " + disk.getName() + " " + disk.getModel() + " "+disk.getSerial()+" "+
-                    "Transfer time: "+disk.getTransferTime()+" "+
+            System.out.println(disk.getName());
+            System.out.println(disk.getModel());
+            System.out.println(disk.getSerial());
+            System.out.println(" Transfer time: "+disk.getTransferTime()+" "+
                     "Queue length: "+disk.getCurrentQueueLength()+" "+
                     "Read Bytes: "+disk.getReadBytes()+" "+
                     "Reads: "+disk.getReads()+" "+

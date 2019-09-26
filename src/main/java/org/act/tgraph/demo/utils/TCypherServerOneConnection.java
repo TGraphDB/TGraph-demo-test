@@ -25,7 +25,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public class TCypherTestServer {
+public class TCypherServerOneConnection {
     private final String dbPath;
     private final int maxConcurrentCnt;
     private final int waitingQueueSize;
@@ -35,7 +35,7 @@ public class TCypherTestServer {
     private GraphDatabaseService db;
 
 
-    public TCypherTestServer(int maxConcurrentCnt, int waitingQueueSize, Producer logger, String dbPath) {
+    public TCypherServerOneConnection(int maxConcurrentCnt, int waitingQueueSize, Producer logger, String dbPath) {
         this.maxConcurrentCnt = maxConcurrentCnt;
         this.waitingQueueSize = waitingQueueSize;
         this.logger = logger;
