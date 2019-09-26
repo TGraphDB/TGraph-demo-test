@@ -12,10 +12,10 @@ unset PREPARE_TEST
 unset PREPARE_OLD
 unset PREPARE_TSC
 
-#export MAVEN_OPTS='-Xmx50g -Xms4g'
+export MAVEN_OPTS='-Xmx50g -Xms4g -server'
 # export MAVEN_OPTS='-Xmx18g -Xms12g'
-# Debug options
-export MAVEN_OPTS='-Xmx18g -Xms10g -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005'
+# # Debug options
+# export MAVEN_OPTS='-Xmx18g -Xms10g -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005'
 
 
 # Function: print system info of current machine (both hardware and software), no argument needed.
