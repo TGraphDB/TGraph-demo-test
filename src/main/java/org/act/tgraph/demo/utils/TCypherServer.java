@@ -14,11 +14,7 @@ import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import oshi.SystemInfo;
 import oshi.hardware.HWDiskStore;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
+import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -57,7 +53,7 @@ public class TCypherServer {
 
 
 
-    public void start() throws IOException, InterruptedException, ProducerException {
+    public void start() throws IOException, ProducerException, InterruptedException {
         db = new GraphDatabaseFactory().newEmbeddedDatabase( new File(dbPath));
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             db.shutdown();
@@ -73,21 +69,25 @@ public class TCypherServer {
         server = new ServerSocket(8438);
         System.out.println("waiting for client to connect.");
 
-        while(shouldRun) {
-            Socket client;
-            try {
-                client = server.accept();
-            }catch (SocketException ignore){ // closed from another thread.
-                break;
+        try {
+            while (shouldRun) {
+                Socket client;
+                try {
+                    client = server.accept();
+                } catch (SocketException ignore) { // closed from another thread.
+                    break;
+                }
+                Thread t = new ServerThread(client, monitor);
+                threads.add(t);
+                System.out.println("GET one more client, currently " + threads.size() + " client");
+                t.setDaemon(true);
+                t.start();
             }
-            Thread t = new ServerThread(client, monitor);
-            threads.add(t);
-            System.out.println("GET one more client, currently "+threads.size()+" client");
-            t.setDaemon(true);
-            t.start();
-        }
-        for(Thread t : threads){
-            t.join();
+            for (Thread t : threads) {
+                t.join();
+            }
+        }catch (InterruptedException ignore){
+            // just exit
         }
         db.shutdown();
         logger.close();
@@ -104,9 +104,10 @@ public class TCypherServer {
         @Override
         public void run() {
             results = new String[queries.length];
+            int i=0;
             try {
                 try (Transaction tx = db.beginTx()) {
-                    for (int i = 0; i < queries.length; i++) {
+                    for (i = 0; i < queries.length; i++) {
                         String query = queries[i];
                         Result result = db.execute(query);
                         results[i] = result.resultAsString().replace("\n", "\\n").replace("\r", "\\r");
@@ -115,6 +116,9 @@ public class TCypherServer {
                     tx.success();
                 }
             }catch (Exception msg){
+//                StringWriter errors = new StringWriter();
+//                msg.printStackTrace(new PrintWriter(errors));
+//                results[i] = errors.toString();
                 msg.printStackTrace();
                 success = false;
             }

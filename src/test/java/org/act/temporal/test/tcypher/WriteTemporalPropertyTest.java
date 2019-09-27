@@ -119,7 +119,7 @@ public class WriteTemporalPropertyTest {
             String[] arr = line.split(":");
             int time = parseTime(dataFileName, arr[0]);
             String[] d = arr[2].split(",");
-            String q = "MATCH ()-[r:ROAD_TO]->() WHERE r.id={0} SET " +
+            String q = "MATCH ()-[r:ROAD_TO]->() WHERE id(r)={0} SET " +
                     "r.travel_time=TV({1}~NOW:{2}), " +
                     "r.full_status=TV({1}~NOW:{3}), " +
                     "r.vehicle_count=TV({1}~NOW:{4}), " +
@@ -132,43 +132,53 @@ public class WriteTemporalPropertyTest {
 
     @Test
     public void tCypherTest(){
-        System.out.println(System.getProperty("java.vm.name"));
-        System.out.println(System.getProperty("java.vm.info"));
-        System.exit(0);
+//        System.out.println(System.getProperty("java.vm.name"));
+//        System.out.println(System.getProperty("java.vm.info"));
+//        System.exit(0);
         GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase(new File("/media/song/test/db-network-only-ro"));
         Runtime.getRuntime().addShutdownHook(new Thread(db::shutdown));
         long t = System.currentTimeMillis();
-        for(int i=0; i<100; i++) {
-            try (Transaction tx = db.beginTx()) {
-                System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE r.id=1 SET r.travel_time_100="+(30+i)).resultAsString());
-//            System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE r.id=1 SET r.travel_time=TV(100~NOW:30)").resultAsString());
-                tx.success();
-            }
+        try (Transaction tx = db.beginTx()) {
+//            for(int i=0; i<10; i++) {
+//                System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE id(r)=1 SET r.travel_time_100"+i+"="+(30+i)).resultAsString());
+                db.execute("MATCH ()-[r:ROAD_TO]->() WHERE id(r)=1 SET r.travel_time=TV(3~13:30, 100~NOW:2)");
+//            }
+            tx.success();
         }
         System.out.println(System.currentTimeMillis() - t);
-//        try(Transaction tx = db.beginTx()){
-//            Relationship r = db.getRelationshipById(1);
-//            for(String key : r.getPropertyKeys()){
-//                System.out.println(key+": "+r.getProperty(key));
-//            }
-////            r.setTemporalProperty("travel_time", 400, 88);
-//            r.getTemporalProperty("travel_time", 0, Integer.MAX_VALUE - 4, new TemporalRangeQuery() {
-//                @Override
-//                public void setValueType(ValueContentType valueType) {
-//                    System.out.println(valueType);
-//                }
-//
-//                @Override
-//                public void onNewEntry(InternalEntry entry) {
-//                    System.out.print(entry.getKey().getStartTime()+":["+entry.getKey().getValueType()+"]"+entry.getValue().toString());
-//                }
-//
-//                @Override
-//                public Object onReturn() {
-//                    return null;
-//                }
-//            });
-//            tx.success();
-//        }
+        try (Transaction tx = db.beginTx()) {
+            for(int i=0; i<102; i++) {
+                System.out.println(db.getRelationshipById(1).getTemporalProperty("travel_time", i));
+//                System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE r.id=1 SET r.travel_time_100="+(30+i)).resultAsString());
+            }
+//            System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE r.id=1 SET r.travel_time=TV(100~NOW:30)").resultAsString());
+            tx.success();
+        }
+        System.out.println(System.currentTimeMillis() - t);
+        try(Transaction tx = db.beginTx()){
+            Relationship r = db.getRelationshipById(1);
+            for(String key : r.getPropertyKeys()){
+                System.out.println(key+": "+r.getProperty(key));
+            }
+//            r.setTemporalProperty("travel_time", 400, 88);
+            r.getTemporalProperty("travel_time", 0, Integer.MAX_VALUE-4, new TemporalRangeQuery() {
+                @Override
+                public void setValueType(ValueContentType valueType) {
+                    System.out.println(valueType);
+                }
+
+                @Override
+                public void onNewEntry(InternalEntry entry) {
+                    System.out.print(entry.getKey().getStartTime()+":["+entry.getKey().getValueType()+"]"+entry.getValue().toString());
+                }
+
+                @Override
+                public Object onReturn() {
+                    return null;
+                }
+            });
+            tx.success();
+        }
+        System.out.println(System.currentTimeMillis() - t);
     }
 }

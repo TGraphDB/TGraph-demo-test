@@ -188,7 +188,7 @@ public class WriteStaticPropertyTest {
             String[] arr = line.split(":");
             int time = parseTime(dataFileName, arr[0]);
             String[] d = arr[2].split(",");
-            String q = "MATCH ()-[r:ROAD_TO]->() WHERE r.id={0} SET " +
+            String q = "MATCH ()-[r:ROAD_TO]->() WHERE id(r)={0} SET " +
                     "r.travel_time_{1}={2}, " +
                     "r.full_status_{1}={3}, " +
                     "r.vehicle_count_{1}={4}, " +
