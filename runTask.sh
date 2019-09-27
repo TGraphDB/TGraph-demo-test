@@ -12,7 +12,7 @@ unset PREPARE_TEST
 unset PREPARE_OLD
 unset PREPARE_TSC
 
-export MAVEN_OPTS='-Xmx50g -Xms4g -server'
+export MAVEN_OPTS='-Xmx50g -Xms4g'
 # export MAVEN_OPTS='-Xmx18g -Xms12g'
 # # Debug options
 # export MAVEN_OPTS='-Xmx18g -Xms10g -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005'
@@ -26,7 +26,7 @@ function systemInfo() {
     else
         IS_COMPILED=''
     fi
-    mvn -B -o ${IS_COMPILED} exec:java \
+    mvn -B ${IS_COMPILED} exec:java \
         -Dexec.mainClass="org.act.tgraph.demo.vo.PhysicalEnv"
 }
 
@@ -35,7 +35,7 @@ function systemInfo() {
 # Example: tcypherServerStart path-to-db-dir
 # Explain: path-to-db-dir is a TGraph DB folder which contains traffic demo road network topology
 function tcypherServerStart() {
-    mvn -B -o clean compile exec:java \
+    mvn -B clean compile exec:java \
         -Dexec.mainClass="org.act.tgraph.demo.utils.TCypherServer" \
         -Dexec.args="$1"
 }
@@ -56,7 +56,7 @@ function tcypherClientWriteSpropTest() {
     else
         IS_COMPILED=''
     fi
-    mvn -B --offline ${IS_COMPILED} exec:java \
+    mvn -B ${IS_COMPILED} exec:java \
         -Dexec.mainClass="org.act.temporal.test.tcypher.WriteStaticPropertyTest" \
         -Dexec.classpathScope="test" \
         -Dexec.args="$1 $2 $3 $4 $5 $6"
@@ -70,7 +70,7 @@ function tcypherClientWriteTpropTest() {
     else
         IS_COMPILED=''
     fi
-    mvn -B --offline ${IS_COMPILED} exec:java \
+    mvn -B ${IS_COMPILED} exec:java \
         -Dexec.mainClass="org.act.temporal.test.tcypher.WriteTemporalPropertyTest" \
         -Dexec.classpathScope="test" \
         -Dexec.args="$1 $2 $3 $4 $5 $6"
