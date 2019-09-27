@@ -62,7 +62,7 @@ public class WriteTemporalPropertyTest {
             Map<String, Long> roadMap = buildRoadIDMap(db);
             db.shutdown();
             System.out.println("id map built.");
-            TCypherClient client = new TCypherClient("cs-write-T-prop", serverHost, threadCnt, 2000);
+            TCypherClient client = new TCypherClient("cs-write-T-prop", serverHost, threadCnt, 2000, true);
             client.start();
 
             String dataFileName = new File(dataFilePath).getName(); // also is time by day. format yyMMdd
@@ -132,6 +132,9 @@ public class WriteTemporalPropertyTest {
 
     @Test
     public void tCypherTest(){
+        System.out.println(System.getProperty("java.vm.name"));
+        System.out.println(System.getProperty("java.vm.info"));
+        System.exit(0);
         GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase(new File("/media/song/test/db-network-only-ro"));
         Runtime.getRuntime().addShutdownHook(new Thread(db::shutdown));
         long t = System.currentTimeMillis();

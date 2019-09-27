@@ -68,7 +68,7 @@ public class WriteStaticPropertyTest {
             db.shutdown();
             System.out.println("id map built.");
 
-            TCypherClient client = new TCypherClient("cs-write-S-prop", serverHost, threadCnt, 2000);
+            TCypherClient client = new TCypherClient("cs-write-S-prop", serverHost, threadCnt, 2000, true);
             client.start();
 
             String dataFileName = new File(dataFilePath).getName(); // also is time by day. format yyMMdd

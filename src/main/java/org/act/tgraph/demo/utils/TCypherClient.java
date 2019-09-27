@@ -4,6 +4,7 @@ import com.aliyun.openservices.aliyun.log.producer.Producer;
 import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
 import com.aliyun.openservices.log.common.LogItem;
 import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import org.act.tgraph.demo.Config;
 
@@ -23,6 +24,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class TCypherClient {
     private final int queueLength;
+    private final boolean enableResultLog;
     private String testName;
     private final String serverHost;
     private final int threadCnt;
@@ -38,11 +40,12 @@ public class TCypherClient {
      * 2. [serverHost] hostname of TGraph (TCypher) server.
      * 3. [threadCount] number of threads to send queries.
      */
-    public TCypherClient(String testName, String serverHost, int threadCnt, int queueLength){
+    public TCypherClient(String testName, String serverHost, int threadCnt, int queueLength, boolean enableResultLog){
         this.testName = getTestName(testName);
         this.serverHost = serverHost;
         this.threadCnt = threadCnt;
         this.queueLength = queueLength;
+        this.enableResultLog = enableResultLog;
     }
 
     private String getTestName(String name){
@@ -134,8 +137,10 @@ public class TCypherClient {
                         e.printStackTrace();
                         break;
                     }
+                    JsonArray resultArr = result.get("results").asArray();
                     LogItem log = new LogItem();
-                    log.PushBack("c_thread", Thread.currentThread().getName());
+                    log.PushBack("type", "time");
+                    log.PushBack("c_thread", t.getName());
                     log.PushBack("c_read_t", String.valueOf(timeMonitor.duration("Read query")));
                     log.PushBack("c_send_t", String.valueOf(timeMonitor.duration("Send query")));
                     log.PushBack("c_send_tE", String.valueOf(timeMonitor.endT("Send query")));
@@ -146,7 +151,7 @@ public class TCypherClient {
                     log.PushBack("s_tx_t", String.valueOf(result.get("t_Tx").asLong()));
                     log.PushBack("s_psend_t", String.valueOf(result.get("t_PreSend").asLong()));
                     log.PushBack("s_tx_success", String.valueOf(result.get("success").asBoolean()));
-                    log.PushBack("s_tx_line_cnt", String.valueOf(result.get("results").asArray().size()));
+                    log.PushBack("s_tx_line_cnt", String.valueOf(resultArr.size()));
 
                     log.PushBack("v_update_t", String.valueOf(result.get("s_updateTime").asLong()));
                     log.PushBack("v_memory", String.valueOf(result.get("s_memory").asLong()));
@@ -159,6 +164,17 @@ public class TCypherClient {
 
                     try {
                         logger.send("tgraph-demo-test", "tgraph-log", testName, "sjh-ubuntu1804", log);
+                        if(enableResultLog){
+                            for(int i=0; i<resultArr.size(); i++) {
+                                LogItem resultLog = new LogItem();
+                                resultLog.PushBack("type", "result");
+                                resultLog.PushBack("c_send_tE", String.valueOf(timeMonitor.endT("Send query")));
+                                resultLog.PushBack("c_thread", t.getName());
+                                resultLog.PushBack("s_result_num", String.valueOf(i));
+                                resultLog.PushBack("s_result_content", resultArr.get(i).asString());
+                                logger.send("tgraph-demo-test", "tgraph-log", testName, "sjh-ubuntu1804", resultLog);
+                            }
+                        }
                     } catch (InterruptedException | ProducerException e) {
                         e.printStackTrace();
                     }
