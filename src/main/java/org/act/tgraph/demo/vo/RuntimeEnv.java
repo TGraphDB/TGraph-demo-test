@@ -1,15 +1,9 @@
 package org.act.tgraph.demo.vo;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import com.eclipsesource.json.JsonObject;
-import org.act.tgraph.demo.Config;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Objects;
 
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
@@ -35,68 +29,107 @@ import oshi.software.os.OperatingSystem.ProcessSort;
 import oshi.util.FormatUtil;
 import oshi.util.Util;
 
-public enum PhysicalEnv {
+public enum RuntimeEnv {
     sjh("develop environment",
-            "Intel(R) Core(TM) i5-4570",
-            3.20,
-            2,
-            24,
-            "win10"),
+            "Intel(R) Core(TM) i5-4570 CPU @ 3.20GHz",
+            3_600_000_000L,
+            4,
+            25_177_202_688L,
+            "GNU/Linux Ubuntu 18.04.3 LTS (Bionic Beaver) build 5.0.0-29-generic (64 bits)",
+            "1.8.0_131-b11"),
 
     unknown();
 
 
-    String cpu;
-    double cpuFreq;
-    int cpuPhysicalCoreCnt;
-    long physicalMem;
-    String description;
-    String os;
+    final String cpu;
+    final long cpuFreq;
+    final int numOfPhysicalCores;
+    final long physicalMem;
+    final String description;
+    final String os;
+    final String jvm;
 
-    PhysicalEnv(String description, String cpu, double cpuFreq, int cpuPhysicalCoreCnt, int physicalMem, String os) {
+    RuntimeEnv(String description, String cpu, long cpuFreq, int numOfPhysicalCores, long physicalMem, String os, String jvm) {
         this.cpu = cpu;
         this.cpuFreq = cpuFreq;
-        this.cpuPhysicalCoreCnt = cpuPhysicalCoreCnt;
+        this.numOfPhysicalCores = numOfPhysicalCores;
         this.physicalMem = physicalMem;
         this.description = description;
         this.os = os;
+        this.jvm = jvm;
     }
 
-    PhysicalEnv(){
+    RuntimeEnv(){
         SystemInfo si = new SystemInfo();
         HardwareAbstractionLayer hal = si.getHardware();
         OperatingSystem os = si.getOperatingSystem();
         this.cpu = hal.getProcessor().toString();
+        this.cpuFreq = hal.getProcessor().getMaxFreq();
+        this.numOfPhysicalCores = hal.getProcessor().getPhysicalProcessorCount();
         this.physicalMem = hal.getMemory().getTotal();
-        this.os = os.getManufacturer() +' '+ os.getFamily() +' '+ os.getVersion().toString() +' '+ os.getBitness()+"bit";
+        this.os = os.getManufacturer() +' '+ os.getFamily() +' '+ os.getVersion().toString() +" ("+ os.getBitness()+" bits)";
+        this.jvm = System.getProperty("java.runtime.version");
+        this.description = "unknown current runtime environment";
     }
 
-    public static PhysicalEnv getCurrentEnv(){
-
+    public static RuntimeEnv getCurrentEnv(){
+        for(RuntimeEnv env: RuntimeEnv.values()){
+            if(env!=unknown &&
+                    Objects.equals(env.cpu, unknown.cpu) &&
+                    env.physicalMem==unknown.physicalMem &&
+                    env.numOfPhysicalCores == unknown.numOfPhysicalCores &&
+                    Objects.equals(env.jvm, unknown.jvm)
+            ){
+                return env;
+            }
+        }
+        return unknown;
     }
 
     public static void main(String[] args) {
-        SystemInfo si = new SystemInfo();
-        HardwareAbstractionLayer hal = si.getHardware();
-        OperatingSystem os = si.getOperatingSystem();
+        System.out.println(RuntimeEnv.unknown.detail());
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("envShortName(").append('\n');
+//        SystemInfo si = new SystemInfo();
+//        HardwareAbstractionLayer hal = si.getHardware();
+//        OperatingSystem os = si.getOperatingSystem();
+//
+//        StringBuilder sb = new StringBuilder();
+//        sb.append("envShortName(").append('\n');
 
         //cpu info
 
         //mem info
 
         //os info
-        sb.append(os.getManufacturer()).append(' ')
-                .append().append(' ')
-                .append();
+
 
     }
 
     @Override
     public String toString(){
+        StringBuilder sb = new StringBuilder();
+        sb.append(name())
+                .append("[").append(cpu).append("]")
+                .append("[").append(numOfPhysicalCores).append(" Physical Cores]")
+                .append("[MaxCPUFreq: ").append(FormatUtil.formatHertz(cpuFreq)).append("]")
+                .append("[Mem: ").append(FormatUtil.formatBytes(physicalMem)).append("]")
+                .append("[OS: ").append(os).append("]")
+                .append("[JVM: ").append(jvm).append("]")
+                .append("[").append(description).append("]");
+        return sb.toString();
+    }
 
+    public String detail(){
+        StringBuilder sb = new StringBuilder();
+        sb.append(name()).append(":\n")
+                .append("CPU[").append(cpu).append("]").append('\n')
+                .append("Number of Physical Cores[").append(numOfPhysicalCores).append("]").append('\n')
+                .append("Max CPU Frequency[").append(cpuFreq).append("]").append('\n')
+                .append("Physical Memory[").append(physicalMem).append("]").append('\n')
+                .append("OS[").append(os).append("]").append('\n')
+                .append("JVM[").append(jvm).append("]").append('\n')
+                .append("Description[").append(description).append("]");
+        return sb.toString();
     }
 
     public static void computerInfo(){

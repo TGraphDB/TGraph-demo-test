@@ -8,8 +8,6 @@ import com.eclipsesource.json.JsonObject;
 import com.sun.management.OperatingSystemMXBean;
 import org.act.tgraph.demo.Config;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Result;
-import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import oshi.SystemInfo;
 import oshi.hardware.HWDiskStore;
@@ -23,8 +21,9 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-public class TCypherServer {
+public class TGraphServer {
     private final String dbPath;
+    private final ReqExecutor reqExecutor;
 
     private final Producer logger;
     private GraphDatabaseService db;
@@ -33,25 +32,13 @@ public class TCypherServer {
     private final List<Thread> threads = Collections.synchronizedList(new LinkedList<>());
     private final String serverCodeVersion;
 
-    public static void main(String[] args){
-        TCypherServer server = new TCypherServer(Config.Default.onlineLogger, args[0]);
-//        TCypherServer server = new TCypherServer("AMITABHA", Config.Default.onlineLogger, "/media/song/test/db-network-only");
-        try {
-            server.start();
-        } catch (IOException | InterruptedException | ProducerException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public TCypherServer(Producer logger, String dbPath) {
-        this.logger = logger;
+    public TGraphServer(Config config, String dbPath, ReqExecutor reqExecutor) {
+        this.logger = config.onlineLogger;
         this.dbPath = dbPath;
-        serverCodeVersion = Config.Default.gitStatus;
+        this.reqExecutor = reqExecutor;
+        serverCodeVersion = config.gitStatus;
         System.out.println("server code version: "+ serverCodeVersion);
     }
-
-
-
 
     public void start() throws IOException, ProducerException, InterruptedException {
         db = new GraphDatabaseFactory().newEmbeddedDatabase( new File(dbPath));
@@ -65,6 +52,7 @@ public class TCypherServer {
         }));
         MonitorThread monitor = new MonitorThread();
         monitor.start();
+        reqExecutor.setDB(db);
 
         server = new ServerSocket(8438);
         System.out.println("waiting for client to connect.");
@@ -94,36 +82,15 @@ public class TCypherServer {
         System.out.println("main thread exit.");
     }
 
-
-    private class Req implements Runnable{
-        String[] queries;
-        String[] results = new String[0];
-        int resultSize;
-        boolean success=true;
-
-        @Override
-        public void run() {
-            results = new String[queries.length];
-            int i=0;
-            try {
-                try (Transaction tx = db.beginTx()) {
-                    for (i = 0; i < queries.length; i++) {
-                        String query = queries[i];
-                        Result result = db.execute(query);
-                        results[i] = result.resultAsString().replace("\n", "\\n").replace("\r", "\\r");
-                        resultSize += results[i].length();
-                    }
-                    tx.success();
-                }
-            }catch (Exception msg){
-//                StringWriter errors = new StringWriter();
-//                msg.printStackTrace(new PrintWriter(errors));
-//                results[i] = errors.toString();
-                msg.printStackTrace();
-                success = false;
-            }
+    public static abstract class ReqExecutor {
+        protected GraphDatabaseService db;
+        private void setDB(GraphDatabaseService db){
+            this.db = db;
         }
+        protected abstract String execute(String line) throws RuntimeException;
     }
+
+    public static class TransactionFailedException extends RuntimeException{}
 
     private class MonitorThread extends Thread{
         volatile ServerStatus serverStatus;
@@ -227,12 +194,17 @@ public class TCypherServer {
                         continue;
                     }
                     time.mark("Wait", "Transaction");
-                    Req req = new Req();
-                    req.queries = line.split(";");
-                    req.run();
+                    String exeResult = "";
+                    boolean success = true;
+                    try {
+                        exeResult = reqExecutor.execute(line);
+                    }catch (TransactionFailedException e){
+                        success = false;
+                    }
                     time.mark("Transaction", "Send");
                     String result = generateResult(
-                            req,
+                            exeResult,
+                            success,
                             time.endT("Wait"),
                             previousSendTime,
                             time.duration("Transaction"),
@@ -247,14 +219,10 @@ public class TCypherServer {
             System.out.println(Thread.currentThread().getName()+" exit. process "+reqCnt+" queries.");
         }
 
-        private String generateResult(Req req, long reqGotTime, long previousSendTime, long txTime, ServerStatus s) {
+        private String generateResult(String results, boolean success, long reqGotTime, long previousSendTime, long txTime, ServerStatus s) {
             JsonObject obj = new JsonObject();
-            obj.add("success", req.success);
-            obj.add("resultSize", req.resultSize);
-            JsonArray results = new JsonArray();
-            for(String result : req.results){
-                results.add(result);
-            }
+            obj.add("success", success);
+            obj.add("resultSize", results.length());
             obj.add("results", results);
 
             obj.add("t_ReqGot", reqGotTime);
