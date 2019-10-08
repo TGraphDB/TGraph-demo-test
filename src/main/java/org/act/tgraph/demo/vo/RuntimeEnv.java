@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.eclipsesource.json.JsonObject;
 import org.act.tgraph.demo.Config;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -35,18 +36,24 @@ import oshi.util.FormatUtil;
 import oshi.util.Util;
 
 public enum PhysicalEnv {
-    SJH("Intel(R) Core(TM) i5-4570", 3.20, 2, 24, "win10", "");
+    sjh("develop environment",
+            "Intel(R) Core(TM) i5-4570",
+            3.20,
+            2,
+            24,
+            "win10"),
 
+    unknown();
 
 
     String cpu;
     double cpuFreq;
     int cpuPhysicalCoreCnt;
-    int physicalMem;
+    long physicalMem;
     String description;
     String os;
 
-    PhysicalEnv(String cpu, double cpuFreq, int cpuPhysicalCoreCnt, int physicalMem, String os, String description) {
+    PhysicalEnv(String description, String cpu, double cpuFreq, int cpuPhysicalCoreCnt, int physicalMem, String os) {
         this.cpu = cpu;
         this.cpuFreq = cpuFreq;
         this.cpuPhysicalCoreCnt = cpuPhysicalCoreCnt;
@@ -55,13 +62,44 @@ public enum PhysicalEnv {
         this.os = os;
     }
 
-//    public static String computerInfo(){
-//
-//    }
+    PhysicalEnv(){
+        SystemInfo si = new SystemInfo();
+        HardwareAbstractionLayer hal = si.getHardware();
+        OperatingSystem os = si.getOperatingSystem();
+        this.cpu = hal.getProcessor().toString();
+        this.physicalMem = hal.getMemory().getTotal();
+        this.os = os.getManufacturer() +' '+ os.getFamily() +' '+ os.getVersion().toString() +' '+ os.getBitness()+"bit";
+    }
 
-    private static StringBuilder oshi = new StringBuilder();
+    public static PhysicalEnv getCurrentEnv(){
+
+    }
+
     public static void main(String[] args) {
+        SystemInfo si = new SystemInfo();
+        HardwareAbstractionLayer hal = si.getHardware();
+        OperatingSystem os = si.getOperatingSystem();
 
+        StringBuilder sb = new StringBuilder();
+        sb.append("envShortName(").append('\n');
+
+        //cpu info
+
+        //mem info
+
+        //os info
+        sb.append(os.getManufacturer()).append(' ')
+                .append().append(' ')
+                .append();
+
+    }
+
+    @Override
+    public String toString(){
+
+    }
+
+    public static void computerInfo(){
         System.out.println("Initializing System...");
         SystemInfo si = new SystemInfo();
 
@@ -103,18 +141,16 @@ public enum PhysicalEnv {
         System.out.println("Checking Network parameters...");
         printNetworkParameters(os.getNetworkParams());
 
-        // hardware: displays
-        System.out.println("Checking Displays...");
-        printDisplays(hal.getDisplays());
-
         // hardware: USB devices
         System.out.println("Checking USB Devices...");
         printUsbDevices(hal.getUsbDevices(true));
 
-        System.out.println("Checking Sound Cards...");
-        printSoundCards(hal.getSoundCards());
+//        // hardware: displays
+//        System.out.println("Checking Displays...");
+//        printDisplays(hal.getDisplays());
 
-        System.out.println("Printing Operating System and Hardware Info:\n" + oshi);
+//        System.out.println("Checking Sound Cards...");
+//        printSoundCards(hal.getSoundCards());
     }
 
     private static void printOperatingSystem(final OperatingSystem os) {
