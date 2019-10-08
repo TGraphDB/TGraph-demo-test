@@ -68,7 +68,7 @@ public class WriteStaticPropertyTest {
             db.shutdown();
             System.out.println("id map built.");
 
-            TCypherClient client = new TCypherClient("cs-write-S-prop", serverHost, threadCnt, 2000, true);
+            TCypherClient client = new TCypherClient("cs-write-S-prop", serverHost, threadCnt, 2000, false);
             client.start();
 
             String dataFileName = new File(dataFilePath).getName(); // also is time by day. format yyMMdd
@@ -105,68 +105,7 @@ public class WriteStaticPropertyTest {
         return Math.toIntExact(timeParser.parse("20"+yearMonthDay+hourAndMinute).getTime()/1000);
     }
 
-    public void importNetwork2db() throws IOException {
 
-        List<RoadChain> roadChainList = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader("/home/song/tmp/Topo.csv"))) {
-            String line;
-            for (int lineCount = 0; (line = br.readLine()) != null; lineCount++) {
-                if (lineCount == 0) continue;//ignore headers
-                try {
-                    roadChainList.add(new RoadChain(line, lineCount));
-                }catch (RuntimeException e){
-                    System.out.println(e.getMessage()+" at line:"+lineCount);
-                }
-            }
-        }
-        for(RoadChain roadChain: roadChainList){
-            roadChain.updateNeighbors();
-        }
-
-        GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase(new File("/tmp/test-db"));
-        try(Transaction tx = db.beginTx()) {
-            for (RoadChain roadChain : roadChainList) {
-                int inCount = roadChain.getInNum();
-                int outCount = roadChain.getOutNum();
-                if (inCount > 0 || outCount > 0) {
-                    Cross inCross = Cross.getStartCross(roadChain);
-                    Cross outCross = Cross.getEndCross(roadChain);
-                    Node inNode, outNode;
-                    if (inCross.getNode(db) == null) {
-                        inNode = db.createNode();
-                        inCross.setNode(inNode);
-                        inNode.setProperty("cross_id", inCross.id);
-                    } else {
-                        inNode = inCross.getNode(db);
-                    }
-                    if (outCross.getNode(db) == null) {
-                        outNode = db.createNode();
-                        outCross.setNode(outNode);
-                        outNode.setProperty("cross_id", outCross.id);
-                    } else {
-                        outNode = outCross.getNode(db);
-                    }
-
-                    Relationship r = inNode.createRelationshipTo(outNode, RelType.ROAD_TO);
-                    r.setProperty("grid_id", roadChain.getGridId());
-                    r.setProperty("chain_id", roadChain.getChainId());
-//                    r.setProperty("uid", roadChain.getUid());
-//                    r.setProperty("type", roadChain.getType());
-//                    r.setProperty("length", roadChain.getLength());
-//                    r.setProperty("angle", roadChain.getAngle());
-//                    r.setProperty("in_count", roadChain.getInNum());
-//                    r.setProperty("out_count", roadChain.getOutNum());
-//                    r.setProperty("in_roads", roadChain.briefInChain());
-//                    r.setProperty("out_roads", roadChain.briefOutChain());
-//                    r.setProperty("data_count", 0);
-//                    r.setProperty("min_time", Integer.MAX_VALUE);
-//                    r.setProperty("max_time", 0);
-                }
-            }
-            tx.success();
-        }
-        db.shutdown();
-    }
 
     private static Map<String, Long> buildRoadIDMap(GraphDatabaseService db) {
         Map<String, Long> map = new HashMap<>(130000);
