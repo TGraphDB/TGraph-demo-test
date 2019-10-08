@@ -104,10 +104,7 @@ public class DataImport {
 
     public static void initDB(){
         if(db==null) {
-            db = new GraphDatabaseFactory()
-                    .newEmbeddedDatabaseBuilder(new File(config.dbPath).getAbsolutePath())
-                    .loadPropertiesFromFile("")
-                    .newGraphDatabase();
+            db = new GraphDatabaseFactory().newEmbeddedDatabase(new File(config.dbPath));
         }
     }
 

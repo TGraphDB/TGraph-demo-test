@@ -9,6 +9,7 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.tooling.GlobalGraphOperations;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -148,7 +149,7 @@ public class MaxConnectedSubGraph {
 
     private void initDB(){
         db = new GraphDatabaseFactory()
-                .newEmbeddedDatabaseBuilder(config.dbPath)
+                .newEmbeddedDatabaseBuilder(new File(config.dbPath))
                 .loadPropertiesFromFile("")
                 .newGraphDatabase();
     }

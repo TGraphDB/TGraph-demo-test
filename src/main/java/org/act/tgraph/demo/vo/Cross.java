@@ -1,12 +1,14 @@
 package org.act.tgraph.demo.vo;
 
-import org.act.tgraph.demo.Config;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 
-import org.slf4j.Logger;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by song on 16-1-22.

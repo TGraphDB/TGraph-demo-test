@@ -1,5 +1,7 @@
 package org.act.temporal.test.singleThread;
 
+import org.act.tgraph.demo.driver.OperationProxy;
+import org.act.tgraph.demo.driver.simulation.TreeMapKVSimulationProxy;
 import org.act.tgraph.demo.vo.RelType;
 import org.act.tgraph.demo.Config;
 import org.act.tgraph.demo.driver.simulation.Aggregator;
@@ -15,6 +17,7 @@ import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
@@ -33,35 +36,33 @@ public class SimpleTest {
     public void go(){
         config.dbPath += "-simple-test";
         Helper.deleteExistDB(config);
-        config.db = new GraphDatabaseFactory()
-                .newEmbeddedDatabaseBuilder(config.dbPath)
-                .loadPropertiesFromFile("")
-                .newGraphDatabase();
-//        config.proxy = new TreeMapKVSimulationProxy();
-        config.proxy = new ArraySimulationProxy();
+        config.db = new GraphDatabaseFactory().newEmbeddedDatabase(new File(config.dbPath));
+//        OperationProxy proxy = new TreeMapKVSimulationProxy();
+        OperationProxy proxy = new ArraySimulationProxy();
+        config.proxy  = proxy;
         try(Transaction tx = config.db.beginTx()){
             Node node = config.db.createNode();
-            config.proxy.set(node, "key", 2010, 10);
-            config.proxy.set(node, "key", 2012, 12);
+            proxy.set(node, "key", 2010, 10);
+            proxy.set(node, "key", 2012, 12);
 //            System.out.println(node.getDynPropertyPointValue("key", 2011));
-            System.out.println(config.proxy.get(node, "key", 2011));
-            System.out.println(config.proxy.getAggregate(node, "key", 2008, 2008, aggregator));
-            System.out.println(config.proxy.getAggregate(node, "key", 2008, 2009, aggregator));
-            System.out.println(config.proxy.getAggregate(node, "key", 2008, 2010, aggregator));
-            System.out.println(config.proxy.getAggregate(node, "key", 2008, 2011, aggregator));
-            System.out.println(config.proxy.getAggregate(node, "key", 2008, 2012, aggregator));
-            System.out.println(config.proxy.getAggregate(node, "key", 2008, 2013, aggregator));
-            System.out.println(config.proxy.getAggregate(node, "key", 2010, 2010, aggregator));
-            System.out.println(config.proxy.getAggregate(node, "key", 2010, 2011, aggregator));
-            System.out.println(config.proxy.getAggregate(node, "key", 2010, 2012, aggregator));
-            System.out.println(config.proxy.getAggregate(node, "key", 2010, 2013, aggregator));
-            System.out.println(config.proxy.getAggregate(node, "key", 2011, 2011, aggregator));
-            System.out.println(config.proxy.getAggregate(node, "key", 2011, 2012, aggregator));
-            System.out.println(config.proxy.getAggregate(node, "key", 2011, 2013, aggregator));
-            System.out.println(config.proxy.getAggregate(node, "key", 2012, 2012, aggregator));
-            System.out.println(config.proxy.getAggregate(node, "key", 2012, 2013, aggregator));
-            System.out.println(config.proxy.getAggregate(node, "key", 2013, 2013, aggregator));
-            System.out.println(config.proxy.getAggregate(node, "key", 2013, 2014, aggregator));
+            System.out.println(proxy.get(node, "key", 2011));
+            System.out.println(proxy.getAggregate(node, "key", 2008, 2008, aggregator));
+            System.out.println(proxy.getAggregate(node, "key", 2008, 2009, aggregator));
+            System.out.println(proxy.getAggregate(node, "key", 2008, 2010, aggregator));
+            System.out.println(proxy.getAggregate(node, "key", 2008, 2011, aggregator));
+            System.out.println(proxy.getAggregate(node, "key", 2008, 2012, aggregator));
+            System.out.println(proxy.getAggregate(node, "key", 2008, 2013, aggregator));
+            System.out.println(proxy.getAggregate(node, "key", 2010, 2010, aggregator));
+            System.out.println(proxy.getAggregate(node, "key", 2010, 2011, aggregator));
+            System.out.println(proxy.getAggregate(node, "key", 2010, 2012, aggregator));
+            System.out.println(proxy.getAggregate(node, "key", 2010, 2013, aggregator));
+            System.out.println(proxy.getAggregate(node, "key", 2011, 2011, aggregator));
+            System.out.println(proxy.getAggregate(node, "key", 2011, 2012, aggregator));
+            System.out.println(proxy.getAggregate(node, "key", 2011, 2013, aggregator));
+            System.out.println(proxy.getAggregate(node, "key", 2012, 2012, aggregator));
+            System.out.println(proxy.getAggregate(node, "key", 2012, 2013, aggregator));
+            System.out.println(proxy.getAggregate(node, "key", 2013, 2013, aggregator));
+            System.out.println(proxy.getAggregate(node, "key", 2013, 2014, aggregator));
 
             tx.success();
         }

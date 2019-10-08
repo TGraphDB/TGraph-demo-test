@@ -27,7 +27,7 @@ function systemInfo() {
         IS_COMPILED=''
     fi
     mvn -B ${IS_COMPILED} exec:java \
-        -Dexec.mainClass="org.act.tgraph.demo.vo.PhysicalEnv"
+        -Dexec.mainClass="org.act.tgraph.demo.vo.RuntimeEnv"
 }
 
 
@@ -36,7 +36,8 @@ function systemInfo() {
 # Explain: path-to-db-dir is a TGraph DB folder which contains traffic demo road network topology
 function tcypherServerStart() {
     mvn -B clean compile exec:java \
-        -Dexec.mainClass="org.act.tgraph.demo.utils.TCypherServer" \
+        -Dexec.mainClass="run.TCypherSocketServer" \
+        -Dexec.classpathScope="test" \
         -Dexec.args="$1"
 }
 
@@ -71,7 +72,7 @@ function tcypherClientWriteTpropTest() {
         IS_COMPILED=''
     fi
     mvn -B ${IS_COMPILED} exec:java \
-        -Dexec.mainClass="org.act.temporal.test.tcypher.WriteTemporalPropertyTest" \
+        -Dexec.mainClass="run.TCypherWriteTemporalPropertyTest" \
         -Dexec.classpathScope="test" \
         -Dexec.args="$1 $2 $3 $4 $5 $6"
 }

@@ -35,7 +35,7 @@ public class DataImportor {
         Thread.currentThread().setName("Neo4jTemporal-importor");
         Helper.deleteExistDB(config);
         db= new GraphDatabaseFactory()
-                .newEmbeddedDatabaseBuilder(config.dbPath )
+                .newEmbeddedDatabaseBuilder(new File(config.dbPath ))
                 .loadPropertiesFromFile("")
                 .newGraphDatabase();
         importNetwork(db);
@@ -186,10 +186,7 @@ public class DataImportor {
         config.dbPath = Config.Default.dbPath+"-onefileimport";
         Thread.currentThread().setName("Neo4jTemporal-oneFile-importer");
         Helper.deleteExistDB(config);
-        config.db= new GraphDatabaseFactory()
-                .newEmbeddedDatabaseBuilder(config.dbPath )
-                .loadPropertiesFromFile(config.neo4jConfigFile)
-                .newGraphDatabase();
+        config.db= new GraphDatabaseFactory().newEmbeddedDatabase(new File(config.dbPath));
         db = config.db;
         importNetwork(config.db);
         importOneFileTemporalData(config.proxy);
@@ -201,10 +198,7 @@ public class DataImportor {
         config.dbPath = Config.Default.dbPath+"-arraySimulationInit";
         Thread.currentThread().setName("Neo4jTemporal-oneFile-importer");
         Helper.deleteExistDB(config);
-        config.db= new GraphDatabaseFactory()
-                .newEmbeddedDatabaseBuilder(config.dbPath )
-                .loadPropertiesFromFile(config.neo4jConfigFile)
-                .newGraphDatabase();
+        config.db= new GraphDatabaseFactory().newEmbeddedDatabase(new File(config.dbPath));
         db = config.db;
         importNetwork(config.db);
 

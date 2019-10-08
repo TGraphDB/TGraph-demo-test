@@ -82,7 +82,7 @@ public class Helper {
     }
 
     public static int getFileTime(File file){
-        return Integer.valueOf(file.getName().substring(10, 21));
+        return Integer.parseInt(file.getName().substring(10, 21));
     }
 
     public static void deleteExistDB(Config config){

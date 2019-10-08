@@ -12,6 +12,7 @@ import org.neo4j.tooling.GlobalGraphOperations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -39,7 +40,7 @@ public class TimeDependentDijkstraShortestPath {
         logger.info("============= begin execution =============");
         Config config = new Config();
         TimeDependentDijkstraShortestPath algo = new TimeDependentDijkstraShortestPath(new GraphDatabaseFactory()
-                .newEmbeddedDatabaseBuilder(config.dbPath)
+                .newEmbeddedDatabaseBuilder(new File(config.dbPath))
                 .loadPropertiesFromFile("")
                 .newGraphDatabase(),logger);
         algo.go(3,10000,1011070322,null);

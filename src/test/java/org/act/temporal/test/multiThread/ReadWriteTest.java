@@ -32,7 +32,7 @@ public class ReadWriteTest {
 
     private List<Client> readClientList = new ArrayList<>();
     private List<Client> writeClientList = new ArrayList<>();
-    private List<Monitor.SnapShot> log = Collections.synchronizedList(new ArrayList());
+    private List<Monitor.SnapShot> log = Collections.synchronizedList(new ArrayList<>());
 
 
     @BeforeClass
@@ -40,7 +40,7 @@ public class ReadWriteTest {
         config.dbPath += "-read-write";
         Helper.deleteExistDB(config);
         db = new GraphDatabaseFactory()
-                .newEmbeddedDatabaseBuilder(config.dbPath)
+                .newEmbeddedDatabaseBuilder(new File(config.dbPath))
                 .loadPropertiesFromFile("")
                 .newGraphDatabase();
         DataImportor.importNetwork(db);
@@ -56,7 +56,7 @@ public class ReadWriteTest {
     @Before
     public void prepareClient() throws FileNotFoundException {
         db = new GraphDatabaseFactory()
-                .newEmbeddedDatabaseBuilder(config.dbPath)
+                .newEmbeddedDatabaseBuilder(new File(config.dbPath))
                 .loadPropertiesFromFile("")
                 .newGraphDatabase();
         for(int i=0;i< totalThreadCount;i++){
