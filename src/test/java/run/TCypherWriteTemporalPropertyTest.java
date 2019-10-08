@@ -1,16 +1,17 @@
-package org.act.temporal.test.tcypher;
+package run;
 
 import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
 import org.act.temporalProperty.impl.InternalEntry;
 import org.act.temporalProperty.meta.ValueContentType;
+import org.act.tgraph.demo.Config;
 import org.act.tgraph.demo.utils.TCypherClient;
+import org.act.tgraph.demo.vo.RuntimeEnv;
 import org.junit.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.temporal.TemporalRangeQuery;
-import org.neo4j.tooling.GlobalGraphOperations;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -26,7 +27,7 @@ import java.util.*;
  *
  *  Test TGraph Server TCypher 'property set' performance.
  */
-public class WriteTemporalPropertyTest {
+public class TCypherWriteTemporalPropertyTest {
 
     /**
      *
@@ -44,54 +45,64 @@ public class WriteTemporalPropertyTest {
             System.out.println("need valid params.");
             return;
         }
-        String dbPath = args[0];
-        String serverHost = args[1];
-        int threadCnt = Integer.parseInt(args[2]);
-        int queryPerTx = Integer.parseInt(args[3]);
-        int totalDataSize = Integer.parseInt(args[4]);
-        String dataFilePath = args[5];
+        String serverHost = args[0];
+        int threadCnt = Integer.parseInt(args[1]);
+        int queryPerTx = Integer.parseInt(args[2]);
+        int totalDataSize = Integer.parseInt(args[3]);
+        String dataFilePath = args[4];
 
-        System.out.println("DBPath: "+dbPath);
         System.out.println("Host: "+ serverHost);
         System.out.println("Thread Num: "+threadCnt);
         System.out.println("Q/Tx: "+queryPerTx);
         System.out.println("Total line send: "+totalDataSize);
         System.out.println("Data path: "+ dataFilePath);
         try {
-            GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase(new File(dbPath));
-            Map<String, Long> roadMap = buildRoadIDMap(db);
-            db.shutdown();
-            System.out.println("id map built.");
-            TCypherClient client = new TCypherClient("cs-write-T-prop", serverHost, threadCnt, 2000, true);
-            client.start();
-
-            String dataFileName = new File(dataFilePath).getName(); // also is time by day. format yyMMdd
-
-            long lineSendCnt = 0;
-            try(BufferedReader br = new BufferedReader(new FileReader(dataFilePath)))
-            {
-                String s;
-                List<String> dataInOneTx = new LinkedList<>();
-                do{
-                    s = br.readLine();
-                    if(s!=null) {
-                        lineSendCnt++;
-                        dataInOneTx.add(s);
-                        if (dataInOneTx.size() == queryPerTx) {
-                            client.addQuery(dataLines2tCypher( dataFileName, dataInOneTx, roadMap));
-                            dataInOneTx.clear();
-                        }
-                    }else{
-                        client.addQuery(dataLines2tCypher(dataFileName, dataInOneTx, roadMap));
-                        dataInOneTx.clear();
-                    }
-                }
-                while (lineSendCnt < totalDataSize && s!=null);
-            }
-            client.awaitSendDone();
+            runTest(serverHost, threadCnt, dataFilePath, queryPerTx, totalDataSize);
         } catch (IOException | ParseException | InterruptedException | ProducerException e) {
             e.printStackTrace();
         }
+    }
+
+    @Test
+    public void run() throws InterruptedException, ParseException, ProducerException, IOException {
+        Config conf = RuntimeEnv.getCurrentEnv().getConf();
+        String serverHost = conf.get("server.host").asString();
+        int threadCnt = conf.get("thread.count").asInt();
+        int queryPerTx = conf.get("query.per.transaction").asInt();
+        int totalDataSize = conf.get("total.data.size").asInt();
+        String dataFilePath = conf.get("data.file.path").asString();
+        runTest(serverHost, threadCnt, dataFilePath, queryPerTx, totalDataSize);
+    }
+
+    private static void runTest(String serverHost, int threadCnt, String dataFilePath, int queryPerTx, long totalDataSize) throws IOException, InterruptedException, ProducerException, ParseException {
+        String logSource = RuntimeEnv.getCurrentEnv().name();
+        TCypherClient client = new TCypherClient("cs-write-T-prop", logSource, serverHost, threadCnt, 2000, true);
+        Map<String, Long> roadMap = client.start();
+
+        String dataFileName = new File(dataFilePath).getName(); // also is time by day. format yyMMdd
+
+        long lineSendCnt = 0;
+        try(BufferedReader br = new BufferedReader(new FileReader(dataFilePath)))
+        {
+            String s;
+            List<String> dataInOneTx = new LinkedList<>();
+            do{
+                s = br.readLine();
+                if(s!=null) {
+                    lineSendCnt++;
+                    dataInOneTx.add(s);
+                    if (dataInOneTx.size() == queryPerTx) {
+                        client.addQuery(dataLines2tCypher( dataFileName, dataInOneTx, roadMap));
+                        dataInOneTx.clear();
+                    }
+                }else{
+                    client.addQuery(dataLines2tCypher(dataFileName, dataInOneTx, roadMap));
+                    dataInOneTx.clear();
+                }
+            }
+            while (lineSendCnt < totalDataSize && s!=null);
+        }
+        client.awaitSendDone();
     }
 
     private static SimpleDateFormat timeParser = new SimpleDateFormat("yyyyMMddHHmm");
@@ -99,19 +110,7 @@ public class WriteTemporalPropertyTest {
         return Math.toIntExact(timeParser.parse("20"+yearMonthDay+hourAndMinute).getTime()/1000);
     }
 
-    private static Map<String, Long> buildRoadIDMap(GraphDatabaseService db) {
-        Map<String, Long> map = new HashMap<>(130000);
-        try(Transaction tx = db.beginTx()){
-            for(Relationship r: GlobalGraphOperations.at(db).getAllRelationships()){
-                String gridId = (String) r.getProperty("grid_id");
-                String chainId = (String) r.getProperty("chain_id");
-                String key = gridId+","+chainId;
-                map.put(key, r.getId());
-            }
-            tx.success();
-        }
-        return map;
-    }
+
 
     private static String dataLines2tCypher(String dataFileName, List<String> lines, Map<String, Long> roadMap) throws ParseException {
         StringBuilder sb = new StringBuilder();
@@ -138,6 +137,10 @@ public class WriteTemporalPropertyTest {
         GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase(new File("/media/song/test/db-network-only-ro"));
         Runtime.getRuntime().addShutdownHook(new Thread(db::shutdown));
         long t = System.currentTimeMillis();
+//        try (Transaction tx = db.beginTx()) {
+//            db.getRelationshipById(1).setTemporalProperty("travel_time", 0, 2L);
+//            tx.success();
+//        }
         try (Transaction tx = db.beginTx()) {
 //            for(int i=0; i<10; i++) {
 //                System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE id(r)=1 SET r.travel_time_100"+i+"="+(30+i)).resultAsString());
@@ -157,9 +160,9 @@ public class WriteTemporalPropertyTest {
         System.out.println(System.currentTimeMillis() - t);
         try(Transaction tx = db.beginTx()){
             Relationship r = db.getRelationshipById(1);
-            for(String key : r.getPropertyKeys()){
-                System.out.println(key+": "+r.getProperty(key));
-            }
+//            for(String key : r.getPropertyKeys()){
+//                System.out.println(key+": "+r.getProperty(key));
+//            }
 //            r.setTemporalProperty("travel_time", 400, 88);
             r.getTemporalProperty("travel_time", 0, Integer.MAX_VALUE-4, new TemporalRangeQuery() {
                 @Override

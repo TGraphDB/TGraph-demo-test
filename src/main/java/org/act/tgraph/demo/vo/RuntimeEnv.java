@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import org.act.tgraph.demo.Config;
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
 import oshi.hardware.CentralProcessor.TickType;
@@ -36,8 +37,14 @@ public enum RuntimeEnv {
             4,
             25_177_202_688L,
             "GNU/Linux Ubuntu 18.04.3 LTS (Bionic Beaver) build 5.0.0-29-generic (64 bits)",
-            "1.8.0_131-b11"),
-
+            "1.8.0_131-b11", Config.sjh),
+    zh("zhangh workstation",
+            "Intel(R) Xeon(R) CPU E5-2650 v3 @ 2.30GHz",
+            2_300_000_000L,
+            20,
+            68_503_519_232L,
+            "Microsoft Windows 10 build 17763 (64 bits)",
+            "1.8.0_202-b08", Config.zhangh),
     unknown();
 
 
@@ -48,8 +55,9 @@ public enum RuntimeEnv {
     final String description;
     final String os;
     final String jvm;
+    final Config config;
 
-    RuntimeEnv(String description, String cpu, long cpuFreq, int numOfPhysicalCores, long physicalMem, String os, String jvm) {
+    RuntimeEnv(String description, String cpu, long cpuFreq, int numOfPhysicalCores, long physicalMem, String os, String jvm, Config config) {
         this.cpu = cpu;
         this.cpuFreq = cpuFreq;
         this.numOfPhysicalCores = numOfPhysicalCores;
@@ -57,6 +65,7 @@ public enum RuntimeEnv {
         this.description = description;
         this.os = os;
         this.jvm = jvm;
+        this.config = config;
     }
 
     RuntimeEnv(){
@@ -68,8 +77,10 @@ public enum RuntimeEnv {
         this.numOfPhysicalCores = hal.getProcessor().getPhysicalProcessorCount();
         this.physicalMem = hal.getMemory().getTotal();
         this.os = os.getManufacturer() +' '+ os.getFamily() +' '+ os.getVersion().toString() +" ("+ os.getBitness()+" bits)";
-        this.jvm = System.getProperty("java.runtime.version");
+        this.jvm = System.getProperty("java.runtime.name") +" ("+ System.getProperty("java.runtime.version")+") "+
+                System.getProperty("java.vm.name")+" ("+ System.getProperty("java.vm.version")+")";
         this.description = "unknown current runtime environment";
+        this.config = new Config();
     }
 
     public static RuntimeEnv getCurrentEnv(){
@@ -86,23 +97,13 @@ public enum RuntimeEnv {
         return unknown;
     }
 
+    public Config getConf(){
+        return config;
+    }
+
     public static void main(String[] args) {
+        System.out.println(); //sun.arch.data.model  java.runtime.name
         System.out.println(RuntimeEnv.unknown.detail());
-
-//        SystemInfo si = new SystemInfo();
-//        HardwareAbstractionLayer hal = si.getHardware();
-//        OperatingSystem os = si.getOperatingSystem();
-//
-//        StringBuilder sb = new StringBuilder();
-//        sb.append("envShortName(").append('\n');
-
-        //cpu info
-
-        //mem info
-
-        //os info
-
-
     }
 
     @Override
@@ -130,6 +131,10 @@ public enum RuntimeEnv {
                 .append("JVM[").append(jvm).append("]").append('\n')
                 .append("Description[").append(description).append("]");
         return sb.toString();
+    }
+
+    public String getStr(String key) {
+        return null;
     }
 
     public static void computerInfo(){
@@ -380,5 +385,6 @@ public enum RuntimeEnv {
             System.out.println(" " + String.valueOf(card.getName()));
         }
     }
+
 
 }

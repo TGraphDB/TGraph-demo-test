@@ -7,6 +7,7 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import org.act.tgraph.demo.Config;
+import org.act.tgraph.demo.vo.RuntimeEnv;
 
 import java.io.*;
 import java.net.Socket;
@@ -26,6 +27,7 @@ public class TCypherClient {
     private final int queueLength;
     private final boolean enableResultLog;
     private String testName;
+    private String logSource;
     private final String serverHost;
     private final int threadCnt;
 
@@ -33,6 +35,8 @@ public class TCypherClient {
     private volatile boolean complete = false;
     private BlockingQueue<String> queue;
     private List<Thread> threads;
+
+    private String relIDMapJsonStr;
     /**
      *
      * has 7 arguments:
@@ -40,20 +44,17 @@ public class TCypherClient {
      * 2. [serverHost] hostname of TGraph (TCypher) server.
      * 3. [threadCount] number of threads to send queries.
      */
-    public TCypherClient(String testName, String serverHost, int threadCnt, int queueLength, boolean enableResultLog){
-        this.testName = getTestName(testName);
+    public TCypherClient(String testName, String logSource, String serverHost, int threadCnt, int queueLength, boolean enableResultLog){
+        SimpleDateFormat ft = new SimpleDateFormat ("yyyyMMdd_HHmm");
+        this.testName = testName + "-" + ft.format(new Date());
+        this.logSource = logSource;
         this.serverHost = serverHost;
         this.threadCnt = threadCnt;
         this.queueLength = queueLength;
         this.enableResultLog = enableResultLog;
     }
 
-    private String getTestName(String name){
-        SimpleDateFormat ft = new SimpleDateFormat ("yyyyMMdd_HHmm");
-        return name + "-" + ft.format(new Date());
-    }
-
-    public void start() throws IOException, InterruptedException {
+    public synchronized Map<String, Long> start() throws IOException, InterruptedException {
         queue = new ArrayBlockingQueue<>(queueLength);
         threads = new LinkedList<>();
         for(int i=0; i<threadCnt; i++) {
@@ -63,6 +64,22 @@ public class TCypherClient {
             t.start();
         }
         queue.put("TOPIC:"+testName);
+        String q = "ID MAP";
+        queue.put(q);
+        System.out.println("wait id map from server...");
+        long t = System.currentTimeMillis();
+        q.wait();
+        System.out.println("wake up. wait "+(System.currentTimeMillis()-t)/1000+" seconds.");
+        if(relIDMapJsonStr!=null){
+            Map<String, Long> idMap = new HashMap<>(140000);
+            JsonObject obj = Json.parse(relIDMapJsonStr).asObject();
+            for (JsonObject.Member m : obj) {
+                idMap.put(m.getName(), m.getValue().asLong());
+            }
+            return idMap;
+        }else{
+            throw new RuntimeException("not get id map but wake up.");
+        }
     }
 
     public void addQuery(String query) throws InterruptedException {
@@ -81,7 +98,6 @@ public class TCypherClient {
         }
         complete = true;
         for(Thread t : threads) t.join();
-        Config.Default.onlineLogger.close();
         System.out.println("Client exit. send "+ querySendCnt +" lines.");
     }
 
@@ -99,10 +115,10 @@ public class TCypherClient {
             output = new PrintWriter(client.getOutputStream(), true);
         }
 
-        public void run(){
+        public synchronized void run(){
             Thread t = Thread.currentThread();
             t.setName("TCypher-client-"+t.getId());
-            Producer logger = Config.Default.onlineLogger;
+            Producer logger = RuntimeEnv.getCurrentEnv().getConf().getLogger();
             String serverCodeVersion = "";
             TimeMonitor timeMonitor = new TimeMonitor();
             try {
@@ -128,7 +144,12 @@ public class TCypherClient {
                         if(response==null) break;
                         if(response.startsWith("Server code version:")){
                             serverCodeVersion = response.substring(20);
-                            testName += "-" + serverCodeVersion;
+                            logSource += "-" + serverCodeVersion;
+                            continue;
+                        }else if("ID MAP".equals(query)){
+                            relIDMapJsonStr = response;
+                            query.notify();
+                            timeMonitor.begin("Log");
                             continue;
                         }
                         result = Json.parse(response).asObject();
@@ -163,7 +184,7 @@ public class TCypherClient {
                     log.PushBack("v_disk_write", String.valueOf(result.get("s_disk_write").asLong()));
 
                     try {
-                        logger.send("tgraph-demo-test", "tgraph-log", testName, "sjh-ubuntu1804", log);
+                        logger.send("tgraph-demo-test", "tgraph-log", testName, logSource, log);
                         if(enableResultLog){
                             for(int i=0; i<resultArr.size(); i++) {
                                 LogItem resultLog = new LogItem();

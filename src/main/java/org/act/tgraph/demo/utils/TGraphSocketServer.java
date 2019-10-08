@@ -1,14 +1,12 @@
 package org.act.tgraph.demo.utils;
 
-
-import com.aliyun.openservices.aliyun.log.producer.Producer;
-import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
-import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import com.sun.management.OperatingSystemMXBean;
-import org.act.tgraph.demo.Config;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
+import org.neo4j.tooling.GlobalGraphOperations;
 import oshi.SystemInfo;
 import oshi.hardware.HWDiskStore;
 
@@ -21,35 +19,27 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-public class TGraphServer {
+public class TGraphSocketServer {
     private final String dbPath;
     private final ReqExecutor reqExecutor;
 
-    private final Producer logger;
     private GraphDatabaseService db;
     private volatile boolean shouldRun = true;
     private ServerSocket server;
     private final List<Thread> threads = Collections.synchronizedList(new LinkedList<>());
     private final String serverCodeVersion;
 
-    public TGraphServer(Config config, String dbPath, ReqExecutor reqExecutor) {
-        this.logger = config.onlineLogger;
+    public TGraphSocketServer(String dbPath, String serverCodeVersion, ReqExecutor reqExecutor) {
         this.dbPath = dbPath;
         this.reqExecutor = reqExecutor;
-        serverCodeVersion = config.gitStatus;
+        this.serverCodeVersion = serverCodeVersion;
         System.out.println("server code version: "+ serverCodeVersion);
     }
 
-    public void start() throws IOException, ProducerException, InterruptedException {
+    public void start() throws IOException {
         db = new GraphDatabaseFactory().newEmbeddedDatabase( new File(dbPath));
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            db.shutdown();
-//            try {
-//                logger.close();
-//            } catch (InterruptedException | ProducerException e) {
-//                e.printStackTrace();
-//            }
-        }));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> db.shutdown()));
+
         MonitorThread monitor = new MonitorThread();
         monitor.start();
         reqExecutor.setDB(db);
@@ -78,8 +68,25 @@ public class TGraphServer {
             // just exit
         }
         db.shutdown();
-        logger.close();
         System.out.println("main thread exit.");
+    }
+
+    private String idMapStr;
+    private synchronized String buildRoadIDMap(GraphDatabaseService db) {
+        if(idMapStr==null) {
+            JsonObject map = new JsonObject();
+            try (Transaction tx = db.beginTx()) {
+                for (Relationship r : GlobalGraphOperations.at(db).getAllRelationships()) {
+                    String gridId = (String) r.getProperty("grid_id");
+                    String chainId = (String) r.getProperty("chain_id");
+                    String key = gridId + "," + chainId;
+                    map.add(key, r.getId());
+                }
+                tx.success();
+            }
+            idMapStr = map.toString();
+        }
+        return idMapStr;
     }
 
     public static abstract class ReqExecutor {
@@ -191,6 +198,10 @@ public class TGraphServer {
                         String testTopic = line.substring(6);
                         System.out.println("topic changed to "+ testTopic);
                         toClient.println("Server code version:"+serverCodeVersion);
+                        continue;
+                    }else if("ID MAP".equals(line)){
+                        System.out.println("building id map...");
+                        toClient.println(buildRoadIDMap(db));
                         continue;
                     }
                     time.mark("Wait", "Transaction");
