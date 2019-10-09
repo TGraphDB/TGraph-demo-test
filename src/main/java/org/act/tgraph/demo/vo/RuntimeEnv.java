@@ -37,14 +37,14 @@ public enum RuntimeEnv {
             4,
             25_177_202_688L,
             "GNU/Linux Ubuntu 18.04.3 LTS (Bionic Beaver) build 5.0.0-29-generic (64 bits)",
-            "1.8.0_131-b11", Config.sjh),
+            "Java(TM) SE Runtime Environment (1.8.0_131-b11) Java HotSpot(TM) 64-Bit Server VM (25.131-b11)", Config.sjh),
     zh("zhangh workstation",
             "Intel(R) Xeon(R) CPU E5-2650 v3 @ 2.30GHz",
             2_300_000_000L,
             20,
             68_503_519_232L,
             "Microsoft Windows 10 build 17763 (64 bits)",
-            "1.8.0_202-b08", Config.zhangh),
+            "Java(TM) SE Runtime Environment (1.8.0_202-b08) Java HotSpot(TM) 64-Bit Server VM (25.202-b08)", Config.zhangh),
     unknown();
 
 
