@@ -5,6 +5,7 @@ import org.act.tgraph.demo.utils.TCypherClient;
 import org.act.tgraph.demo.vo.Cross;
 import org.act.tgraph.demo.vo.RelType;
 import org.act.tgraph.demo.vo.RoadChain;
+import org.act.tgraph.demo.vo.RuntimeEnv;
 import org.junit.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -67,8 +68,8 @@ public class WriteStaticPropertyTest {
             Map<String, Long> roadMap = buildRoadIDMap(db);
             db.shutdown();
             System.out.println("id map built.");
-
-            TCypherClient client = new TCypherClient("cs-write-S-prop", serverHost, threadCnt, 2000, false);
+            String logSource = RuntimeEnv.getCurrentEnv().name();
+            TCypherClient client = new TCypherClient("cs-write-S-prop", logSource, serverHost, threadCnt, 2000, false);
             client.start();
 
             String dataFileName = new File(dataFilePath).getName(); // also is time by day. format yyMMdd
