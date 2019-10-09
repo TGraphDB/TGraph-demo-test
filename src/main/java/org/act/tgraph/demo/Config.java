@@ -26,9 +26,6 @@ import java.util.Properties;
  * Created by song on 16-2-24.
  */
 public class Config extends JsonObject{
-    public String name;
-    public final RuntimeEnv runtimeEnv = RuntimeEnv.getCurrentEnv();
-
     public GraphDatabaseService db;
     public OperationProxy proxy = new Neo4jTemporalProxy();
 
