@@ -7,6 +7,8 @@ import org.act.tgraph.demo.Config;
 import org.act.tgraph.demo.utils.TCypherClient;
 import org.act.tgraph.demo.vo.RuntimeEnv;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
@@ -27,18 +29,46 @@ import java.util.*;
  *
  *  Test TGraph Server TCypher 'property set' performance.
  */
-public class TCypherWriteTemporalPropertyTest {
 
-    /**
-     *
-     * has 6 arguments:
-     * 1. [dbPath] path of the TGraph database to get relationship id.
-     * 2. [serverHost] hostname of TGraph (TCypher) server.
-     * 3. [threadCount] number of threads to send queries.
-     * 4. [queryPerTransaction] number of TCypher queries executed in one transaction.
-     * 5. [totalDataSize] number of lines to read from data file.
-     * 6. [dataFilePath] should be like '/media/song/test/data-set/beijing-traffic/TGraph/byday/100501'
-     */
+@RunWith(Parameterized.class)
+public class TCypherWriteTemporalPropertyTest {
+    private int threadCnt; // number of threads to send queries.
+    private int queryPerTx; // number of TCypher queries executed in one transaction.
+    private String serverHost; // hostname of TGraph (TCypher) server.
+    private String dataFilePath; // should be like '/media/song/test/data-set/beijing-traffic/TGraph/byday/100501'
+    private long totalDataSize; // number of lines to read from data file.
+
+    public TCypherWriteTemporalPropertyTest(int threadCnt, int queryPerTx, String serverHost, String dataFilePath, long totalDataSize){
+        this.threadCnt = threadCnt;
+        this.queryPerTx = queryPerTx;
+        this.serverHost = serverHost;
+        this.dataFilePath = dataFilePath;
+        this.totalDataSize = totalDataSize;
+    }
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() throws ParseException {
+        Config conf = RuntimeEnv.getCurrentEnv().getConf();
+        System.out.println("current runtime env: "+RuntimeEnv.getCurrentEnv().name());
+
+        String serverHost = conf.get("server_host").asString();
+        int totalDataSize = 60_0000;
+        String dataFileDir = conf.get("dir_data_file_by_day").asString();
+
+        return Arrays.asList(new Object[][] {
+                { 10, 100, serverHost, getDataFilePath(dataFileDir, "2010.05.01"), totalDataSize }
+        });
+    }
+
+    @Test
+    public void run() throws InterruptedException, ParseException, ProducerException, IOException {
+        System.out.println("Host: "+ serverHost);
+        System.out.println("Thread Num: "+threadCnt);
+        System.out.println("Q/Tx: "+queryPerTx);
+        System.out.println("Total line send: "+totalDataSize);
+        System.out.println("Data path: "+ dataFilePath);
+        runTest(serverHost, threadCnt, dataFilePath, queryPerTx, totalDataSize);
+    }
 
     public static void main(String[] args){
         if(args.length<6){
@@ -61,17 +91,6 @@ public class TCypherWriteTemporalPropertyTest {
         } catch (IOException | ParseException | InterruptedException | ProducerException e) {
             e.printStackTrace();
         }
-    }
-
-    @Test
-    public void run() throws InterruptedException, ParseException, ProducerException, IOException {
-        Config conf = RuntimeEnv.getCurrentEnv().getConf();
-        String serverHost = conf.get("server.host").asString();
-        int threadCnt = conf.get("thread.count").asInt();
-        int queryPerTx = conf.get("query.per.transaction").asInt();
-        int totalDataSize = conf.get("total.data.size").asInt();
-        String dataFilePath = conf.get("data.file.path").asString();
-        runTest(serverHost, threadCnt, dataFilePath, queryPerTx, totalDataSize);
     }
 
     private static void runTest(String serverHost, int threadCnt, String dataFilePath, int queryPerTx, long totalDataSize) throws IOException, InterruptedException, ProducerException, ParseException {
@@ -105,13 +124,6 @@ public class TCypherWriteTemporalPropertyTest {
         client.awaitSendDone();
     }
 
-    private static SimpleDateFormat timeParser = new SimpleDateFormat("yyyyMMddHHmm");
-    private static int parseTime(String yearMonthDay, String hourAndMinute) throws ParseException {
-        return Math.toIntExact(timeParser.parse("20"+yearMonthDay+hourAndMinute).getTime()/1000);
-    }
-
-
-
     private static String dataLines2tCypher(String dataFileName, List<String> lines, Map<String, Long> roadMap) throws ParseException {
         StringBuilder sb = new StringBuilder();
         for (String line : lines) {
@@ -129,59 +141,69 @@ public class TCypherWriteTemporalPropertyTest {
         return sb.substring(0, sb.length()-1);
     }
 
-    @Test
-    public void tCypherTest(){
-//        System.out.println(System.getProperty("java.vm.name"));
-//        System.out.println(System.getProperty("java.vm.info"));
-//        System.exit(0);
-        GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase(new File("/media/song/test/db-network-only-ro"));
-        Runtime.getRuntime().addShutdownHook(new Thread(db::shutdown));
-        long t = System.currentTimeMillis();
+    private static SimpleDateFormat timeParser = new SimpleDateFormat("yyyyMMddHHmm");
+    private static int parseTime(String yearMonthDay, String hourAndMinute) throws ParseException {
+        return Math.toIntExact(timeParser.parse("20"+yearMonthDay+hourAndMinute).getTime()/1000);
+    }
+
+    private static String getDataFilePath(String dataFileDir, String day) throws ParseException {
+        return new SimpleDateFormat("MMdd").format(new SimpleDateFormat("yyyy.MM.dd").parse(day));
+    }
+
+
+//    @Test
+//    public void tCypherTest(){
+////        System.out.println(System.getProperty("java.vm.name"));
+////        System.out.println(System.getProperty("java.vm.info"));
+////        System.exit(0);
+//        GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase(new File("/media/song/test/db-network-only-ro"));
+//        Runtime.getRuntime().addShutdownHook(new Thread(db::shutdown));
+//        long t = System.currentTimeMillis();
+////        try (Transaction tx = db.beginTx()) {
+////            db.getRelationshipById(1).setTemporalProperty("travel_time", 0, 2L);
+////            tx.success();
+////        }
 //        try (Transaction tx = db.beginTx()) {
-//            db.getRelationshipById(1).setTemporalProperty("travel_time", 0, 2L);
+////            for(int i=0; i<10; i++) {
+////                System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE id(r)=1 SET r.travel_time_100"+i+"="+(30+i)).resultAsString());
+//                db.execute("MATCH ()-[r:ROAD_TO]->() WHERE id(r)=1 SET r.travel_time=TV(3~13:30, 100~NOW:2)");
+////            }
 //            tx.success();
 //        }
-        try (Transaction tx = db.beginTx()) {
-//            for(int i=0; i<10; i++) {
-//                System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE id(r)=1 SET r.travel_time_100"+i+"="+(30+i)).resultAsString());
-                db.execute("MATCH ()-[r:ROAD_TO]->() WHERE id(r)=1 SET r.travel_time=TV(3~13:30, 100~NOW:2)");
+//        System.out.println(System.currentTimeMillis() - t);
+//        try (Transaction tx = db.beginTx()) {
+//            for(int i=0; i<102; i++) {
+//                System.out.println(db.getRelationshipById(1).getTemporalProperty("travel_time", i));
+////                System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE r.id=1 SET r.travel_time_100="+(30+i)).resultAsString());
 //            }
-            tx.success();
-        }
-        System.out.println(System.currentTimeMillis() - t);
-        try (Transaction tx = db.beginTx()) {
-            for(int i=0; i<102; i++) {
-                System.out.println(db.getRelationshipById(1).getTemporalProperty("travel_time", i));
-//                System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE r.id=1 SET r.travel_time_100="+(30+i)).resultAsString());
-            }
-//            System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE r.id=1 SET r.travel_time=TV(100~NOW:30)").resultAsString());
-            tx.success();
-        }
-        System.out.println(System.currentTimeMillis() - t);
-        try(Transaction tx = db.beginTx()){
-            Relationship r = db.getRelationshipById(1);
-//            for(String key : r.getPropertyKeys()){
-//                System.out.println(key+": "+r.getProperty(key));
-//            }
-//            r.setTemporalProperty("travel_time", 400, 88);
-            r.getTemporalProperty("travel_time", 0, Integer.MAX_VALUE-4, new TemporalRangeQuery() {
-                @Override
-                public void setValueType(ValueContentType valueType) {
-                    System.out.println(valueType);
-                }
-
-                @Override
-                public void onNewEntry(InternalEntry entry) {
-                    System.out.print(entry.getKey().getStartTime()+":["+entry.getKey().getValueType()+"]"+entry.getValue().toString());
-                }
-
-                @Override
-                public Object onReturn() {
-                    return null;
-                }
-            });
-            tx.success();
-        }
-        System.out.println(System.currentTimeMillis() - t);
-    }
+////            System.out.println(db.execute("MATCH ()-[r:ROAD_TO]->() WHERE r.id=1 SET r.travel_time=TV(100~NOW:30)").resultAsString());
+//            tx.success();
+//        }
+//        System.out.println(System.currentTimeMillis() - t);
+//        try(Transaction tx = db.beginTx()){
+//            Relationship r = db.getRelationshipById(1);
+////            for(String key : r.getPropertyKeys()){
+////                System.out.println(key+": "+r.getProperty(key));
+////            }
+////            r.setTemporalProperty("travel_time", 400, 88);
+//            r.getTemporalProperty("travel_time", 0, Integer.MAX_VALUE-4, new TemporalRangeQuery() {
+//                @Override
+//                public void setValueType(ValueContentType valueType) {
+//                    System.out.println(valueType);
+//                }
+//
+//                @Override
+//                public void onNewEntry(InternalEntry entry) {
+//                    System.out.print(entry.getKey().getStartTime()+":["+entry.getKey().getValueType()+"]"+entry.getValue().toString());
+//                }
+//
+//                @Override
+//                public Object onReturn() {
+//                    return null;
+//                }
+//            });
+//            tx.success();
+//        }
+//        System.out.println(System.currentTimeMillis() - t);
+//    }
 }
