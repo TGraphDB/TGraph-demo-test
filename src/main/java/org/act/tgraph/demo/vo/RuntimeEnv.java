@@ -133,10 +133,6 @@ public enum RuntimeEnv {
         return sb.toString();
     }
 
-    public String getStr(String key) {
-        return null;
-    }
-
     public static void computerInfo(){
         System.out.println("Initializing System...");
         SystemInfo si = new SystemInfo();

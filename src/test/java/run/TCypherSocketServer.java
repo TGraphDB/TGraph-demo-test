@@ -12,7 +12,7 @@ public class TCypherSocketServer {
         RuntimeEnv env = RuntimeEnv.getCurrentEnv();
         String serverCodeVersion = env.name() + "-" + env.getConf().codeGitVersion();
         System.out.println("current runtime env: "+serverCodeVersion);
-        TGraphSocketServer server = new TGraphSocketServer(env.getStr("dbPath"), serverCodeVersion, new TCypherReqExecutor());
+        TGraphSocketServer server = new TGraphSocketServer(env.getConf().dbPath, serverCodeVersion, new TCypherReqExecutor());
         try {
             server.start();
         } catch (IOException e) {
