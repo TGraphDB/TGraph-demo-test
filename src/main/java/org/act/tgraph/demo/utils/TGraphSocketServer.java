@@ -72,7 +72,7 @@ public class TGraphSocketServer {
     }
 
     private String idMapStr;
-    private synchronized String buildRoadIDMap(GraphDatabaseService db) {
+    private String buildRoadIDMap(GraphDatabaseService db) {
         if(idMapStr==null) {
             JsonObject map = new JsonObject();
             try (Transaction tx = db.beginTx()) {
@@ -201,7 +201,9 @@ public class TGraphSocketServer {
                         continue;
                     }else if("ID MAP".equals(line)){
                         System.out.println("building id map...");
-                        toClient.println(buildRoadIDMap(db));
+                        String idMap = buildRoadIDMap(db);
+                        System.out.println("done. size:"+idMap.length()+" sending...");
+                        toClient.println(idMap);
                         continue;
                     }
                     time.mark("Wait", "Transaction");

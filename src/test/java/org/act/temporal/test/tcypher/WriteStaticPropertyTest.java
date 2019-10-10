@@ -2,16 +2,10 @@ package org.act.temporal.test.tcypher;
 
 import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
 import org.act.tgraph.demo.utils.TCypherClient;
-import org.act.tgraph.demo.vo.Cross;
-import org.act.tgraph.demo.vo.RelType;
-import org.act.tgraph.demo.vo.RoadChain;
 import org.act.tgraph.demo.vo.RuntimeEnv;
-import org.junit.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 import java.io.BufferedReader;
@@ -21,12 +15,11 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  *  create by sjh at 2019-09-10
@@ -57,20 +50,15 @@ public class WriteStaticPropertyTest {
         int totalDataSize = Integer.parseInt(args[4]);
         String dataFilePath = args[5];
 
-        System.out.println("DBPath: "+dbPath);
         System.out.println("Host: "+ serverHost);
         System.out.println("Thread Num: "+threadCnt);
         System.out.println("Q/Tx: "+queryPerTx);
         System.out.println("Total line send: "+totalDataSize);
         System.out.println("Data path: "+ dataFilePath);
         try {
-            GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase(new File(dbPath));
-            Map<String, Long> roadMap = buildRoadIDMap(db);
-            db.shutdown();
+            TCypherClient client = new TCypherClient("cs-write-S-prop", serverHost, threadCnt, 2000, false);
+            Map<String, Long> roadMap = client.start();
             System.out.println("id map built.");
-            String logSource = RuntimeEnv.getCurrentEnv().name();
-            TCypherClient client = new TCypherClient("cs-write-S-prop", logSource, serverHost, threadCnt, 2000, false);
-            client.start();
 
             String dataFileName = new File(dataFilePath).getName(); // also is time by day. format yyMMdd
 
@@ -95,8 +83,8 @@ public class WriteStaticPropertyTest {
                 }
                 while (lineSendCnt < totalDataSize && s!=null);
             }
-            client.awaitSendDone();
-        } catch (IOException | ParseException | InterruptedException | ProducerException e) {
+            client.awaitTermination();
+        } catch (IOException | ParseException | InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
     }

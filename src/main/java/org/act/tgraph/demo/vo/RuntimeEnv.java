@@ -35,7 +35,7 @@ public enum RuntimeEnv {
             "Intel(R) Core(TM) i5-4570 CPU @ 3.20GHz",
             3_600_000_000L,
             4,
-            25_177_202_688L,
+            25_177_100_288L,
             "GNU/Linux Ubuntu 18.04.3 LTS (Bionic Beaver) build 5.0.0-29-generic (64 bits)",
             "Java(TM) SE Runtime Environment (1.8.0_131-b11) Java HotSpot(TM) 64-Bit Server VM (25.131-b11)", Config.sjh),
     zh("zhangh workstation",

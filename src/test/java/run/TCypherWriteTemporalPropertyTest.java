@@ -1,19 +1,11 @@
 package run;
 
-import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
-import org.act.temporalProperty.impl.InternalEntry;
-import org.act.temporalProperty.meta.ValueContentType;
 import org.act.tgraph.demo.Config;
 import org.act.tgraph.demo.utils.TCypherClient;
 import org.act.tgraph.demo.vo.RuntimeEnv;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.Transaction;
-import org.neo4j.graphdb.factory.GraphDatabaseFactory;
-import org.neo4j.temporal.TemporalRangeQuery;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -23,6 +15,7 @@ import java.text.MessageFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 /**
  *  create by sjh at 2019-09-10
@@ -49,6 +42,8 @@ public class TCypherWriteTemporalPropertyTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() throws ParseException {
         Config conf = RuntimeEnv.getCurrentEnv().getConf();
+//        System.out.println(RuntimeEnv.unknown.detail());
+//        System.out.println(RuntimeEnv.sjh.detail());
         System.out.println("current runtime env: "+RuntimeEnv.getCurrentEnv().name());
 
         String serverHost = conf.get("server_host").asString();
@@ -56,12 +51,12 @@ public class TCypherWriteTemporalPropertyTest {
         String dataFileDir = conf.get("dir_data_file_by_day").asString();
 
         return Arrays.asList(new Object[][] {
-                { 10, 100, serverHost, getDataFilePath(dataFileDir, "2010.05.01"), totalDataSize }
+                { 20, 100, serverHost, getDataFilePath(dataFileDir, "2010.05.01"), totalDataSize }
         });
     }
 
     @Test
-    public void run() throws InterruptedException, ParseException, ProducerException, IOException {
+    public void run() throws InterruptedException, ParseException, IOException, ExecutionException {
         System.out.println("Host: "+ serverHost);
         System.out.println("Thread Num: "+threadCnt);
         System.out.println("Q/Tx: "+queryPerTx);
@@ -88,16 +83,15 @@ public class TCypherWriteTemporalPropertyTest {
         System.out.println("Data path: "+ dataFilePath);
         try {
             runTest(serverHost, threadCnt, dataFilePath, queryPerTx, totalDataSize);
-        } catch (IOException | ParseException | InterruptedException | ProducerException e) {
+        } catch (IOException | ParseException | InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
     }
 
-    private static void runTest(String serverHost, int threadCnt, String dataFilePath, int queryPerTx, long totalDataSize) throws IOException, InterruptedException, ProducerException, ParseException {
-        String logSource = RuntimeEnv.getCurrentEnv().name();
-        TCypherClient client = new TCypherClient("cs-write-T-prop", logSource, serverHost, threadCnt, 2000, true);
-        Map<String, Long> roadMap = client.start();
+    private static void runTest(String serverHost, int threadCnt, String dataFilePath, int queryPerTx, long totalDataSize) throws IOException, InterruptedException, ParseException, ExecutionException {
 
+        TCypherClient client = new TCypherClient("cs-write-T-prop", serverHost, threadCnt, 2000, true);
+        Map<String, Long> roadMap = client.start();
         String dataFileName = new File(dataFilePath).getName(); // also is time by day. format yyMMdd
 
         long lineSendCnt = 0;
@@ -121,7 +115,7 @@ public class TCypherWriteTemporalPropertyTest {
             }
             while (lineSendCnt < totalDataSize && s!=null);
         }
-        client.awaitSendDone();
+        client.awaitTermination();
     }
 
     private static String dataLines2tCypher(String dataFileName, List<String> lines, Map<String, Long> roadMap) throws ParseException {
@@ -147,7 +141,8 @@ public class TCypherWriteTemporalPropertyTest {
     }
 
     private static String getDataFilePath(String dataFileDir, String day) throws ParseException {
-        return new SimpleDateFormat("MMdd").format(new SimpleDateFormat("yyyy.MM.dd").parse(day));
+        String fileName = new SimpleDateFormat("yyMMdd").format(new SimpleDateFormat("yyyy.MM.dd").parse(day));
+        return new File(dataFileDir, fileName).getAbsolutePath();
     }
 
 

@@ -10,7 +10,7 @@ import java.io.IOException;
 public class TCypherSocketServer {
     public static void main(String[] args){
         RuntimeEnv env = RuntimeEnv.getCurrentEnv();
-        String serverCodeVersion = env.name() + "-" + env.getConf().codeGitVersion();
+        String serverCodeVersion = env.name() + "." + env.getConf().codeGitVersion();
         TGraphSocketServer server = new TGraphSocketServer(env.getConf().dbPath, serverCodeVersion, new TCypherReqExecutor());
         try {
             server.start();
