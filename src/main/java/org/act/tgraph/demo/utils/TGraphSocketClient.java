@@ -41,7 +41,9 @@ public abstract class TGraphSocketClient {
         service.shutdown();
         while(!service.isTerminated()) {
             service.awaitTermination(10, TimeUnit.SECONDS);
-            System.out.println( service.getCompletedTaskCount()+" query completed.");
+            long completeCnt = service.getCompletedTaskCount();
+            int remains = service.getQueue().size();
+            System.out.println( completeCnt+"/"+ (completeCnt+remains)+" query completed.");
         }
         while(true){
             Connection conn = connectionPool.poll();
@@ -70,9 +72,9 @@ public abstract class TGraphSocketClient {
                 String response = conn.in.readLine();
                 timeMonitor.end("Wait result");
                 if (response == null) throw new RuntimeException("[Got null. Server close connection]");
-                onResponse(query, response, timeMonitor, Thread.currentThread(), conn);
+                String result = onResponse(query, response, timeMonitor, Thread.currentThread(), conn);
                 connectionPool.put(conn);
-                return response;
+                return result;
             }catch (Exception e){
                 e.printStackTrace();
                 throw e;
@@ -80,7 +82,7 @@ public abstract class TGraphSocketClient {
         }
     }
 
-    protected abstract void onResponse(String query, String response, TimeMonitor timeMonitor, Thread thread, Connection conn) throws Exception;
+    protected abstract String onResponse(String query, String response, TimeMonitor timeMonitor, Thread thread, Connection conn) throws Exception;
 
     public static class Connection{
         private Socket client;

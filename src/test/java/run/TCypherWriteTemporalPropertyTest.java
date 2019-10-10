@@ -195,11 +195,11 @@ public class TCypherWriteTemporalPropertyTest {
         }
 
         @Override
-        public void onResponse(String query, String response, TimeMonitor timeMonitor, Thread thread, TGraphSocketClient.Connection conn) throws Exception {
-            if (response.startsWith("Server code version:") || "ID MAP".equals(query)) return;
-
+        public String onResponse(String query, String response, TimeMonitor timeMonitor, Thread thread, Connection conn) throws Exception {
             JsonObject result = Json.parse(response).asObject();
             String resultContent = result.get("results").asString();
+            if (resultContent.startsWith("Server code version:") || "ID MAP".equals(query)) return resultContent;
+
             LogItem log = new LogItem();
             log.PushBack("type", "time");
             log.PushBack("c_thread", "T." + Thread.currentThread().getId());
@@ -231,6 +231,7 @@ public class TCypherWriteTemporalPropertyTest {
             resultLog.PushBack("c_thread", "T." + Thread.currentThread().getId());
             resultLog.PushBack("s_result_content", resultContent);
             logger.send("tgraph-demo-test", "tgraph-log", testName, logSource, resultLog);
+            return resultContent;
         }
     }
 
