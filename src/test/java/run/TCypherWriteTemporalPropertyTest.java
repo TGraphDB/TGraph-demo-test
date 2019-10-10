@@ -42,14 +42,14 @@ public class TCypherWriteTemporalPropertyTest {
     private Config config = RuntimeEnv.getCurrentEnv().getConf();
 
     private int threadCnt; // number of threads to send queries.
-    private int queryPerTx; // number of TCypher queries executed in one transaction.
+    private int opPerTx; // number of TCypher queries executed in one transaction.
     private String serverHost; // hostname of TGraph (TCypher) server.
     private String dataFilePath; // should be like '/media/song/test/data-set/beijing-traffic/TGraph/byday/100501'
     private long totalDataSize; // number of lines to read from data file.
 
     public TCypherWriteTemporalPropertyTest(int threadCnt, int queryPerTx, String serverHost, String dataFilePath, long totalDataSize){
         this.threadCnt = threadCnt;
-        this.queryPerTx = queryPerTx;
+        this.opPerTx = queryPerTx;
         this.serverHost = serverHost;
         this.dataFilePath = dataFilePath;
         this.totalDataSize = totalDataSize;
@@ -108,7 +108,7 @@ public class TCypherWriteTemporalPropertyTest {
     protected void runTest() throws InterruptedException, ParseException, IOException, ExecutionException {
         System.out.println("Host: " + serverHost);
         System.out.println("Thread Num: " + threadCnt);
-        System.out.println("Q/Tx: " + queryPerTx);
+        System.out.println("Q/Tx: " + opPerTx);
         System.out.println("Total line send: " + totalDataSize);
         System.out.println("Data path: " + dataFilePath);
 
@@ -150,7 +150,7 @@ public class TCypherWriteTemporalPropertyTest {
                 if(s!=null) {
                     lineSendCnt++;
                     dataInOneTx.add(s);
-                    if (dataInOneTx.size() == queryPerTx) {
+                    if (dataInOneTx.size() == opPerTx) {
                         client.addQuery(dataLines2Req( dataFileName, dataInOneTx, roadMap));
                         dataInOneTx.clear();
                     }
@@ -201,6 +201,8 @@ public class TCypherWriteTemporalPropertyTest {
             if (resultContent.startsWith("Server code version:") || "ID MAP".equals(query)) return resultContent;
 
             LogItem log = new LogItem();
+            log.PushBack("c_line_per_tx", String.valueOf(opPerTx));
+
             log.PushBack("type", "time");
             log.PushBack("c_thread", "T." + Thread.currentThread().getId());
             log.PushBack("c_queue_t", String.valueOf(timeMonitor.duration("Wait in queue")));
@@ -213,6 +215,7 @@ public class TCypherWriteTemporalPropertyTest {
             log.PushBack("s_psend_t", String.valueOf(result.get("t_PreSend").asLong()));
             log.PushBack("s_tx_success", String.valueOf(result.get("success").asBoolean()));
             log.PushBack("s_result_size", String.valueOf(resultContent.length()));
+
 
             log.PushBack("v_update_t", String.valueOf(result.get("s_updateTime").asLong()));
             log.PushBack("v_memory", String.valueOf(result.get("s_memory").asLong()));
