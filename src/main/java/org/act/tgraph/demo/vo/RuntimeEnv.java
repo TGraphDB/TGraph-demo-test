@@ -85,7 +85,7 @@ public enum RuntimeEnv {
 
     private static RuntimeEnv currentEnv;
     public static RuntimeEnv getCurrentEnv(){
-        if(currentEnv!=null) {
+        if(currentEnv==null) {
             for (RuntimeEnv env : RuntimeEnv.values()) {
                 if (env != unknown &&
                         Objects.equals(env.cpu, unknown.cpu) &&
