@@ -15,6 +15,9 @@ import java.util.Map;
 public class KernelWriteSocketServer {
     public static void main(String[] args){
         TGraphSocketServer server = new TGraphSocketServer(RuntimeEnv.getCurrentEnv().getConf().dbPath, new KernelWriteExecutor());
+        RuntimeEnv env = RuntimeEnv.getCurrentEnv();
+        String serverCodeVersion = env.name() + "." + env.getConf().codeGitVersion();
+        System.out.println("server code version: "+ serverCodeVersion);
         try {
             server.start();
         } catch (IOException e) {
@@ -51,7 +54,6 @@ public class KernelWriteSocketServer {
                 System.out.println("topic changed to "+ testTopic);
                 RuntimeEnv env = RuntimeEnv.getCurrentEnv();
                 String serverCodeVersion = env.name() + "." + env.getConf().codeGitVersion();
-                System.out.println("server code version: "+ serverCodeVersion);
                 return "Server code version:"+serverCodeVersion;
             }else if("ID MAP".equals(line)){
                 System.out.println("building id map...");

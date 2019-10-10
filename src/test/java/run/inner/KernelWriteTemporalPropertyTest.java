@@ -13,6 +13,8 @@ import java.util.*;
 
 @RunWith(Parameterized.class)
 public class KernelWriteTemporalPropertyTest extends TCypherWriteTemporalPropertyTest {
+    @Override
+    protected String getTestName(){ return "cs-kernel-write-tp";}
 
     public KernelWriteTemporalPropertyTest(int threadCnt, int queryPerTx, String serverHost, String dataFilePath, long totalDataSize) {
         super(threadCnt, queryPerTx, serverHost, dataFilePath, totalDataSize);
