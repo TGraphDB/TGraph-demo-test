@@ -1,7 +1,12 @@
 package run;
 
+import com.aliyun.openservices.aliyun.log.producer.Producer;
+import com.aliyun.openservices.log.common.LogItem;
+import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonObject;
 import org.act.tgraph.demo.Config;
-import org.act.tgraph.demo.utils.TCypherClient;
+import org.act.tgraph.demo.utils.TGraphSocketClient;
+import org.act.tgraph.demo.utils.TimeMonitor;
 import org.act.tgraph.demo.vo.RuntimeEnv;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -14,8 +19,16 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  *  create by sjh at 2019-09-10
@@ -25,13 +38,16 @@ import java.util.concurrent.ExecutionException;
 
 @RunWith(Parameterized.class)
 public class TCypherWriteTemporalPropertyTest {
+    private Producer logger = RuntimeEnv.getCurrentEnv().getConf().getLogger();
+    private Config config = RuntimeEnv.getCurrentEnv().getConf();
+
     private int threadCnt; // number of threads to send queries.
     private int queryPerTx; // number of TCypher queries executed in one transaction.
     private String serverHost; // hostname of TGraph (TCypher) server.
     private String dataFilePath; // should be like '/media/song/test/data-set/beijing-traffic/TGraph/byday/100501'
     private long totalDataSize; // number of lines to read from data file.
 
-    public TCypherWriteTemporalPropertyTest(int threadCnt, int queryPerTx, String serverHost, String dataFilePath, long totalDataSize){
+    TCypherWriteTemporalPropertyTest(int threadCnt, int queryPerTx, String serverHost, String dataFilePath, long totalDataSize){
         this.threadCnt = threadCnt;
         this.queryPerTx = queryPerTx;
         this.serverHost = serverHost;
@@ -39,30 +55,25 @@ public class TCypherWriteTemporalPropertyTest {
         this.totalDataSize = totalDataSize;
     }
 
+    protected String getTestName(){ return "cs-write-T-prop";}
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() throws ParseException {
-        Config conf = RuntimeEnv.getCurrentEnv().getConf();
-//        System.out.println(RuntimeEnv.unknown.detail());
-//        System.out.println(RuntimeEnv.sjh.detail());
+        Config config = RuntimeEnv.getCurrentEnv().getConf();
         System.out.println("current runtime env: "+RuntimeEnv.getCurrentEnv().name());
 
-        String serverHost = conf.get("server_host").asString();
+        String serverHost = config.get("server_host").asString();
         int totalDataSize = 60_0000;
-        String dataFileDir = conf.get("dir_data_file_by_day").asString();
+        String dataFileDir = config.get("dir_data_file_by_day").asString();
 
         return Arrays.asList(new Object[][] {
                 { 20, 100, serverHost, getDataFilePath(dataFileDir, "2010.05.01"), totalDataSize }
         });
     }
 
-    @Test
-    public void run() throws InterruptedException, ParseException, IOException, ExecutionException {
-        System.out.println("Host: "+ serverHost);
-        System.out.println("Thread Num: "+threadCnt);
-        System.out.println("Q/Tx: "+queryPerTx);
-        System.out.println("Total line send: "+totalDataSize);
-        System.out.println("Data path: "+ dataFilePath);
-        runTest(serverHost, threadCnt, dataFilePath, queryPerTx, totalDataSize);
+    static String getDataFilePath(String dataFileDir, String day) throws ParseException {
+        String fileName = new SimpleDateFormat("yyMMdd").format(new SimpleDateFormat("yyyy.MM.dd").parse(day));
+        return new File(dataFileDir, fileName).getAbsolutePath();
     }
 
     public static void main(String[] args){
@@ -82,18 +93,53 @@ public class TCypherWriteTemporalPropertyTest {
         System.out.println("Total line send: "+totalDataSize);
         System.out.println("Data path: "+ dataFilePath);
         try {
-            runTest(serverHost, threadCnt, dataFilePath, queryPerTx, totalDataSize);
+            TCypherWriteTemporalPropertyTest test = new TCypherWriteTemporalPropertyTest(threadCnt, queryPerTx, serverHost, dataFilePath, totalDataSize);
+            test.run();
         } catch (IOException | ParseException | InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
     }
 
-    private static void runTest(String serverHost, int threadCnt, String dataFilePath, int queryPerTx, long totalDataSize) throws IOException, InterruptedException, ParseException, ExecutionException {
+    @Test
+    public void run() throws InterruptedException, ParseException, IOException, ExecutionException {
+        runTest();
+    }
 
-        TCypherClient client = new TCypherClient("cs-write-T-prop", serverHost, threadCnt, 2000, true);
-        Map<String, Long> roadMap = client.start();
+    protected void runTest() throws InterruptedException, ParseException, IOException, ExecutionException {
+        System.out.println("Host: " + serverHost);
+        System.out.println("Thread Num: " + threadCnt);
+        System.out.println("Q/Tx: " + queryPerTx);
+        System.out.println("Total line send: " + totalDataSize);
+        System.out.println("Data path: " + dataFilePath);
+
+        SimpleDateFormat ft = new SimpleDateFormat ("yyyyMMdd_HHmm");
+        Client client = new Client( serverHost, threadCnt, 2000);
+        client.testName = getTestName() + ft.format(new Date());
+
+        String responseLine = client.addQuery("TOPIC:"+getTestName()).get();
+        if(responseLine.startsWith("Server code version:")) {
+            String serverCodeVersion = responseLine.substring(20);
+            String[] arr = serverCodeVersion.split("\\.");
+            String gitVersion = config.codeGitVersion();
+            if (Objects.equals(arr[1], gitVersion)){
+                client.logSource += "->" + serverCodeVersion;
+            }else{
+                client.logSource += "."+gitVersion+"->" + serverCodeVersion;
+            }
+            System.out.println("logSource: "+ client.logSource);
+        }else throw new RuntimeException("unexpected server response.");
+
+        Future<String> f = client.addQuery("ID MAP");
+        System.out.println("wait id map from server...");
+        long t = System.currentTimeMillis();
+        JsonObject obj = Json.parse(f.get()).asObject();
+        System.out.println("done. wait " + (System.currentTimeMillis() - t) / 1000 + " seconds.");
+        Map<String, Long> roadMap = new HashMap<>(140000);
+        for (JsonObject.Member m : obj) {
+            roadMap.put(m.getName(), m.getValue().asLong());
+        }
+
         String dataFileName = new File(dataFilePath).getName(); // also is time by day. format yyMMdd
-
         long lineSendCnt = 0;
         try(BufferedReader br = new BufferedReader(new FileReader(dataFilePath)))
         {
@@ -108,6 +154,7 @@ public class TCypherWriteTemporalPropertyTest {
                         client.addQuery(dataLines2tCypher( dataFileName, dataInOneTx, roadMap));
                         dataInOneTx.clear();
                     }
+                    if(lineSendCnt %400==0) System.out.println(lineSendCnt +" line read.");
                 }else{
                     client.addQuery(dataLines2tCypher(dataFileName, dataInOneTx, roadMap));
                     dataInOneTx.clear();
@@ -118,7 +165,7 @@ public class TCypherWriteTemporalPropertyTest {
         client.awaitTermination();
     }
 
-    private static String dataLines2tCypher(String dataFileName, List<String> lines, Map<String, Long> roadMap) throws ParseException {
+    protected String dataLines2tCypher(String dataFileName, List<String> lines, Map<String, Long> roadMap) throws ParseException {
         StringBuilder sb = new StringBuilder();
         for (String line : lines) {
             String[] arr = line.split(":");
@@ -135,15 +182,58 @@ public class TCypherWriteTemporalPropertyTest {
         return sb.substring(0, sb.length()-1);
     }
 
-    private static SimpleDateFormat timeParser = new SimpleDateFormat("yyyyMMddHHmm");
-    private static int parseTime(String yearMonthDay, String hourAndMinute) throws ParseException {
+    private SimpleDateFormat timeParser = new SimpleDateFormat("yyyyMMddHHmm");
+    int parseTime(String yearMonthDay, String hourAndMinute) throws ParseException {
         return Math.toIntExact(timeParser.parse("20"+yearMonthDay+hourAndMinute).getTime()/1000);
     }
 
-    private static String getDataFilePath(String dataFileDir, String day) throws ParseException {
-        String fileName = new SimpleDateFormat("yyMMdd").format(new SimpleDateFormat("yyyy.MM.dd").parse(day));
-        return new File(dataFileDir, fileName).getAbsolutePath();
+    private class Client extends TGraphSocketClient{
+        String logSource;
+        String testName;
+        Client(String serverHost, int parallelCnt, int queueLength) throws IOException {
+            super(serverHost, parallelCnt, queueLength);
+        }
+
+        @Override
+        public void onResponse(String query, String response, TimeMonitor timeMonitor, Thread thread, TGraphSocketClient.Connection conn) throws Exception {
+            if (response.startsWith("Server code version:") || "ID MAP".equals(query)) return;
+
+            JsonObject result = Json.parse(response).asObject();
+            String resultContent = result.get("results").asString();
+            LogItem log = new LogItem();
+            log.PushBack("type", "time");
+            log.PushBack("c_thread", "T." + Thread.currentThread().getId());
+            log.PushBack("c_queue_t", String.valueOf(timeMonitor.duration("Wait in queue")));
+            log.PushBack("c_send_t", String.valueOf(timeMonitor.duration("Send query")));
+            log.PushBack("c_send_tE", String.valueOf(timeMonitor.endT("Send query")));
+            log.PushBack("c_wait_t", String.valueOf(timeMonitor.duration("Wait result")));
+
+            log.PushBack("s_receive_tE", String.valueOf(result.get("t_ReqGot").asLong()));
+            log.PushBack("s_tx_t", String.valueOf(result.get("t_Tx").asLong()));
+            log.PushBack("s_psend_t", String.valueOf(result.get("t_PreSend").asLong()));
+            log.PushBack("s_tx_success", String.valueOf(result.get("success").asBoolean()));
+            log.PushBack("s_result_size", String.valueOf(resultContent.length()));
+
+            log.PushBack("v_update_t", String.valueOf(result.get("s_updateTime").asLong()));
+            log.PushBack("v_memory", String.valueOf(result.get("s_memory").asLong()));
+            log.PushBack("v_connCnt", String.valueOf(result.get("s_connCnt").asLong()));
+            log.PushBack("v_pCPU", String.valueOf(result.get("s_pCPU").asDouble()));
+            log.PushBack("v_CPU", String.valueOf(result.get("s_CPU").asDouble()));
+            log.PushBack("v_disk_qLen", String.valueOf(result.get("s_disk_qLen").asLong()));
+            log.PushBack("v_disk_read", String.valueOf(result.get("s_disk_read").asLong()));
+            log.PushBack("v_disk_write", String.valueOf(result.get("s_disk_write").asLong()));
+            logger.send("tgraph-demo-test", "tgraph-log", testName, logSource, log);
+
+            // log result content;
+            LogItem resultLog = new LogItem();
+            resultLog.PushBack("type", "result");
+            resultLog.PushBack("c_send_tE", String.valueOf(timeMonitor.endT("Send query")));
+            resultLog.PushBack("c_thread", "T." + Thread.currentThread().getId());
+            resultLog.PushBack("s_result_content", resultContent);
+            logger.send("tgraph-demo-test", "tgraph-log", testName, logSource, resultLog);
+        }
     }
+
 
 
 //    @Test

@@ -83,18 +83,25 @@ public enum RuntimeEnv {
         this.config = new Config();
     }
 
+    private static RuntimeEnv currentEnv;
     public static RuntimeEnv getCurrentEnv(){
-        for(RuntimeEnv env: RuntimeEnv.values()){
-            if(env!=unknown &&
-                    Objects.equals(env.cpu, unknown.cpu) &&
-                    env.physicalMem==unknown.physicalMem &&
-                    env.numOfPhysicalCores == unknown.numOfPhysicalCores &&
-                    Objects.equals(env.jvm, unknown.jvm)
-            ){
-                return env;
+        if(currentEnv!=null) {
+            for (RuntimeEnv env : RuntimeEnv.values()) {
+                if (env != unknown &&
+                        Objects.equals(env.cpu, unknown.cpu) &&
+                        env.physicalMem == unknown.physicalMem &&
+                        env.numOfPhysicalCores == unknown.numOfPhysicalCores &&
+                        Objects.equals(env.jvm, unknown.jvm)
+                ) {
+                    currentEnv = env;
+                    return env;
+                }
             }
+            currentEnv = unknown;
+            return unknown;
+        }else{
+            return currentEnv;
         }
-        return unknown;
     }
 
     public Config getConf(){

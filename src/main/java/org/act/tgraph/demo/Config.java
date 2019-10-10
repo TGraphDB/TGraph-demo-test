@@ -82,6 +82,9 @@ public class Config extends JsonObject{
             Properties prop = new Properties();
             prop.load(input);
             gitStatus = prop.getProperty("git.commit.id.describe-short");
+            if(gitStatus.endsWith("-Modified")){
+                gitStatus = gitStatus.replace("-Modified", "(M)");
+            }
         } catch (IOException ex) {
             if(ex instanceof FileNotFoundException) return "NoGit";
             ex.printStackTrace();
