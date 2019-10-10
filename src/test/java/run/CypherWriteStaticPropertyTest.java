@@ -17,7 +17,8 @@ import java.util.concurrent.ExecutionException;
 /**
  *  create by sjh at 2019-09-10
  *
- *  Test TGraph Server TCypher 'property set' performance.
+ *  Test Neo4j Server Cypher 'property set' performance.
+ *  same as TCypherWriteTemporalPropertyTest but use different cypher queries.
  */
 public class CypherWriteStaticPropertyTest extends TCypherWriteTemporalPropertyTest{
     @Override
