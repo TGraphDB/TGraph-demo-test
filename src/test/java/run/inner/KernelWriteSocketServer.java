@@ -1,4 +1,4 @@
-package run;
+package run.inner;
 
 import com.eclipsesource.json.JsonObject;
 import org.act.tgraph.demo.utils.TGraphSocketServer;
@@ -9,10 +9,12 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
-public class TCypherSocketServer {
+public class KernelWriteSocketServer {
     public static void main(String[] args){
-        TGraphSocketServer server = new TGraphSocketServer(RuntimeEnv.getCurrentEnv().getConf().dbPath, new TCypherReqExecutor());
+        TGraphSocketServer server = new TGraphSocketServer(RuntimeEnv.getCurrentEnv().getConf().dbPath, new KernelWriteExecutor());
         try {
             server.start();
         } catch (IOException e) {
@@ -20,7 +22,8 @@ public class TCypherSocketServer {
         }
     }
 
-    private static class TCypherReqExecutor extends TGraphSocketServer.ReqExecutor{
+    private static class KernelWriteExecutor extends TGraphSocketServer.ReqExecutor{
+        private Map<Long, Relationship> idMap = new HashMap<>(140000);
         private String idMapStr;
 
         private String buildRoadIDMap() {
@@ -31,6 +34,7 @@ public class TCypherSocketServer {
                         String gridId = (String) r.getProperty("grid_id");
                         String chainId = (String) r.getProperty("chain_id");
                         String key = gridId + "," + chainId;
+                        idMap.put(r.getId(), r);
                         map.add(key, r.getId());
                     }
                     tx.success();
@@ -51,19 +55,22 @@ public class TCypherSocketServer {
                 return "Server code version:"+serverCodeVersion;
             }else if("ID MAP".equals(line)){
                 System.out.println("building id map...");
-                String idMap = buildRoadIDMap();
-                System.out.println("done. size:"+idMap.length()+" sending...");
-                return idMap;
+                String response = buildRoadIDMap();
+                System.out.println("done. "+idMap.size()+" roads. sending...");
+                return response;
             }
             String[] queries = line.split(";");
-            StringBuilder results = new StringBuilder();
-            int i=0;
             try {
                 try (Transaction tx = db.beginTx()) {
-                    for (i = 0; i < queries.length; i++) {
-                        String query = queries[i];
-                        Result result = db.execute(query);
-                        results.append( result.resultAsString().replace("\n", "\\n").replace("\r", "\\r") );
+                    for (String query : queries) {
+                        String[] arr = query.split(",");
+                        long roadId = Long.parseLong(arr[0]);
+                        int time = Integer.parseInt(arr[1]);
+                        Relationship r = idMap.get(roadId);
+                        r.setTemporalProperty("travel_time", time, Long.parseLong(arr[2]));
+                        r.setTemporalProperty("full_status", time, Long.parseLong(arr[3]));
+                        r.setTemporalProperty("vehicle_count", time, Long.parseLong(arr[4]));
+                        r.setTemporalProperty("segment_count", time, Long.parseLong(arr[5]));
                     }
                     tx.success();
                 }
@@ -74,7 +81,7 @@ public class TCypherSocketServer {
                 msg.printStackTrace();
                 throw new TGraphSocketServer.TransactionFailedException();
             }
-            return results.toString();
+            return "";
         }
     }
 }

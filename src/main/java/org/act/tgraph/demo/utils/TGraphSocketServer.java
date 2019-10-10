@@ -3,14 +3,15 @@ package org.act.tgraph.demo.utils;
 import com.eclipsesource.json.JsonObject;
 import com.sun.management.OperatingSystemMXBean;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
-import org.neo4j.tooling.GlobalGraphOperations;
 import oshi.SystemInfo;
 import oshi.hardware.HWDiskStore;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -27,13 +28,10 @@ public class TGraphSocketServer {
     private volatile boolean shouldRun = true;
     private ServerSocket server;
     private final List<Thread> threads = Collections.synchronizedList(new LinkedList<>());
-    private final String serverCodeVersion;
 
-    public TGraphSocketServer(String dbPath, String serverCodeVersion, ReqExecutor reqExecutor) {
+    public TGraphSocketServer(String dbPath, ReqExecutor reqExecutor) {
         this.dbPath = dbPath;
         this.reqExecutor = reqExecutor;
-        this.serverCodeVersion = serverCodeVersion;
-        System.out.println("server code version: "+ serverCodeVersion);
     }
 
     public void start() throws IOException {
@@ -69,24 +67,6 @@ public class TGraphSocketServer {
         }
         db.shutdown();
         System.out.println("main thread exit.");
-    }
-
-    private String idMapStr;
-    private String buildRoadIDMap(GraphDatabaseService db) {
-        if(idMapStr==null) {
-            JsonObject map = new JsonObject();
-            try (Transaction tx = db.beginTx()) {
-                for (Relationship r : GlobalGraphOperations.at(db).getAllRelationships()) {
-                    String gridId = (String) r.getProperty("grid_id");
-                    String chainId = (String) r.getProperty("chain_id");
-                    String key = gridId + "," + chainId;
-                    map.add(key, r.getId());
-                }
-                tx.success();
-            }
-            idMapStr = map.toString();
-        }
-        return idMapStr;
     }
 
     public static abstract class ReqExecutor {
@@ -193,17 +173,6 @@ public class TGraphSocketServer {
                     }else if("GC".equals(line)){
                         Runtime.getRuntime().gc();
                         System.out.println("client ask server gc.");
-                        continue;
-                    }else if(line.startsWith("TOPIC:")){
-                        String testTopic = line.substring(6);
-                        System.out.println("topic changed to "+ testTopic);
-                        toClient.println("Server code version:"+serverCodeVersion);
-                        continue;
-                    }else if("ID MAP".equals(line)){
-                        System.out.println("building id map...");
-                        String idMap = buildRoadIDMap(db);
-                        System.out.println("done. size:"+idMap.length()+" sending...");
-                        toClient.println(idMap);
                         continue;
                     }
                     time.mark("Wait", "Transaction");

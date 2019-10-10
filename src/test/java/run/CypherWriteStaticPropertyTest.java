@@ -3,6 +3,7 @@ package run;
 import org.act.tgraph.demo.Config;
 import org.act.tgraph.demo.vo.RuntimeEnv;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.IOException;
@@ -20,6 +21,7 @@ import java.util.concurrent.ExecutionException;
  *  Test Neo4j Server Cypher 'property set' performance.
  *  same as TCypherWriteTemporalPropertyTest but use different cypher queries.
  */
+@RunWith(Parameterized.class)
 public class CypherWriteStaticPropertyTest extends TCypherWriteTemporalPropertyTest{
     @Override
     protected String getTestName(){return "cs-write-S-prop";}
@@ -38,7 +40,7 @@ public class CypherWriteStaticPropertyTest extends TCypherWriteTemporalPropertyT
         });
     }
 
-    private CypherWriteStaticPropertyTest(int threadCnt, int queryPerTx, String serverHost, String dataFilePath, long totalDataSize) {
+    public CypherWriteStaticPropertyTest(int threadCnt, int queryPerTx, String serverHost, String dataFilePath, long totalDataSize) {
         super(threadCnt, queryPerTx, serverHost, dataFilePath, totalDataSize);
     }
 
@@ -66,13 +68,8 @@ public class CypherWriteStaticPropertyTest extends TCypherWriteTemporalPropertyT
         }
     }
 
-    @Test
-    public void run() throws InterruptedException, ParseException, IOException, ExecutionException {
-        runTest();
-    }
-
     @Override
-    protected String dataLines2tCypher(String dataFileName, List<String> lines, Map<String, Long> roadMap) throws ParseException {
+    protected String dataLines2Req(String dataFileName, List<String> lines, Map<String, Long> roadMap) throws ParseException {
         StringBuilder sb = new StringBuilder();
         for (String line : lines) {
             String[] arr = line.split(":");

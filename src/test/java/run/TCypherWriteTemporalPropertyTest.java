@@ -47,7 +47,7 @@ public class TCypherWriteTemporalPropertyTest {
     private String dataFilePath; // should be like '/media/song/test/data-set/beijing-traffic/TGraph/byday/100501'
     private long totalDataSize; // number of lines to read from data file.
 
-    TCypherWriteTemporalPropertyTest(int threadCnt, int queryPerTx, String serverHost, String dataFilePath, long totalDataSize){
+    public TCypherWriteTemporalPropertyTest(int threadCnt, int queryPerTx, String serverHost, String dataFilePath, long totalDataSize){
         this.threadCnt = threadCnt;
         this.queryPerTx = queryPerTx;
         this.serverHost = serverHost;
@@ -71,7 +71,7 @@ public class TCypherWriteTemporalPropertyTest {
         });
     }
 
-    static String getDataFilePath(String dataFileDir, String day) throws ParseException {
+    protected static String getDataFilePath(String dataFileDir, String day) throws ParseException {
         String fileName = new SimpleDateFormat("yyMMdd").format(new SimpleDateFormat("yyyy.MM.dd").parse(day));
         return new File(dataFileDir, fileName).getAbsolutePath();
     }
@@ -112,11 +112,11 @@ public class TCypherWriteTemporalPropertyTest {
         System.out.println("Total line send: " + totalDataSize);
         System.out.println("Data path: " + dataFilePath);
 
-        SimpleDateFormat ft = new SimpleDateFormat ("yyyyMMdd_HHmm");
         Client client = new Client( serverHost, threadCnt, 2000);
-        client.testName = getTestName() + ft.format(new Date());
+        client.testName = getTestName() +"-"+ new SimpleDateFormat ("yyyyMMdd_HHmm").format(new Date());
+        client.logSource = RuntimeEnv.getCurrentEnv().name();
 
-        String responseLine = client.addQuery("TOPIC:"+getTestName()).get();
+        String responseLine = client.addQuery("TOPIC:"+client.testName).get();
         if(responseLine.startsWith("Server code version:")) {
             String serverCodeVersion = responseLine.substring(20);
             String[] arr = serverCodeVersion.split("\\.");
@@ -151,12 +151,12 @@ public class TCypherWriteTemporalPropertyTest {
                     lineSendCnt++;
                     dataInOneTx.add(s);
                     if (dataInOneTx.size() == queryPerTx) {
-                        client.addQuery(dataLines2tCypher( dataFileName, dataInOneTx, roadMap));
+                        client.addQuery(dataLines2Req( dataFileName, dataInOneTx, roadMap));
                         dataInOneTx.clear();
                     }
                     if(lineSendCnt %400==0) System.out.println(lineSendCnt +" line read.");
                 }else{
-                    client.addQuery(dataLines2tCypher(dataFileName, dataInOneTx, roadMap));
+                    client.addQuery(dataLines2Req(dataFileName, dataInOneTx, roadMap));
                     dataInOneTx.clear();
                 }
             }
@@ -165,7 +165,7 @@ public class TCypherWriteTemporalPropertyTest {
         client.awaitTermination();
     }
 
-    protected String dataLines2tCypher(String dataFileName, List<String> lines, Map<String, Long> roadMap) throws ParseException {
+    protected String dataLines2Req(String dataFileName, List<String> lines, Map<String, Long> roadMap) throws ParseException {
         StringBuilder sb = new StringBuilder();
         for (String line : lines) {
             String[] arr = line.split(":");
@@ -183,7 +183,7 @@ public class TCypherWriteTemporalPropertyTest {
     }
 
     private SimpleDateFormat timeParser = new SimpleDateFormat("yyyyMMddHHmm");
-    int parseTime(String yearMonthDay, String hourAndMinute) throws ParseException {
+    protected int parseTime(String yearMonthDay, String hourAndMinute) throws ParseException {
         return Math.toIntExact(timeParser.parse("20"+yearMonthDay+hourAndMinute).getTime()/1000);
     }
 
