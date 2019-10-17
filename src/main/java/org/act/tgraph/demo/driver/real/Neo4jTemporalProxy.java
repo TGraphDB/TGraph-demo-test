@@ -1,14 +1,12 @@
 package org.act.tgraph.demo.driver.real;
 
 import org.act.temporalProperty.impl.InternalEntry;
-import org.act.temporalProperty.meta.ValueContentType;
 import org.act.tgraph.demo.driver.OperationProxy;
 import org.act.tgraph.demo.driver.simulation.Aggregator;
 import org.act.temporalProperty.util.Slice;
 
 import org.neo4j.graphdb.NotFoundException;
 import org.neo4j.graphdb.PropertyContainer;
-import org.neo4j.graphdb.TGraphNoImplementationException;
 import org.neo4j.temporal.TemporalRangeQuery;
 
 /**
@@ -21,7 +19,7 @@ public class Neo4jTemporalProxy implements OperationProxy
         return (String) container.getTemporalProperty(key, from, to, new TemporalRangeQuery() {
 
             @Override
-            public void setValueType( ValueContentType valueType )
+            public void setValueType(String valueType )
             {
                 //
             }
