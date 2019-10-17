@@ -33,31 +33,31 @@ import oshi.util.Util;
 public enum RuntimeEnv {
     sjh("develop environment",
             "Intel(R) Core(TM) i5-4570 CPU @ 3.20GHz",
-            3_600_000_000L,
+            "3.6 GHz",
             4,
-            25_177_100_288L,
+            "23.4 GiB",
             "GNU/Linux Ubuntu 18.04.3 LTS (Bionic Beaver) build 5.0.0-29-generic (64 bits)",
             "Java(TM) SE Runtime Environment (1.8.0_131-b11) Java HotSpot(TM) 64-Bit Server VM (25.131-b11)", Config.sjh),
     zh("zhangh workstation",
             "Intel(R) Xeon(R) CPU E5-2650 v3 @ 2.30GHz",
-            2_300_000_000L,
+            "2.3 GHz",
             20,
-            68_503_519_232L,
+            "68_503_519_232L",
             "Microsoft Windows 10 build 17763 (64 bits)",
             "Java(TM) SE Runtime Environment (1.8.0_202-b08) Java HotSpot(TM) 64-Bit Server VM (25.202-b08)", Config.zhangh),
     unknown();
 
 
     final String cpu;
-    final long cpuFreq;
+    final String cpuFreq;
     final int numOfPhysicalCores;
-    final long physicalMem;
+    final String physicalMem;
     final String description;
     final String os;
     final String jvm;
     final Config config;
 
-    RuntimeEnv(String description, String cpu, long cpuFreq, int numOfPhysicalCores, long physicalMem, String os, String jvm, Config config) {
+    RuntimeEnv(String description, String cpu, String cpuFreq, int numOfPhysicalCores, String physicalMem, String os, String jvm, Config config) {
         this.cpu = cpu;
         this.cpuFreq = cpuFreq;
         this.numOfPhysicalCores = numOfPhysicalCores;
@@ -73,9 +73,9 @@ public enum RuntimeEnv {
         HardwareAbstractionLayer hal = si.getHardware();
         OperatingSystem os = si.getOperatingSystem();
         this.cpu = hal.getProcessor().toString();
-        this.cpuFreq = hal.getProcessor().getMaxFreq();
+        this.cpuFreq = FormatUtil.formatHertz(hal.getProcessor().getMaxFreq());
         this.numOfPhysicalCores = hal.getProcessor().getPhysicalProcessorCount();
-        this.physicalMem = hal.getMemory().getTotal();
+        this.physicalMem = FormatUtil.formatBytes(hal.getMemory().getTotal());
         this.os = os.getManufacturer() +' '+ os.getFamily() +' '+ os.getVersion().toString() +" ("+ os.getBitness()+" bits)";
         this.jvm = System.getProperty("java.runtime.name") +" ("+ System.getProperty("java.runtime.version")+") "+
                 System.getProperty("java.vm.name")+" ("+ System.getProperty("java.vm.version")+")";
@@ -89,7 +89,7 @@ public enum RuntimeEnv {
             for (RuntimeEnv env : RuntimeEnv.values()) {
                 if (env != unknown &&
                         Objects.equals(env.cpu, unknown.cpu) &&
-                        env.physicalMem == unknown.physicalMem &&
+                        Objects.equals(env.physicalMem, unknown.physicalMem) &&
                         env.numOfPhysicalCores == unknown.numOfPhysicalCores &&
                         Objects.equals(env.jvm, unknown.jvm)
                 ) {
@@ -98,6 +98,7 @@ public enum RuntimeEnv {
                 }
             }
             currentEnv = unknown;
+            System.out.println(unknown);
             return unknown;
         }else{
             return currentEnv;
@@ -110,7 +111,7 @@ public enum RuntimeEnv {
 
     public static void main(String[] args) {
         System.out.println(); //sun.arch.data.model  java.runtime.name
-        System.out.println(RuntimeEnv.unknown.detail());
+        System.out.println(RuntimeEnv.unknown);
     }
 
     @Override
@@ -119,24 +120,11 @@ public enum RuntimeEnv {
         sb.append(name())
                 .append("[").append(cpu).append("]")
                 .append("[").append(numOfPhysicalCores).append(" Physical Cores]")
-                .append("[MaxCPUFreq: ").append(FormatUtil.formatHertz(cpuFreq)).append("]")
-                .append("[Mem: ").append(FormatUtil.formatBytes(physicalMem)).append("]")
+                .append("[MaxCPUFreq: ").append(cpuFreq).append("]")
+                .append("[Mem: ").append(physicalMem).append("]")
                 .append("[OS: ").append(os).append("]")
                 .append("[JVM: ").append(jvm).append("]")
                 .append("[").append(description).append("]");
-        return sb.toString();
-    }
-
-    public String detail(){
-        StringBuilder sb = new StringBuilder();
-        sb.append(name()).append(":\n")
-                .append("CPU[").append(cpu).append("]").append('\n')
-                .append("Number of Physical Cores[").append(numOfPhysicalCores).append("]").append('\n')
-                .append("Max CPU Frequency[").append(cpuFreq).append("]").append('\n')
-                .append("Physical Memory[").append(physicalMem).append("]").append('\n')
-                .append("OS[").append(os).append("]").append('\n')
-                .append("JVM[").append(jvm).append("]").append('\n')
-                .append("Description[").append(description).append("]");
         return sb.toString();
     }
 
