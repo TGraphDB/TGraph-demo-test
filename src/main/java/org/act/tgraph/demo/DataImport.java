@@ -8,6 +8,7 @@ import org.act.tgraph.demo.vo.RoadChain;
 import org.act.tgraph.demo.vo.TemporalStatus;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
+import org.neo4j.temporal.TimePoint;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 import org.slf4j.Logger;
@@ -78,17 +79,17 @@ public class DataImport {
                         if (roadChain.getInNum() > 0 || roadChain.getOutNum() > 0) {
                             Relationship relationship = roadChain.getRelationship(db);
                             if (relationship != null) {
-                                relationship.setTemporalProperty("travel-time", time, temporalStatus.getTravelTime());
-                                relationship.setTemporalProperty("full-status", time, temporalStatus.getFullStatus());
-                                relationship.setTemporalProperty("vehicle-count", time, temporalStatus.getVehicleCount());
-                                relationship.setTemporalProperty("segment-count", time, temporalStatus.getSegmentCount());
+                                relationship.setTemporalProperty("travel-time", new TimePoint(time), temporalStatus.getTravelTime());
+                                relationship.setTemporalProperty("full-status", new TimePoint(time), temporalStatus.getFullStatus());
+                                relationship.setTemporalProperty("vehicle-count", new TimePoint(time), temporalStatus.getVehicleCount());
+                                relationship.setTemporalProperty("segment-count", new TimePoint(time), temporalStatus.getSegmentCount());
                                 int minT = (Integer) relationship.getProperty("min-time");
                                 int maxT = (Integer) relationship.getProperty("max-time");
                                 int dataCount = (Integer) relationship.getProperty("data-count");
                                 if(minT>time) relationship.setProperty("min-time",time);
                                 if(maxT<time) relationship.setProperty("max-time",time);
                                 relationship.setProperty("data-count",dataCount+1);
-                                relationship.setTemporalProperty("temporal-point", dataCount+1, time);
+                                relationship.setTemporalProperty("temporal-point", new TimePoint(dataCount+1), time);
                             } else {
                                 System.out.println(roadChain);
                             }
@@ -211,7 +212,7 @@ public class DataImport {
 
                     boolean hasData=false;
                     for(int i=1288541160+40;i<1289231700+100;i+=3600*24){
-                        if(r.getTemporalProperty("vehicle-count",i)!=null){
+                        if(r.getTemporalProperty("vehicle-count",new TimePoint(i))!=null){
                             hasData=true;break;
                         }
                     }

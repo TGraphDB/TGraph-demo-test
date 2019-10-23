@@ -7,6 +7,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
+import org.neo4j.temporal.TimePoint;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 import org.slf4j.Logger;
@@ -140,7 +141,7 @@ public class TimeDependentDijkstraShortestPath {
                 for(Relationship r : node.getRelationships()){
                     Node neighbor = r.getOtherNode(node);
 //                    logger.info(r.getDynPropertyPointValue("travel-time", g));
-                    Object travelTimeObj = r.getTemporalProperty("travel-time", g);
+                    Object travelTimeObj = r.getTemporalProperty("travel-time", new TimePoint(g));
                     int travelTime;
                     if(travelTimeObj!=null) {
                         travelTime = (Integer) travelTimeObj;

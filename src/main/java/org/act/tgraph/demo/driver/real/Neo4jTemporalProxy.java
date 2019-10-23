@@ -8,6 +8,7 @@ import org.act.temporalProperty.util.Slice;
 import org.neo4j.graphdb.NotFoundException;
 import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.temporal.TemporalRangeQuery;
+import org.neo4j.temporal.TimePoint;
 
 /**
  * Created by song on 16-2-23.
@@ -16,7 +17,7 @@ public class Neo4jTemporalProxy implements OperationProxy
 {
     @Override
     public String getAggregate(PropertyContainer container, String key, final int from, int to, Aggregator aggregator) {
-        return (String) container.getTemporalProperty(key, from, to, new TemporalRangeQuery() {
+        return (String) container.getTemporalProperty(key, new TimePoint(from), new TimePoint(to), new TemporalRangeQuery() {
 
             @Override
             public void setValueType(String valueType )
@@ -46,7 +47,7 @@ public class Neo4jTemporalProxy implements OperationProxy
     @Override
     public String get(PropertyContainer container, String key, int time) {
         try {
-            return ""+container.getTemporalProperty(key,time);
+            return ""+container.getTemporalProperty(key, new TimePoint(time));
         }catch (NotFoundException e) {
             if (e.getMessage().contains("Dynamic property not exist!")) {
 //                System.out.println("property["+key+"] not exist.ignore");
@@ -62,7 +63,7 @@ public class Neo4jTemporalProxy implements OperationProxy
     @Override
     public void set(PropertyContainer pContainer, String key, int time, Object value) {
         try {
-            pContainer.setTemporalProperty(key, time, value);
+            pContainer.setTemporalProperty(key, new TimePoint(time), value);
         }catch (NotFoundException e) {
 
         }

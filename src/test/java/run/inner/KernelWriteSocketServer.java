@@ -6,6 +6,7 @@ import org.act.tgraph.demo.vo.RuntimeEnv;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.temporal.TimePoint;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 import java.io.IOException;
@@ -69,10 +70,10 @@ public class KernelWriteSocketServer {
                         long roadId = Long.parseLong(arr[0]);
                         int time = Integer.parseInt(arr[1]);
                         Relationship r = idMap.get(roadId);
-                        r.setTemporalProperty("travel_time", time, Long.parseLong(arr[2]));
-                        r.setTemporalProperty("full_status", time, Long.parseLong(arr[3]));
-                        r.setTemporalProperty("vehicle_count", time, Long.parseLong(arr[4]));
-                        r.setTemporalProperty("segment_count", time, Long.parseLong(arr[5]));
+                        r.setTemporalProperty("travel_time", TimePoint.unixMilli(time), Long.parseLong(arr[2]));
+                        r.setTemporalProperty("full_status", TimePoint.unixMilli(time), Long.parseLong(arr[3]));
+                        r.setTemporalProperty("vehicle_count", TimePoint.unixMilli(time), Long.parseLong(arr[4]));
+                        r.setTemporalProperty("segment_count", TimePoint.unixMilli(time), Long.parseLong(arr[5]));
                     }
                     tx.success();
                 }

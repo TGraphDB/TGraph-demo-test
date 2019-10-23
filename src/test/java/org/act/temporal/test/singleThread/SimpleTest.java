@@ -14,6 +14,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
+import org.neo4j.temporal.TimePoint;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 import java.io.ByteArrayOutputStream;
@@ -199,10 +200,10 @@ public class SimpleTest {
         try (Transaction tx = config.db.beginTx()) {
             for(Relationship r: GlobalGraphOperations.at(config.db).getAllRelationships()){
                 long id = r.getId();
-                Integer v1 = (Integer) r.getTemporalProperty("travel-time",1011082355);
-                Integer v2 = (Integer) r.getTemporalProperty("full-status",1011082355);
-                Integer v3 = (Integer) r.getTemporalProperty("vehicle-count",1011082355);
-                Integer v4 = (Integer) r.getTemporalProperty("segment-count",1011082355);
+                Integer v1 = (Integer) r.getTemporalProperty("travel-time",new TimePoint(1011082355));
+                Integer v2 = (Integer) r.getTemporalProperty("full-status",new TimePoint(1011082355));
+                Integer v3 = (Integer) r.getTemporalProperty("vehicle-count",new TimePoint(1011082355));
+                Integer v4 = (Integer) r.getTemporalProperty("segment-count",new TimePoint(1011082355));
 
                 if(v1==null && v2==null && v3==null && v4==null){
                     nulCount++;

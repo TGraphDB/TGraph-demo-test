@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.schema.IndexDefinition;
+import org.neo4j.temporal.TimePoint;
 
 /**
  * Created by song on 2018-07-26.
@@ -44,17 +45,17 @@ public class TCypherFunctionTest
             // CREATE ({name:'my node',tp:TV(1~4:16, 5~8:9, 12~2010:3)})
             // match (n{name:'my node'}) set n.tp = TV(1~4:16, 5~8:9,12~2010:3)
             db.execute( "match (n{name:'my node'}) set n.tp = TV(1~4:16, 5~8:9, 12~2010:3)" );//
-            myNode.setTemporalProperty( "hehe", 1, 30, "A" );
-            myNode.setTemporalProperty( "haha", 1, 30, 1 );
+            myNode.setTemporalProperty( "hehe", new TimePoint(1), new TimePoint(30), "A" );
+            myNode.setTemporalProperty( "haha", new TimePoint(1), new TimePoint(30), 1 );
             tx.success();
         }
 
         try (Transaction tx = db.beginTx()){
             for (Node node: db.getAllNodes()){
-                node.setTemporalProperty( "haha", 20, 44, 2 );
-                Object tv1 = node.getTemporalProperty( "tp", 4 );
-                Object tv2 = node.getTemporalProperty( "hehe", 24 );
-                Object tv3 = node.getTemporalProperty( "haha", 24 );
+                node.setTemporalProperty( "haha", new TimePoint(20), new TimePoint(44), 2 );
+                Object tv1 = node.getTemporalProperty( "tp", new TimePoint(4) );
+                Object tv2 = node.getTemporalProperty( "hehe", new TimePoint(24) );
+                Object tv3 = node.getTemporalProperty( "haha", new TimePoint(24) );
                 Object v = node.getProperty( "name" );
                 System.out.println(node.getId()+" "+tv1+" "+tv2+" "+tv3+" "+v);
             }
@@ -90,7 +91,7 @@ public class TCypherFunctionTest
         try(Transaction tx = db.beginTx()){
             Node n = db.createNode();
             nodeId = n.getId();
-            n.setTemporalProperty("travel_time", 0, 0);
+            n.setTemporalProperty("travel_time", new TimePoint(0), 0);
             tx.success();
         }
 
@@ -126,7 +127,7 @@ public class TCypherFunctionTest
 
         try(Transaction tx = db.beginTx()){
             for(int t : Arrays.asList(0, 10, 20, 30, 40)){
-                Object o = db.getNodeById(nodeId).getTemporalProperty("travel_time", t);
+                Object o = db.getNodeById(nodeId).getTemporalProperty("travel_time", new TimePoint(t));
                 System.out.println(o);
             }
             tx.success();
@@ -235,10 +236,10 @@ public class TCypherFunctionTest
             for(int i=0;i<10;i++)
             {
                 Node myNode = db.createNode( label );
-                db.temporalIndex().nodeQueryValueIndex( 0, 3 ).propertyValRange( "hehe", 0, 4 ).query();
+                db.temporalIndex().nodeQueryValueIndex( new TimePoint(0), new TimePoint(3) ).propertyValRange( "hehe", 0, 4 ).query();
                 myNode.setProperty( "name", "neo4j"+i );
-                myNode.setTemporalProperty( "tp", 1, 4, i );
-                myNode.setTemporalProperty( "tp", 6, 8, i );
+                myNode.setTemporalProperty( "tp", new TimePoint(1), new TimePoint(4), i );
+                myNode.setTemporalProperty( "tp", new TimePoint(6), new TimePoint(8), i );
             }
             tx.success();
         }
@@ -300,8 +301,8 @@ public class TCypherFunctionTest
             {
                 Node myNode = db.createNode( label );
                 myNode.setProperty( "name", "neo4j"+i );
-                myNode.setTemporalProperty( "tp", 1, 4, i );
-                myNode.setTemporalProperty( "tp", 6, 8, i );
+                myNode.setTemporalProperty( "tp", new TimePoint(1), new TimePoint(4), i );
+                myNode.setTemporalProperty( "tp", new TimePoint(6), new TimePoint(8), i );
             }
             tx.success();
         }

@@ -97,8 +97,9 @@ public class Config extends JsonObject{
 
     public static Config sjh = new Config();
     static {
+        sjh.dbPath = "/media/song/test/db-network-only";
         sjh.add("dir_data_file_by_day", "/media/song/test/data-set/beijing-traffic/TGraph/byday");
-        sjh.add("server_host", "192.168.1.141");
+        sjh.add("server_host", "localhost"); //192.168.1.141
     }
 
     public static Config zhangh = new Config();
