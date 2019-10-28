@@ -42,7 +42,7 @@ public enum RuntimeEnv {
             "Intel(R) Xeon(R) CPU E5-2650 v3 @ 2.30GHz",
             "2.3 GHz",
             20,
-            "63.8 Gib",
+            "63.8 GiB",
             "Microsoft Windows 10 build 17763 (64 bits)",
             "Java(TM) SE Runtime Environment (1.8.0_202-b08) Java HotSpot(TM) 64-Bit Server VM (25.202-b08)", Config.zhangh),
     unknown();
