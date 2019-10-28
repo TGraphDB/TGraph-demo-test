@@ -26,11 +26,22 @@ public class KernelWriteTemporalPropertyTest extends TCypherWriteTemporalPropert
         System.out.println("current runtime env: "+ RuntimeEnv.getCurrentEnv().name());
 
         String serverHost = config.get("server_host").asString();
-        int totalDataSize = 60_0000;
+        int totalDataSize = 200_0000;
         String dataFileDir = config.get("dir_data_file_by_day").asString();
 
         return Arrays.asList(new Object[][] {
-                { 20, 100, serverHost, getDataFilePath(dataFileDir, "2010.05.01"), totalDataSize }
+                { 18, 10, serverHost, getDataFilePath(dataFileDir, "2010.05.01"), totalDataSize },
+                { 18, 50, serverHost, getDataFilePath(dataFileDir, "2010.05.02"), totalDataSize },
+                { 18, 100, serverHost, getDataFilePath(dataFileDir, "2010.05.03"), totalDataSize },
+                { 9, 10, serverHost, getDataFilePath(dataFileDir, "2010.05.04"), totalDataSize },
+                { 9, 50, serverHost, getDataFilePath(dataFileDir, "2010.05.05"), totalDataSize },
+                { 9, 100, serverHost, getDataFilePath(dataFileDir, "2010.05.06"), totalDataSize },
+                { 3, 10, serverHost, getDataFilePath(dataFileDir, "2010.05.07"), totalDataSize },
+                { 3, 50, serverHost, getDataFilePath(dataFileDir, "2010.05.08"), totalDataSize },
+                { 3, 100, serverHost, getDataFilePath(dataFileDir, "2010.05.09"), totalDataSize },
+                { 1, 10, serverHost, getDataFilePath(dataFileDir, "2010.05.10"), totalDataSize },
+                { 1, 50, serverHost, getDataFilePath(dataFileDir, "2010.05.11"), totalDataSize },
+                { 1, 100, serverHost, getDataFilePath(dataFileDir, "2010.05.12"), totalDataSize }
         });
     }
 

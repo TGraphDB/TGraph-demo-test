@@ -227,13 +227,13 @@ public class TCypherWriteTemporalPropertyTest {
             log.PushBack("v_disk_write", String.valueOf(result.get("s_disk_write").asLong()));
             logger.send("tgraph-demo-test", "tgraph-log", testName, logSource, log);
 
-            // log result content;
-            LogItem resultLog = new LogItem();
-            resultLog.PushBack("type", "result");
-            resultLog.PushBack("c_send_tE", String.valueOf(timeMonitor.endT("Send query")));
-            resultLog.PushBack("c_thread", "T." + Thread.currentThread().getId());
-            resultLog.PushBack("s_result_content", resultContent);
-            logger.send("tgraph-demo-test", "tgraph-log", testName, logSource, resultLog);
+//            // log result content;
+//            LogItem resultLog = new LogItem();
+//            resultLog.PushBack("type", "result");
+//            resultLog.PushBack("c_send_tE", String.valueOf(timeMonitor.endT("Send query")));
+//            resultLog.PushBack("c_thread", "T." + Thread.currentThread().getId());
+//            resultLog.PushBack("s_result_content", resultContent);
+//            logger.send("tgraph-demo-test", "tgraph-log", testName, logSource, resultLog);
             return resultContent;
         }
     }
