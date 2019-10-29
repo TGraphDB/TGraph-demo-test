@@ -20,6 +20,7 @@ import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.temporal.TimePoint;
+import org.neo4j.tooling.GlobalGraphOperations;
 
 /**
  * Created by song on 2018-07-26.
@@ -31,7 +32,7 @@ public class TCypherFunctionTest
     {
         GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase( new File( System.getProperty( "java.io.tmpdir" ), "TGRAPH-db" ) );
         try (Transaction tx = db.beginTx()){
-            for (Node node: db.getAllNodes()){
+            for (Node node: GlobalGraphOperations.at(db).getAllNodes()){
                 node.delete();
             }
             tx.success();
@@ -51,7 +52,7 @@ public class TCypherFunctionTest
         }
 
         try (Transaction tx = db.beginTx()){
-            for (Node node: db.getAllNodes()){
+            for (Node node: GlobalGraphOperations.at(db).getAllNodes()){
                 node.setTemporalProperty( "haha", new TimePoint(20), new TimePoint(44), 2 );
                 Object tv1 = node.getTemporalProperty( "tp", new TimePoint(4) );
                 Object tv2 = node.getTemporalProperty( "hehe", new TimePoint(24) );
