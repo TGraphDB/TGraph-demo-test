@@ -206,7 +206,7 @@ public class TCypherFunctionTest
     {
         GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase( new File( System.getProperty( "java.io.tmpdir" ), "TGRAPH-db" ) );
         try (Transaction tx = db.beginTx()){
-            for (Node node: db.getAllNodes()){
+            for (Node node: GlobalGraphOperations.at(db).getAllNodes()){
                 node.delete();
             }
             tx.success();
@@ -289,7 +289,7 @@ public class TCypherFunctionTest
     {
         GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase( new File( System.getProperty( "java.io.tmpdir" ), "TGRAPH-db" ) );
         try (Transaction tx = db.beginTx()){
-            for (Node node: db.getAllNodes()){
+            for (Node node: GlobalGraphOperations.at(db).getAllNodes()){
                 node.delete();
             }
             tx.success();
