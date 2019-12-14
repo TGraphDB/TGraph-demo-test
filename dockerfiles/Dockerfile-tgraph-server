@@ -1,0 +1,12 @@
+FROM paulosalgado/oracle-java8-ubuntu-16:latest
+MAINTAINER Jinghe Song <songjh@act.buaa.edu.cn>
+
+ENV MAVEN_OPTS '-Xmx512m'
+
+EXPOSE 7474
+RUN mkdir -p /tmp/build
+WORKDIR /tmp/build
+
+RUN git clone --depth=1 https://github.com/TGraphDB/temporal-neo4j.git -b master --single-branch
+WORKDIR /tmp/build/neo4j
+RUN mvn -B install -Dmaven.test.skip=true -Dlicense.skip=true -Dlicensing.skip=true

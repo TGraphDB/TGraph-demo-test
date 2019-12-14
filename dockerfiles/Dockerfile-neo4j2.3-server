@@ -1,0 +1,33 @@
+FROM paulosalgado/oracle-java8-ubuntu-16:latest
+MAINTAINER Jinghe Song <songjh@act.buaa.edu.cn>
+
+
+EXPOSE 7474
+RUN mkdir -p /tmp/build
+WORKDIR /tmp/build
+
+RUN git clone --depth=1 https://github.com/TGraphDB/temporal-neo4j.git -b master --single-branch
+WORKDIR /tmp/build/neo4j
+ENV MAVEN_OPTS '-Xmx512m'
+RUN mvn -B install -Dmaven.test.skip=true -Dlicense.skip=true -Dlicensing.skip=true
+RUN sed -i 's/daily/never/g' /usr/share/maven/conf/settings.xml
+
+
+
+
+
+EXPOSE 7474
+RUN mkdir -p /opt/neo4j
+WORKDIR /opt/neo4j
+RUN git clone --depth=1 https://github.com/neo4j/neo4j.git -b 3.2 --single-branch
+WORKDIR /opt/neo4j/neo4j
+RUN mvn -B install -DskipTests -Dlicense.skip=true -Dlicensing.skip
+# RUN mvn -B clean install -DminimalBuild -Dlicense.skip=true -Dlicensing.skip
+WORKDIR /opt/neo4j/neo4j/community/server
+CMD ['mvn', 'clean', 'compile', 'exec:java']
+WORKDIR  /tmp/build/neo4j/packaging/standalone/target
+RUN ls
+RUN bash tar -xf neo4j-community-*-unix.tar.gz -C /opt  &&  mv /opt/neo4j-community-* /opt/neo4j && rm -rf /tmp/build
+RUN echo 'dbms.connectors.default_listen_address=0.0.0.0' >> /opt/neo4j/conf/neo4j.conf
+ENTRYPOINT /bin/bash
+CMD [ "/opt/neo4j/bin/neo4j",  "start" ]
