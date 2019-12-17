@@ -12,12 +12,12 @@ RUN git clone --depth=1 https://github.com/TGraphDB/TGraph-demo-test.git -b mast
 
 WORKDIR /tgraph/temporal-storage
 # RUN mvn -B dependency:resolve
-RUN mvn -B install -Dmaven.test.skip=true && \
-    cd /tgraph/temporal-neo4j && \
-    mvn -B install -DskipTests -Dlicense.skip=true -Dlicensing.skip=true -pl org.neo4j:neo4j-cypher -am && \
-    cd /tgraph/TGraph-demo-test && \
-    mvn -B install -DskipTests
+RUN mvn -B install -Dmaven.test.skip=true
 
-VOLUME /tgraph
+WORKDIR /tgraph/temporal-neo4j
+RUN mvn -B install -DskipTests -Dlicense.skip=true -Dlicensing.skip=true -pl org.neo4j:neo4j-cypher -am
+
+WORKDIR /tgraph/TGraph-demo-test
+RUN mvn -B install -DskipTests
 
 ENTRYPOINT /bin/bash
