@@ -16,5 +16,9 @@ RUN wget -q "https://archive.apache.org/dist/maven/maven-3/$MAVEN_VERSION/binari
   && ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
 ENV MAVEN_HOME /usr/share/maven
 COPY maven-settings.xml /usr/share/maven/conf/settings.xml
-ENV MAVEN_OPTS '-Xmx512m -XX:MaxPermSize=256m'
-VOLUME /root/.m2
+# ENV MAVEN_OPTS '-Xmx512m'
+
+RUN mkdir -p /maven
+VOLUME /maven
+
+ENTRYPOINT /bin/bash

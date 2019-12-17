@@ -3,22 +3,23 @@ MAINTAINER Jinghe Song <songjh@act.buaa.edu.cn>
 
 # cache TGraph source code & maven packages & built java classes and jars
 
-RUN mkdir -p /tgraph-source
-WORKDIR /tgraph-source
+RUN mkdir -p /tgraph
+WORKDIR /tgraph
 
 RUN git clone --depth=1 https://github.com/TGraphDB/temporal-storage.git -b TGraph2.3latest --single-branch
 RUN git clone --depth=1 https://github.com/TGraphDB/temporal-neo4j.git -b TGraph2.3latest --single-branch
 RUN git clone --depth=1 https://github.com/TGraphDB/TGraph-demo-test.git -b master --single-branch
 
-WORKDIR /tgraph-source/temporal-storage
+WORKDIR /tgraph/temporal-storage
 # RUN mvn -B dependency:resolve
 RUN mvn -B install -Dmaven.test.skip=true
 
-WORKDIR /tgraph-source/temporal-neo4j
+WORKDIR /tgraph/temporal-neo4j
 RUN mvn -B install -DskipTests -Dlicense.skip=true -Dlicensing.skip=true -pl org.neo4j:neo4j-cypher -am
 
-WORKDIR /tgraph-source/TGraph-demo-test
+WORKDIR /tgraph/TGraph-demo-test
 RUN mvn -B install -DskipTests
 
-VOLUME /root/.m2
-VOLUME /tgraph-source
+VOLUME /tgraph
+
+ENTRYPOINT /bin/bash
