@@ -1,6 +1,6 @@
 package org.act.temporal.test.multiThread;
 
-import org.act.tgraph.demo.Config;
+import org.act.tgraph.demo.client.Config;
 import org.act.temporal.test.multiThread.clients.Client;
 import org.act.temporal.test.multiThread.clients.ReadPointClient;
 import org.act.temporal.test.multiThread.clients.ReadRangeAggregateClient;

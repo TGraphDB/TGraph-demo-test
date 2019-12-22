@@ -1,8 +1,7 @@
 package run;
 
-import org.act.tgraph.demo.Config;
-import org.act.tgraph.demo.vo.RuntimeEnv;
-import org.junit.Test;
+import org.act.tgraph.demo.client.Config;
+import org.act.tgraph.demo.client.vo.RuntimeEnv;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 

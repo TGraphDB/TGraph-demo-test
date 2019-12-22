@@ -1,8 +1,8 @@
 package run.inner;
 
 
-import org.act.tgraph.demo.Config;
-import org.act.tgraph.demo.vo.RuntimeEnv;
+import org.act.tgraph.demo.client.Config;
+import org.act.tgraph.demo.client.vo.RuntimeEnv;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import run.TCypherWriteTemporalPropertyTest;

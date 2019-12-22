@@ -1,7 +1,7 @@
 package org.act.temporal.test.multiThread.clients;
 
-import org.act.tgraph.demo.vo.RoadChain;
-import org.act.tgraph.demo.vo.TemporalStatus;
+import org.act.tgraph.demo.client.vo.RoadChain;
+import org.act.tgraph.demo.client.vo.TemporalStatus;
 import org.act.temporal.test.utils.Helper;
 import org.act.temporal.test.vo.Line;
 

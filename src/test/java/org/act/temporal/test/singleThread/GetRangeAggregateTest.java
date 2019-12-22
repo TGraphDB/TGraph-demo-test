@@ -1,8 +1,8 @@
 package org.act.temporal.test.singleThread;
 
-import org.act.tgraph.demo.driver.OperationProxy;
-import org.act.tgraph.demo.driver.simulation.Aggregator;
-import org.act.tgraph.demo.Config;
+import org.act.tgraph.demo.client.driver.OperationProxy;
+import org.act.tgraph.demo.client.driver.neo4j.Aggregator;
+import org.act.tgraph.demo.client.Config;
 import org.act.temporal.test.utils.Helper;
 import org.act.temporal.test.utils.Monitor;
 import org.junit.After;

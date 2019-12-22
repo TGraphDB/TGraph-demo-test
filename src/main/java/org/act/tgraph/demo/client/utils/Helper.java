@@ -1,9 +1,10 @@
-package org.act.temporal.test.utils;
+package org.act.tgraph.demo.client.utils;
 
 import org.act.tgraph.demo.client.Config;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 
 /**
@@ -81,8 +82,8 @@ public class Helper {
         return new int[]{start,end};
     }
 
-    public static int getFileTime(File file){
-        return Integer.parseInt(file.getName().substring(10, 21));
+    public static int getFileTimeStamp(File file){
+        return timeStr2int(file.getName().substring(9, 21));
     }
 
     public static void deleteExistDB(Config config){
@@ -102,6 +103,38 @@ public class Helper {
             hexChars[j * 2 + 1] = hexArray[v & 0x0F];
         }
         return new String(hexChars);
+    }
+
+    public static int timeStr2int(String tStr){
+        String yearStr = tStr.substring(0,4);
+        String monthStr = tStr.substring(4,6);
+        String dayStr = tStr.substring(6,8);
+        String hourStr = tStr.substring(8,10);
+        String minuteStr = tStr.substring(10, 12);
+//        System.out.println(yearStr+" "+monthStr+" "+dayStr+" "+hourStr+" "+minuteStr);
+        int year = Integer.parseInt(yearStr);
+        int month = Integer.parseInt(monthStr)-1;//month count from 0 to 11, no 12
+        int day = Integer.parseInt(dayStr);
+        int hour = Integer.parseInt(hourStr);
+        int minute = Integer.parseInt(minuteStr);
+//        System.out.println(year+" "+month+" "+day+" "+hour+" "+minute);
+        Calendar ca= Calendar.getInstance();
+        ca.set(year, month, day, hour, minute, 0); //seconds set to 0
+        long timestamp = ca.getTimeInMillis();
+//        System.out.println(timestamp);
+        if(timestamp/1000<Integer.MAX_VALUE){
+            return (int) (timestamp/1000);
+        }else {
+            throw new RuntimeException("timestamp larger than Integer.MAX_VALUE, this should not happen");
+        }
+    }
+
+    public static String timeStamp2String(final int timestamp){
+        Calendar ca= Calendar.getInstance();
+        ca.setTimeInMillis(((long) timestamp) * 1000);
+        return ca.get(Calendar.YEAR)+"-"+(ca.get(Calendar.MONTH)+1)+"-"+ca.get(Calendar.DAY_OF_MONTH)+" "+
+                String.format("%02d", ca.get(Calendar.HOUR_OF_DAY))+":"+
+                String.format("%02d", ca.get(Calendar.MINUTE));
     }
 }
 

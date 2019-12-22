@@ -1,11 +1,10 @@
 package org.act.temporal.test.singleThread;
 
-import org.act.tgraph.demo.driver.OperationProxy;
-import org.act.tgraph.demo.driver.simulation.TreeMapKVSimulationProxy;
-import org.act.tgraph.demo.vo.RelType;
-import org.act.tgraph.demo.Config;
-import org.act.tgraph.demo.driver.simulation.Aggregator;
-import org.act.tgraph.demo.driver.simulation.ArraySimulationProxy;
+import org.act.tgraph.demo.client.driver.OperationProxy;
+import org.act.tgraph.demo.client.vo.RelType;
+import org.act.tgraph.demo.client.Config;
+import org.act.tgraph.demo.client.driver.neo4j.Aggregator;
+import org.act.tgraph.demo.client.driver.neo4j.ArraySimulationProxy;
 import org.act.temporal.test.utils.DataImportor;
 import org.act.temporal.test.utils.Helper;
 import org.junit.After;
