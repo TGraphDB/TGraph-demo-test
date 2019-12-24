@@ -1,4 +1,4 @@
-package org.act.tgraph.demo.client.algo;
+package org.act.tgraph.demo.algo;
 
 import org.act.tgraph.demo.client.Config;
 import org.act.tgraph.demo.client.utils.TransactionWrapper;

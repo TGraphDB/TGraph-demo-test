@@ -1,4 +1,4 @@
-package org.act.tgraph.demo.client.algo;
+package org.act.tgraph.demo.algo;
 
 import com.google.common.collect.Lists;
 import org.act.tgraph.demo.client.Config;
