@@ -1,4 +1,4 @@
-package org.act.tgraph.demo.client.utils;
+package org.act.tgraph.demo.utils;
 
 
 import com.aliyun.openservices.aliyun.log.producer.Producer;

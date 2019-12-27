@@ -1,7 +1,7 @@
 package org.act.tgraph.demo.server;
 
 import com.eclipsesource.json.JsonObject;
-import org.act.tgraph.demo.client.utils.TGraphSocketServer;
+import org.act.tgraph.demo.utils.TGraphSocketServer;
 import org.act.tgraph.demo.client.vo.RuntimeEnv;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Result;

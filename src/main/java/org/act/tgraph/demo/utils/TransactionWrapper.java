@@ -1,4 +1,4 @@
-package org.act.tgraph.demo.client.utils;
+package org.act.tgraph.demo.utils;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;

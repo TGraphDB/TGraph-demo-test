@@ -1,4 +1,4 @@
-package org.act.tgraph.demo.client.utils;
+package org.act.tgraph.demo.utils;
 
 import com.eclipsesource.json.JsonObject;
 import com.sun.management.OperatingSystemMXBean;

@@ -1,4 +1,4 @@
-package org.act.tgraph.demo.client.utils;
+package org.act.tgraph.demo.utils;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
@@ -36,7 +36,7 @@ public class DataDownloader
             "20101108.tar.gz" };
     private static long[] fileSize = new long[]{67805801};
 
-    private static File download( String url, File out ) throws IOException {
+    public static File download( String url, File out ) throws IOException {
         if(out.exists() && out.isFile()){
             return out;
         }
@@ -47,13 +47,19 @@ public class DataDownloader
         return out;
     }
 
+
+    public static File decompressGZip( File input, File outFile ) throws IOException {
+        try (GzipCompressorInputStream in = new GzipCompressorInputStream(new FileInputStream(input))){
+            IOUtils.copy(in, new FileOutputStream(outFile));
+        }
+        return outFile;
+    }
+
     /**
-     * Tar文件解压方法
+     * Tar.gz文件解压方法
      *
-     * @param input
-     *            要解压的压缩文件名称（绝对路径名称）
-     * @param targetDir
-     *            解压后文件放置的路径名（绝对路径名称）
+     * @param input 要解压的压缩文件名称（绝对路径名称）
+     * @param targetDir 解压后文件放置的路径名（绝对路径名称）
      * @return 解压出的文件列表
      */
     private static List<File> decompressTarGZip( File input, File targetDir ) throws IOException {

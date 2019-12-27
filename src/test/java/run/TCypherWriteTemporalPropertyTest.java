@@ -6,7 +6,7 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import org.act.tgraph.demo.client.Config;
 import org.act.tgraph.demo.client.driver.tgraph.TGraphSocketClient;
-import org.act.tgraph.demo.client.utils.TimeMonitor;
+import org.act.tgraph.demo.utils.TimeMonitor;
 import org.act.tgraph.demo.client.vo.RuntimeEnv;
 import org.junit.Test;
 import org.junit.runner.RunWith;

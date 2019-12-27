@@ -1,6 +1,6 @@
 package org.act.tgraph.demo.client.driver.tgraph;
 
-import org.act.tgraph.demo.client.utils.TimeMonitor;
+import org.act.tgraph.demo.utils.TimeMonitor;
 
 import java.io.BufferedReader;
 import java.io.IOException;

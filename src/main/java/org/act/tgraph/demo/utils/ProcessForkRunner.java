@@ -1,4 +1,4 @@
-package org.act.tgraph.demo.client.utils;
+package org.act.tgraph.demo.utils;
 
 import java.io.File;
 import java.io.IOException;

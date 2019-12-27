@@ -2,7 +2,7 @@ package org.act.tgraph.demo.algo;
 
 import com.google.common.collect.Lists;
 import org.act.tgraph.demo.client.Config;
-import org.act.tgraph.demo.client.utils.TransactionWrapper;
+import org.act.tgraph.demo.utils.TransactionWrapper;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;

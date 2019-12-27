@@ -1,7 +1,7 @@
 package org.act.tgraph.demo.client;
 
-import org.act.tgraph.demo.client.utils.Helper;
-import org.act.tgraph.demo.client.utils.TransactionWrapper;
+import org.act.tgraph.demo.utils.Helper;
+import org.act.tgraph.demo.utils.TransactionWrapper;
 import org.act.tgraph.demo.client.vo.Cross;
 import org.act.tgraph.demo.client.vo.RelType;
 import org.act.tgraph.demo.client.vo.RoadChain;

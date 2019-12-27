@@ -1,7 +1,7 @@
 package org.act.tgraph.demo.algo;
 
 import org.act.tgraph.demo.client.Config;
-import org.act.tgraph.demo.client.utils.TransactionWrapper;
+import org.act.tgraph.demo.utils.TransactionWrapper;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;

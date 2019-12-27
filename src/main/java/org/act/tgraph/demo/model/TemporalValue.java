@@ -1,4 +1,4 @@
-package org.act.tgraph.demo.benchmark;
+package org.act.tgraph.demo.model;
 
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterators;
@@ -23,7 +23,7 @@ public class TemporalValue<V>
 {
     private final TreeMap<TimePointL, ValWithFlag> map = new TreeMap<>();
 
-    public TemporalValue(V initialValue )
+    public TemporalValue(V initialValue)
     {
         map.put( TimePointL.Init, val( initialValue ) );
     }
