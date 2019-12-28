@@ -1,22 +1,39 @@
 package org.act.tgraph.demo.model;
 
 import org.act.tgraph.demo.algo.BreadthFirstRelTraversal;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class DataStatistic {
     public static void main(String[] args) throws IOException {
         TrafficTemporalPropertyGraph tgraph = new TrafficTemporalPropertyGraph();
+        long start = System.currentTimeMillis();
         tgraph.importTopology(new File("/tmp/road_topology.csv"));
 //        isolatedGraph(tgraph);
 //        confirmDualReference(tgraph);
 //        System.out.println(tgraph.getRoadEndCross("595662_42964").detail());
 //        addNewRouteCount(tgraph);
-        tgraph.importTraffic(buildFileList("/tmp/traffic", Arrays.asList("0501.csv"))); // , "0502.csv", "0503.csv", "0504.csv", "0505.csv", "0506.csv", "0507.csv"
+        System.out.println("import topology time: "+ (System.currentTimeMillis()-start));
+        start = System.currentTimeMillis();
+        tgraph.importTraffic(buildFileList("/tmp/traffic", Arrays.asList("0501.csv", "0502.csv", "0503.csv"))); // , "0504.csv", "0505.csv", "0506.csv", "0507.csv"
+        System.out.println("import time: "+ (System.currentTimeMillis()-start)/1000);
+//        new Scanner(System.in).nextLine();
+        start = System.currentTimeMillis();
+//        long rmCnt = tgraph.compress();
+//        System.out.println("compress time: "+ (System.currentTimeMillis()-start));
+//        System.out.println("compress remove "+rmCnt+" entries. ");
+//        roadUpdateDistribution(tgraph);
+        totalTravelTimeEvolve(tgraph);
+        System.out.println("calc time: "+ (System.currentTimeMillis()-start));
+//        new Scanner(System.in).nextLine();
     }
 
     private static List<File> buildFileList(String dir, List<String> files) {
@@ -109,4 +126,92 @@ public class DataStatistic {
         System.out.println(cnt.get()+" case in original routes match that strange rule.");
     }
 
+    /**
+     *
+     * @param tgraph
+     * Results show when importing 0501 traffic data (6667610 lines, 190MB, result in 6667610*3=20002830 entries), it use 30 seconds and cost about 2GB memory.
+     * after compress (about 1 seconds), 11476236 entries are removed (about 1/2 is redundant).
+     */
+    private static void sameValCompress(TrafficTemporalPropertyGraph tgraph){
+        long start = System.currentTimeMillis();
+        long rmCnt = tgraph.compress();
+        System.out.println("compress time: "+ (System.currentTimeMillis()-start));
+        System.out.println("compress remove "+rmCnt+" entries. ");
+    }
+
+    /**
+     * distribution of road tp value update.
+     * xAxis: roads (order by yAxis, desc)
+     * yAxis: value update count
+     */
+    private static void roadUpdateDistribution(TrafficTemporalPropertyGraph tgraph){
+        assert  tgraph.compress()==0 : "need compress.";
+        List<Pair<RoadRel, IntSummaryStatistics>> results = tgraph.getAllRoads().parallelStream().map(road -> {
+            IntSummaryStatistics stat = h_countIntervalLength(road.tpJamStatus.intervalEntries());
+            return Pair.of(road, stat);
+        }).collect(Collectors.toList());
+        System.out.println("result count: "+results.size());
+        results.sort((o1, o2) -> (int) (o2.getRight().getCount() - o1.getRight().getCount()));
+        for(Pair<RoadRel, IntSummaryStatistics> pair : results){
+            System.out.println(pair.getLeft().id+" "+pair.getRight());
+        }
+    }
+    private static <E> IntSummaryStatistics h_countIntervalLength(Iterator<Triple<TimePointInt, TimePointInt, E>> tpValIter){
+        Iterable<Triple<TimePointInt, TimePointInt, E>> tp = ()-> tpValIter;
+        return StreamSupport.stream(tp.spliterator(), false)
+                .filter(entry -> !entry.getMiddle().isNow())
+                .map(entry -> {
+            TimePointInt startT = entry.getLeft();
+            TimePointInt endT = entry.getMiddle();
+            return endT.val() - startT.val();
+        }).collect(Collectors.summarizingInt(Integer::intValue));
+    }
+
+    /**
+     * must have continues data (no time gap)
+     * only calculate a subset of roads (some roads may upload no data in two days! for data value update distribution, see {@code roadUpdateDistribution()})
+     * @param tgraph
+     *
+     */
+    private static void totalTravelTimeEvolve(TrafficTemporalPropertyGraph tgraph){
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        assert  tgraph.compress()==0 : "need compress.";
+        Pair<TimePointInt, Set<RoadRel>> tmp = continueUpdateRoads(tgraph, 80000, sdf);
+        System.out.println("get "+tmp.getRight().size()+" roads.");
+        int sampleTimeInterval = 1800; //seconds
+        for(int t=tmp.getLeft().val(); t<tgraph.getTimeMax(); t+=sampleTimeInterval){
+            TimePointInt time = new TimePointInt(t);
+            long totalTravelTime = 0;
+            int roadCnt = 0;
+            for (RoadRel road : tmp.getRight()) {
+                Integer travelTime = road.tpTravelTime.get(time);
+                if(travelTime != null){
+                    totalTravelTime += travelTime;
+                    roadCnt++;
+                }
+            }
+            System.out.println(sdf.format(new Date(time.val()*1000L))+" "+(totalTravelTime/roadCnt)+" "+roadCnt);//
+        }
+    }
+    private static Pair<TimePointInt, Set<RoadRel>> continueUpdateRoads(TrafficTemporalPropertyGraph tgraph, int leastRoadCount, SimpleDateFormat sdf){
+        long l = tgraph.getTimeMin();
+        long r = tgraph.getTimeMax();
+        long mid = (l+r+1)/2;
+        while(l<mid && mid<r){
+            TimePointInt time = new TimePointInt(Math.toIntExact(mid));
+            long roadCnt = tgraph.getAllRoads().parallelStream().filter(road-> road.tpTravelTime.get(time)!=null).count();
+            if(roadCnt>leastRoadCount){
+                r = mid;
+                mid = (l+r+1)/2;
+            }else if(roadCnt<leastRoadCount){
+                l = mid;
+                mid = (l+r+1)/2;
+            }else{
+                break;
+            }
+            System.out.println("mid,cnt: "+sdf.format(new Date(mid*1000))+" "+roadCnt);
+        }
+        TimePointInt time = new TimePointInt(Math.toIntExact(mid));
+        return Pair.of(time, tgraph.getAllRoads().parallelStream().filter(road-> road.tpTravelTime.get(time)!=null).collect(Collectors.toSet()));
+    }
 }

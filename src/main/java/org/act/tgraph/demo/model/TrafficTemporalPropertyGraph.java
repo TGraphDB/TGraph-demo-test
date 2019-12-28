@@ -42,11 +42,14 @@ public class TrafficTemporalPropertyGraph {
         try(MultiFileReader iterator = new MultiFileReader(trafficData)) {
             while (iterator.hasNext()) {
                 StatusUpdate s = iterator.next();
-                TimeInterval tInt = new TimeInterval(new TimePointL(s.time));//to NOW
+                TimePointInt tStart = new TimePointInt(s.time);
                 RoadRel road = roadRelMap.get(s.roadId);
-                road.tpJamStatus.put(tInt, s.jamStatus);
-                road.tpSegCount.put(tInt, s.segmentCount);
-                road.tpTravelTime.put(tInt, s.travelTime);
+                road.tpJamStatus.setToNow(tStart, s.jamStatus);
+                road.tpSegCount.setToNow(tStart, s.segmentCount);
+                road.tpTravelTime.setToNow(tStart, s.travelTime);
+                Integer cnt = road.updateCount.get(TimePointInt.Now);
+                if(cnt==null) road.updateCount.setToNow(tStart, 1);
+                else road.updateCount.setToNow(tStart, cnt+1);
                 if (timeMax < s.time) timeMax = s.time;
                 if (timeMin > s.time) timeMin = s.time;
             }
@@ -104,5 +107,24 @@ public class TrafficTemporalPropertyGraph {
 
     public CrossNode getRoadEndCross(String roadId) {
         return roadEndCrossNodeMap.get(getRoadRel(roadId));
+    }
+
+    public long compress() {
+        long totalRmCnt = 0;
+        for(RoadRel road : getAllRoads()){
+            totalRmCnt += road.tpTravelTime.mergeSameVal();
+            totalRmCnt += road.tpSegCount.mergeSameVal();
+            totalRmCnt += road.tpJamStatus.mergeSameVal();
+        }
+        return totalRmCnt;
+    }
+
+
+    public int getTimeMin() {
+        return timeMin;
+    }
+
+    public int getTimeMax() {
+        return timeMax;
     }
 }

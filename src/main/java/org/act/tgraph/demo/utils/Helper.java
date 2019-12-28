@@ -1,5 +1,6 @@
 package org.act.tgraph.demo.utils;
 
+import com.google.common.collect.PeekingIterator;
 import org.act.tgraph.demo.client.Config;
 
 import java.io.File;
@@ -135,6 +136,15 @@ public class Helper {
         return ca.get(Calendar.YEAR)+"-"+(ca.get(Calendar.MONTH)+1)+"-"+ca.get(Calendar.DAY_OF_MONTH)+" "+
                 String.format("%02d", ca.get(Calendar.HOUR_OF_DAY))+":"+
                 String.format("%02d", ca.get(Calendar.MINUTE));
+    }
+
+    public static <E> PeekingIterator<E> emptyIterator(){
+        return new PeekingIterator<E>() {
+            @Override public boolean hasNext() { return false; }
+            @Override public E peek() { throw new RuntimeException("empty Iterator!"); }
+            @Override public E next() { throw new RuntimeException("empty Iterator!"); }
+            @Override public void remove() { throw new UnsupportedOperationException(); }
+        };
     }
 }
 
