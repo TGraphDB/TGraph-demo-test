@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class DataStatistic {
+    private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+
     public static void main(String[] args) throws IOException {
         TrafficTemporalPropertyGraph tgraph = new TrafficTemporalPropertyGraph();
         long start = System.currentTimeMillis();
@@ -23,7 +25,7 @@ public class DataStatistic {
 //        addNewRouteCount(tgraph);
         System.out.println("import topology time: "+ (System.currentTimeMillis()-start));
         start = System.currentTimeMillis();
-        tgraph.importTraffic(buildFileList("/tmp/traffic", Arrays.asList("0501.csv", "0502.csv", "0503.csv"))); // , "0504.csv", "0505.csv", "0506.csv", "0507.csv"
+        tgraph.importTraffic(buildFileList("/tmp/traffic", Arrays.asList("0501.csv", "0502.csv", "0503.csv", "0504.csv", "0505.csv", "0506.csv", "0507.csv"))); //
         System.out.println("import time: "+ (System.currentTimeMillis()-start)/1000);
 //        new Scanner(System.in).nextLine();
         start = System.currentTimeMillis();
@@ -31,7 +33,11 @@ public class DataStatistic {
 //        System.out.println("compress time: "+ (System.currentTimeMillis()-start));
 //        System.out.println("compress remove "+rmCnt+" entries. ");
 //        roadUpdateDistribution(tgraph);
-        totalTravelTimeEvolve(tgraph);
+//        totalTravelTimeEvolve(tgraph);
+        Pair<TimePointInt, Set<RoadRel>> tmp = mostFreqValueUpdateRoads(tgraph, 3600, 24);
+        System.out.println("get "+tmp.getRight().size()+" roads.");
+        double lenPercent = roadLengthPercent(tgraph, tmp.getRight());
+        System.out.println("length percent: "+lenPercent);
         System.out.println("calc time: "+ (System.currentTimeMillis()-start));
 //        new Scanner(System.in).nextLine();
     }
@@ -144,7 +150,7 @@ public class DataStatistic {
      * xAxis: roads (order by yAxis, desc)
      * yAxis: value update count
      */
-    private static void roadUpdateDistribution(TrafficTemporalPropertyGraph tgraph){
+    private static List<Pair<RoadRel, IntSummaryStatistics>> roadUpdateDistribution(TrafficTemporalPropertyGraph tgraph){
         assert  tgraph.compress()==0 : "need compress.";
         List<Pair<RoadRel, IntSummaryStatistics>> results = tgraph.getAllRoads().parallelStream().map(road -> {
             IntSummaryStatistics stat = h_countIntervalLength(road.tpJamStatus.intervalEntries());
@@ -155,6 +161,7 @@ public class DataStatistic {
         for(Pair<RoadRel, IntSummaryStatistics> pair : results){
             System.out.println(pair.getLeft().id+" "+pair.getRight());
         }
+        return results;
     }
     private static <E> IntSummaryStatistics h_countIntervalLength(Iterator<Triple<TimePointInt, TimePointInt, E>> tpValIter){
         Iterable<Triple<TimePointInt, TimePointInt, E>> tp = ()-> tpValIter;
@@ -168,17 +175,21 @@ public class DataStatistic {
     }
 
     /**
+     * temporal property value evolve in a given period of time.
      * must have continues data (no time gap)
      * only calculate a subset of roads (some roads may upload no data in two days! for data value update distribution, see {@code roadUpdateDistribution()})
      * @param tgraph
      *
      */
     private static void totalTravelTimeEvolve(TrafficTemporalPropertyGraph tgraph){
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+
         assert  tgraph.compress()==0 : "need compress.";
-        Pair<TimePointInt, Set<RoadRel>> tmp = continueUpdateRoads(tgraph, 80000, sdf);
+//        Pair<TimePointInt, Set<RoadRel>> tmp = continueUpdateRoads(tgraph, 80000, sdf);
+        Pair<TimePointInt, Set<RoadRel>> tmp = mostFreqValueUpdateRoads(tgraph, 3600, 24);
         System.out.println("get "+tmp.getRight().size()+" roads.");
-        int sampleTimeInterval = 1800; //seconds
+        double lenPercent = roadLengthPercent(tgraph, tmp.getRight());
+        System.out.println("length percent: "+lenPercent);
+        int sampleTimeInterval = 600; //seconds
         for(int t=tmp.getLeft().val(); t<tgraph.getTimeMax(); t+=sampleTimeInterval){
             TimePointInt time = new TimePointInt(t);
             long totalTravelTime = 0;
@@ -193,7 +204,9 @@ public class DataStatistic {
             System.out.println(sdf.format(new Date(time.val()*1000L))+" "+(totalTravelTime/roadCnt)+" "+roadCnt);//
         }
     }
-    private static Pair<TimePointInt, Set<RoadRel>> continueUpdateRoads(TrafficTemporalPropertyGraph tgraph, int leastRoadCount, SimpleDateFormat sdf){
+    // find the first time at which there are at least `leastRoadCount` roads have the give temporal property (get!=null).
+    // and pack those roads in the result set.
+    private static Pair<TimePointInt, Set<RoadRel>> continueUpdateRoads(TrafficTemporalPropertyGraph tgraph, int leastRoadCount){
         long l = tgraph.getTimeMin();
         long r = tgraph.getTimeMax();
         long mid = (l+r+1)/2;
@@ -213,5 +226,42 @@ public class DataStatistic {
         }
         TimePointInt time = new TimePointInt(Math.toIntExact(mid));
         return Pair.of(time, tgraph.getAllRoads().parallelStream().filter(road-> road.tpTravelTime.get(time)!=null).collect(Collectors.toSet()));
+    }
+    // find roads whose largest value update period less than `largestUpdatePeriod` (in seconds)
+    // and find the first time at which all of the above roads' temporal property have values.
+    private static Pair<TimePointInt, Set<RoadRel>> mostFreqValueUpdateRoads(TrafficTemporalPropertyGraph tgraph, int largestUpdatePeriod, int updateCnt){
+        List<Pair<RoadRel, IntSummaryStatistics>> candidate = roadUpdateDistribution(tgraph);
+        Set<RoadRel> result = candidate.stream()
+                .filter(pair -> {
+                    IntSummaryStatistics s = pair.getRight();
+                    return s.getMax()<=largestUpdatePeriod && s.getCount()>= updateCnt;
+                }).map(Pair::getLeft).collect(Collectors.toSet());
+        long l = tgraph.getTimeMin();
+        long r = tgraph.getTimeMax();
+        long mid = (l+r+1)/2;
+        while(l<mid && mid<r){
+            TimePointInt time = new TimePointInt(Math.toIntExact(mid));
+            long roadCnt = result.parallelStream().filter(road-> road.tpTravelTime.get(time)!=null).count();
+            if(roadCnt>=result.size()){
+                r = mid;
+                mid = (l+r+1)/2;
+            }else {
+                l = mid;
+                mid = (l+r+1)/2;
+            }
+            System.out.println("mid,cnt: "+sdf.format(new Date(mid*1000))+" "+roadCnt);
+        }
+        TimePointInt time = new TimePointInt(Math.toIntExact(mid));
+        return Pair.of(time, result);
+    }
+    private static double roadLengthPercent(TrafficTemporalPropertyGraph tgraph, Collection<RoadRel> roads){
+        Optional<Integer> subsetLen = roads.stream().map(roadRel -> roadRel.length).reduce(Integer::sum);
+        Optional<Integer> totalLen = tgraph.getAllRoads().stream().map(roadRel -> roadRel.length).reduce(Integer::sum);
+        if(subsetLen.isPresent() && totalLen.isPresent()){
+            System.out.println("total length: "+totalLen.get()+" subset length: "+subsetLen.get());
+            return subsetLen.get()*1.0d/totalLen.get();
+        }else{
+            return -1;
+        }
     }
 }

@@ -71,6 +71,10 @@ public class TemporalValue<V>
         return toRemove.size();
     }
 
+    public TimePointInt latestTime(){
+        return map.lastKey();
+    }
+
 //    public PeekingIterator<Triple<TimePointInt,Boolean,V>> pointEntries()
 //    {
 //        return Iterators.peekingIterator( Iterators.transform( map.entrySet().iterator(),
