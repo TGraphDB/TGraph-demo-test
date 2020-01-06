@@ -25,7 +25,7 @@ public class DataStatistic {
 //        addNewRouteCount(tgraph);
         System.out.println("import topology time: "+ (System.currentTimeMillis()-start));
         start = System.currentTimeMillis();
-        tgraph.importTraffic(buildFileList("/tmp/traffic", Arrays.asList("0501.csv", "0502.csv", "0503.csv", "0504.csv", "0505.csv", "0506.csv", "0507.csv"))); //
+        tgraph.importTraffic(buildFileList("/tmp/traffic", Arrays.asList("0503.csv", "0504.csv", "0505.csv", "0506.csv", "0507.csv"))); //"0501.csv", "0502.csv",
         System.out.println("import time: "+ (System.currentTimeMillis()-start)/1000);
 //        new Scanner(System.in).nextLine();
         start = System.currentTimeMillis();
@@ -36,8 +36,10 @@ public class DataStatistic {
 //        totalTravelTimeEvolve(tgraph);
         Pair<TimePointInt, Set<RoadRel>> tmp = mostFreqValueUpdateRoads(tgraph, 3600, 24);
         System.out.println("get "+tmp.getRight().size()+" roads.");
-        double lenPercent = roadLengthPercent(tgraph, tmp.getRight());
-        System.out.println("length percent: "+lenPercent);
+//        double lenPercent = roadLengthPercent(tgraph, tmp.getRight());
+//        System.out.println("length percent: "+lenPercent);
+        double dataPercent = roadDataPercent(tmp.getRight(), tgraph);
+        System.out.println("data percent: "+dataPercent);
         System.out.println("calc time: "+ (System.currentTimeMillis()-start));
 //        new Scanner(System.in).nextLine();
     }
@@ -182,7 +184,6 @@ public class DataStatistic {
      *
      */
     private static void totalTravelTimeEvolve(TrafficTemporalPropertyGraph tgraph){
-
         assert  tgraph.compress()==0 : "need compress.";
 //        Pair<TimePointInt, Set<RoadRel>> tmp = continueUpdateRoads(tgraph, 80000, sdf);
         Pair<TimePointInt, Set<RoadRel>> tmp = mostFreqValueUpdateRoads(tgraph, 3600, 24);
@@ -264,4 +265,16 @@ public class DataStatistic {
             return -1;
         }
     }
+
+    private static double roadDataPercent(Set<RoadRel> roads, TrafficTemporalPropertyGraph tgraph){
+        Optional<Integer> totalUpdateCnt = tgraph.getAllRoads().parallelStream().filter(roadRel -> roadRel.updateCount.latestTime()!=null).map(roadRel -> roadRel.updateCount.get(TimePointInt.Now)).reduce(Integer::sum);
+        Optional<Integer> roadsUpdateCnt = tgraph.getAllRoads().parallelStream().filter(roads::contains).map(roadRel -> roadRel.updateCount.get(TimePointInt.Now)).reduce(Integer::sum);
+        if(totalUpdateCnt.isPresent() && roadsUpdateCnt.isPresent()){
+            System.out.println("total update cnt: "+totalUpdateCnt.get()+" subset update cnt: "+roadsUpdateCnt.get());
+            return roadsUpdateCnt.get()*1.0d/totalUpdateCnt.get();
+        }else{
+            return -1;
+        }
+    }
+
 }

@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
  */
 public class TemporalValue<V>
 {
-    private final NavigableMap<TimePointInt, V> map = new TreeMap<>();//ConcurrentSkipListMap<>();
+    private final NavigableMap<TimePointInt, V> map = new ConcurrentSkipListMap<>();//new TreeMap<>();
 
     public void set( TimePointInt start, TimePointInt end, V value ) {
         assert start!=null && end!=null && value!=null;
@@ -72,7 +72,11 @@ public class TemporalValue<V>
     }
 
     public TimePointInt latestTime(){
-        return map.lastKey();
+        try {
+            return map.lastKey();
+        }catch (NoSuchElementException e){
+            return null;
+        }
     }
 
 //    public PeekingIterator<Triple<TimePointInt,Boolean,V>> pointEntries()
