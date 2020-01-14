@@ -105,8 +105,12 @@ public class TrafficTemporalPropertyGraph {
         return result;
     }
 
-    public CrossNode getRoadEndCross(String roadId) {
-        return roadEndCrossNodeMap.get(getRoadRel(roadId));
+    public CrossNode getRoadStartCross(RoadRel road) {
+        return roadStartCrossNodeMap.get(road);
+    }
+
+    public CrossNode getRoadEndCross(RoadRel road) {
+        return roadEndCrossNodeMap.get(road);
     }
 
     public long compress() {
