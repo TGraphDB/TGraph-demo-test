@@ -1,31 +1,51 @@
 package org.act.tgraph.demo.benchmark.transaction;
 
-import org.act.tgraph.demo.benchmark.ResultChecker;
-import org.act.tgraph.demo.client.driver.DBOperationProxy;
-import org.act.tgraph.demo.utils.LoggerProxy;
+import com.eclipsesource.json.JsonArray;
+import com.eclipsesource.json.JsonObject;
 
 import java.util.List;
 
-public class ImportTemporalDataTx implements AbstractTransaction {
-    private StatusUpdate[] data;
+public class ImportTemporalDataTx extends AbstractTransaction {
+    public final StatusUpdate[] data;
     public ImportTemporalDataTx(List<StatusUpdate> lines) {
         this.data = lines.toArray(new StatusUpdate[0]);
     }
 
-
-    @Override
-    public boolean execute(LoggerProxy log, DBOperationProxy db, ResultChecker checker) {
-        DBOperationProxy.TxProxy tx = db.beginTx();
-        for(StatusUpdate s : data){
-            tx.setTemporalProp(s.roadId,s.time,s.jamStatus,s.segmentCount,s.travelTime);
+    public ImportTemporalDataTx(JsonObject obj){
+        assert obj.get("type").asString().equals("tx_import_temporal_data");
+        JsonArray idArr = obj.get("id").asArray();
+        JsonArray timeArr = obj.get("time").asArray();
+        JsonArray travelTimeArr = obj.get("travelTime").asArray();
+        JsonArray jamStatusArr = obj.get("jamStatus").asArray();
+        JsonArray segCntArr = obj.get("segCnt").asArray();
+        data = new StatusUpdate[idArr.size()];
+        for(int i=0; i<idArr.size(); i++){
+            data[i] = new StatusUpdate(idArr.get(i).asLong(), timeArr.get(i).asInt(), travelTimeArr.get(i).asInt(), jamStatusArr.get(i).asInt(), segCntArr.get(i).asInt());
         }
-        tx.commit();
-        return false;
     }
 
     @Override
-    public String encode() {
-        return null;
+    public JsonObject encodeArgs() {
+        JsonObject obj = new JsonObject();
+        obj.add("type", "tx_import_temporal_data");
+        JsonArray idArr = new JsonArray();
+        JsonArray timeArr = new JsonArray();
+        JsonArray travelTimeArr = new JsonArray();
+        JsonArray jamStatusArr = new JsonArray();
+        JsonArray segCntArr = new JsonArray();
+        for(StatusUpdate s : data){
+            idArr.add(s.roadId);
+            timeArr.add(s.time);
+            travelTimeArr.add(s.travelTime);
+            jamStatusArr.add(s.jamStatus);
+            segCntArr.add(s.segmentCount);
+        }
+        obj.add("id", idArr);
+        obj.add("time", timeArr);
+        obj.add("travelTime", travelTimeArr);
+        obj.add("jamStatus", jamStatusArr);
+        obj.add("segCnt", segCntArr);
+        return obj;
     }
 
     public static class StatusUpdate{

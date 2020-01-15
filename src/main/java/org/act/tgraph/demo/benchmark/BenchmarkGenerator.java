@@ -6,6 +6,7 @@ import com.google.common.collect.PeekingIterator;
 import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction;
 import org.act.tgraph.demo.benchmark.transaction.ImportStaticDataTx;
 import org.act.tgraph.demo.benchmark.transaction.ImportTemporalDataTx;
+import org.act.tgraph.demo.benchmark.transaction.ReachableAreaQueryTx;
 import org.act.tgraph.demo.model.CrossNode;
 import org.act.tgraph.demo.model.RoadRel;
 import org.act.tgraph.demo.model.StatusUpdate;
@@ -112,4 +113,12 @@ public class BenchmarkGenerator {
         }
     }
 
+    private class ReadTxIterator extends AbstractIterator<AbstractTransaction> {
+        Random rand = new Random();
+        @Override
+        protected AbstractTransaction computeNext() {
+
+            return new ReachableAreaQueryTx();
+        }
+    }
 }

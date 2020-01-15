@@ -74,7 +74,7 @@ public class TGraphSocketServer {
         private void setDB(GraphDatabaseService db){
             this.db = db;
         }
-        protected abstract String execute(String line) throws RuntimeException;
+        protected abstract JsonObject execute(String line) throws RuntimeException;
     }
 
     public static class TransactionFailedException extends RuntimeException{}
@@ -176,7 +176,7 @@ public class TGraphSocketServer {
                         continue;
                     }
                     time.mark("Wait", "Transaction");
-                    String exeResult = "";
+                    JsonObject exeResult;
                     boolean success = true;
                     try {
                         exeResult = reqExecutor.execute(line);

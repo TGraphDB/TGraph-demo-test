@@ -1,5 +1,7 @@
 package org.act.tgraph.demo.model;
 
+import org.neo4j.graphdb.RelationshipType;
+
 import java.util.*;
 
 /**

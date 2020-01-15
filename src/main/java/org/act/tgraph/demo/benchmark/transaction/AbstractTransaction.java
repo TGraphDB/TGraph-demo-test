@@ -1,13 +1,19 @@
 package org.act.tgraph.demo.benchmark.transaction;
 
-import org.act.tgraph.demo.benchmark.ResultChecker;
-import org.act.tgraph.demo.client.driver.DBOperationProxy;
-import org.act.tgraph.demo.utils.LoggerProxy;
+import com.eclipsesource.json.JsonObject;
 
-public interface AbstractTransaction {
+public abstract class AbstractTransaction {
 
-    boolean execute(LoggerProxy log, DBOperationProxy db, ResultChecker checker);
+    public abstract JsonObject encodeArgs();
 
-    String encode();
+    public JsonObject encodeMetrics(){
+        return new JsonObject();
+    }
+
+    protected JsonObject newTx(String type){
+        JsonObject obj = new JsonObject();
+        obj.add("type", type);
+        return obj;
+    }
 
 }
