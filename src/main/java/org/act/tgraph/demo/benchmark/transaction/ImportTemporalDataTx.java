@@ -12,7 +12,7 @@ public class ImportTemporalDataTx extends AbstractTransaction {
     }
 
     public ImportTemporalDataTx(JsonObject obj){
-        assert obj.get("type").asString().equals("tx_import_temporal_data");
+        assert TxType.valueOf(obj.get("type").asString()) == TxType.tx_import_temporal_data;
         JsonArray idArr = obj.get("id").asArray();
         JsonArray timeArr = obj.get("time").asArray();
         JsonArray travelTimeArr = obj.get("travelTime").asArray();
@@ -26,8 +26,7 @@ public class ImportTemporalDataTx extends AbstractTransaction {
 
     @Override
     public JsonObject encodeArgs() {
-        JsonObject obj = new JsonObject();
-        obj.add("type", "tx_import_temporal_data");
+        JsonObject obj = newTx(TxType.tx_import_temporal_data);
         JsonArray idArr = new JsonArray();
         JsonArray timeArr = new JsonArray();
         JsonArray travelTimeArr = new JsonArray();

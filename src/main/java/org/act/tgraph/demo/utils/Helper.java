@@ -4,9 +4,11 @@ import com.google.common.collect.PeekingIterator;
 import org.act.tgraph.demo.client.Config;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by song on 16-2-23.
@@ -146,6 +148,33 @@ public class Helper {
             @Override public void remove() { throw new UnsupportedOperationException(); }
         };
     }
+
+    public static List<File> trafficFileList(String dir, String fileStart, String fileEnd) {
+        Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(monthDayStr2Time(fileStart));
+        long endT = monthDayStr2Time(fileEnd);
+        File folder = new File(dir);
+        if (!folder.exists() && !folder.mkdirs()) throw new RuntimeException("can not create dir.");
+        List<String> files = new ArrayList<>();
+        while(c.getTimeInMillis() <= endT) {
+            files.add(String.format("%02d%02d.csv", c.get(Calendar.MONTH) + 1, c.get(Calendar.DAY_OF_MONTH)));
+            c.add(Calendar.HOUR, 24);
+        }
+        return files.stream().map(s -> new File(folder, s)).collect(Collectors.toList());
+    }
+
+    public static long monthDayStr2Time(String monthDayStr){
+        Calendar c = Calendar.getInstance();
+        c.set(Calendar.YEAR, 2010);
+        c.set(Calendar.MONTH, Integer.parseInt(monthDayStr.substring(0, 2))-1);
+        c.set(Calendar.DAY_OF_MONTH, Integer.parseInt(monthDayStr.substring(2,4)));
+        return c.getTimeInMillis();
+    }
+
+    public static int monthDayStr2TimeInt(String monthDayStr){
+        return ((int) monthDayStr2Time(monthDayStr)/1000);
+    }
+
 }
 
 

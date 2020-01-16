@@ -1,8 +1,6 @@
 package org.act.tgraph.demo.benchmark;
 
 import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.PeekingIterator;
 import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction;
 import org.act.tgraph.demo.benchmark.transaction.ImportStaticDataTx;
 import org.act.tgraph.demo.benchmark.transaction.ImportTemporalDataTx;
@@ -11,23 +9,33 @@ import org.act.tgraph.demo.model.CrossNode;
 import org.act.tgraph.demo.model.RoadRel;
 import org.act.tgraph.demo.model.StatusUpdate;
 import org.act.tgraph.demo.model.TrafficTemporalPropertyGraph;
+import org.act.tgraph.demo.utils.Helper;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.io.*;
-import java.nio.file.Files;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
-import java.util.stream.Stream;
 
 /**
  * Generate an instance of benchmark (a iterator/list of transactions) from given arguments.
  */
-public class BenchmarkGenerator {
+public class BenchmarkTransactionGenerator {
+    public static void main(String[] args) throws IOException {
+        TrafficTemporalPropertyGraph tgraph = new TrafficTemporalPropertyGraph();
+        tgraph.importTopology(new File("/tmp/road_topology.csv"));
+        BenchmarkTransactionGenerator gen = new BenchmarkTransactionGenerator();
+        BenchmarkWriter writer = new BenchmarkWriter("/tmp/benchmark");
+        writer.execute(gen.phaseImportStatic(tgraph));
+        writer.execute(gen.phaseWriteTemporalProp(100, Helper.trafficFileList("/tmp/traffic", "0503.csv", "0507.csv")));
+        writer.execute(gen.phaseRead(Helper.monthDayStr2TimeInt("0503"), Helper.monthDayStr2TimeInt("0507"), 100));
+    }
+
     private Map<CrossNode, Long> crossIdMap = new HashMap<>();
     private Map<String, Long> roadIdMap = new HashMap<>();
-
-    public BenchmarkGenerator(){
-
-    }
+    private Random rand = new Random();
 
     //
     public AbstractTransaction phaseImportStatic(TrafficTemporalPropertyGraph tgraph){
@@ -55,13 +63,13 @@ public class BenchmarkGenerator {
         return new WriteTemporalDataTxIterator(linePerTx, files);
     }
 
-    public Iterator<AbstractTransaction> phaseRead(){
-
+    public Iterator<AbstractTransaction> phaseRead(int startT, int endT, int txCount){
+        return new ReadTxIterator(startT, endT, txCount);
     }
 
-    public Iterator<AbstractTransaction> phaseReadWrite(){
-
-    }
+//    public Iterator<AbstractTransaction> phaseReadWrite(){
+//
+//    }
 
     private class WriteTemporalDataTxIterator extends AbstractIterator<AbstractTransaction> {
         final int linePerTx;
@@ -114,11 +122,23 @@ public class BenchmarkGenerator {
     }
 
     private class ReadTxIterator extends AbstractIterator<AbstractTransaction> {
-        Random rand = new Random();
+        private final int startTime;
+        private final int endTime;
+        private final int txCount;
+        private int curCnt = 0;
+
+        ReadTxIterator(int startT, int endT, int txCount){
+            this.startTime = startT;
+            this.endTime = endT;
+            this.txCount = txCount;
+        }
         @Override
         protected AbstractTransaction computeNext() {
-
-            return new ReachableAreaQueryTx();
+            if(curCnt>txCount) return endOfData();
+            curCnt++;
+            long startCrossId = rand.nextInt(crossIdMap.size());
+            int departureTime = rand.nextInt(endTime - startTime )+ startTime;
+            return new ReachableAreaQueryTx(startCrossId, departureTime, 1800);
         }
     }
 }

@@ -19,7 +19,7 @@ public class ImportStaticDataTx extends AbstractTransaction {
     }
 
     public ImportStaticDataTx(JsonObject obj){
-        assert obj.get("type").asString().equals("tx_import_static_data");
+        assert TxType.valueOf(obj.get("type").asString()) == TxType.tx_import_static_data;
         crosses = new ArrayList<>();
         roads = new ArrayList<>();
         JsonArray crossArr = obj.get("cross").asArray();
@@ -34,7 +34,7 @@ public class ImportStaticDataTx extends AbstractTransaction {
     }
     @Override
     public JsonObject encodeArgs() {
-        JsonObject obj = newTx("tx_import_static_data");
+        JsonObject obj = newTx(TxType.tx_import_static_data);
         JsonArray arr = new JsonArray();
         StringBuilder sb = new StringBuilder();
         for(Pair<Long, String> cross : crosses){

@@ -4,7 +4,6 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import org.act.tgraph.demo.algo.EarliestArriveTime;
-import org.act.tgraph.demo.benchmark.TransactionExecutor;
 import org.act.tgraph.demo.benchmark.transaction.ImportStaticDataTx;
 import org.act.tgraph.demo.benchmark.transaction.ImportTemporalDataTx;
 import org.act.tgraph.demo.benchmark.transaction.ReachableAreaQueryTx;
@@ -15,12 +14,9 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.temporal.TimePoint;
-import org.neo4j.tooling.GlobalGraphOperations;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 public class KernelTcpServer extends TGraphSocketServer.ReqExecutor {
     public static void main(String[] args){
@@ -84,17 +80,20 @@ public class KernelTcpServer extends TGraphSocketServer.ReqExecutor {
 
     private JsonObject execute(ReachableAreaQueryTx tx){
         try(Transaction t = db.beginTx()) {
-            EarliestArriveTime algo = new EarliestArriveTime(db, "travel_time", tx.startCrossId, tx.departureTime, tx.travelTime);
-            List<Pair<Long, Integer>> result = algo.runInTransaction();
+            EarliestArriveTime algo = new EarliestArriveTimeTGraphKernel(db, "travel_time", tx.startCrossId, tx.departureTime, tx.travelTime);
+            Set<EarliestArriveTime.NodeCross> result = algo.run();
             JsonObject res = Json.object();
             JsonArray nodeIdArr = Json.array();
             JsonArray arriveTimeArr = Json.array();
-            for(Pair<Long, Integer> p : result){
-                nodeIdArr.add(p.getLeft());
-                arriveTimeArr.add(p.getRight());
+            JsonArray parentIdArr = Json.array();
+            for(EarliestArriveTime.NodeCross node : result){
+                nodeIdArr.add(node.id);
+                arriveTimeArr.add(node.arriveTime);
+                parentIdArr.add(node.parent.id);
             }
             res.add("nodeId", nodeIdArr);
             res.add("arriveTime", arriveTimeArr);
+            res.add("parentId", parentIdArr);
             t.failure();
             return res;
         }
