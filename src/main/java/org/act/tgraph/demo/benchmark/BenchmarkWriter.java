@@ -17,12 +17,16 @@ public class BenchmarkWriter {
         writer = new GZIPOutputStream(new FileOutputStream(file));
     }
 
-    public void execute(AbstractTransaction tx) throws IOException {
+    public void write(AbstractTransaction tx) throws IOException {
         writer.write(tx.encode().getBytes());
         writer.write('\n');
     }
 
-    public void execute(Iterator<AbstractTransaction> txIter) throws IOException {
-        while(txIter.hasNext()) execute(txIter.next());
+    public void write(Iterator<AbstractTransaction> txIter) throws IOException {
+        while(txIter.hasNext()) write(txIter.next());
+    }
+
+    public void close() throws IOException {
+        writer.close();
     }
 }

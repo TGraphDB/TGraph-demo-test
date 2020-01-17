@@ -1,5 +1,6 @@
 package org.act.tgraph.demo.server;
 
+import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import org.act.tgraph.demo.utils.TGraphSocketServer;
 import org.act.tgraph.demo.client.vo.RuntimeEnv;
@@ -41,40 +42,29 @@ public class TCypherTCPServer {
         }
 
         @Override
-        protected String execute(String line) throws RuntimeException {
-            if(line.startsWith("TOPIC:")){
-                String testTopic = line.substring(6);
-                System.out.println("topic changed to "+ testTopic);
-                RuntimeEnv env = RuntimeEnv.getCurrentEnv();
-                String serverCodeVersion = env.name() + "." + env.getConf().codeGitVersion();
-                System.out.println("server code version: "+ serverCodeVersion);
-                return "Server code version:"+serverCodeVersion;
-            }else if("ID MAP".equals(line)){
-                System.out.println("building id map...");
-                String idMap = buildRoadIDMap();
-                System.out.println("done. size:"+idMap.length()+" sending...");
-                return idMap;
-            }
-            String[] queries = line.split(";");
-            StringBuilder results = new StringBuilder();
-            int i=0;
-            try {
-                try (Transaction tx = db.beginTx()) {
-                    for (i = 0; i < queries.length; i++) {
-                        String query = queries[i];
-                        Result result = db.execute(query);
-                        results.append( result.resultAsString().replace("\n", "\\n").replace("\r", "\\r") );
-                    }
-                    tx.success();
-                }
-            }catch (Exception msg){
-//                StringWriter errors = new StringWriter();
-//                msg.printStackTrace(new PrintWriter(errors));
-//                results[i] = errors.toString();
-                msg.printStackTrace();
-                throw new TGraphSocketServer.TransactionFailedException();
-            }
-            return results.toString();
+        protected JsonObject execute(String line) throws RuntimeException {
+//            JsonObject req = Json.parse(line).asObject();
+//            String[] queries = req.get("");
+//            StringBuilder results = new StringBuilder();
+//            int i=0;
+//            try {
+//                try (Transaction tx = db.beginTx()) {
+//                    for (i = 0; i < queries.length; i++) {
+//                        String query = queries[i];
+//                        Result result = db.execute(query);
+//                        results.append( result.resultAsString().replace("\n", "\\n").replace("\r", "\\r") );
+//                    }
+//                    tx.success();
+//                }
+//            }catch (Exception msg){
+////                StringWriter errors = new StringWriter();
+////                msg.printStackTrace(new PrintWriter(errors));
+////                results[i] = errors.toString();
+//                msg.printStackTrace();
+//                throw new TGraphSocketServer.TransactionFailedException();
+//            }
+//            return results.toString();
+            return new JsonObject();
         }
     }
 }

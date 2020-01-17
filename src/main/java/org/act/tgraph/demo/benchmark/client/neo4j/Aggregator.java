@@ -1,4 +1,4 @@
-package org.act.tgraph.demo.client.driver.neo4j;
+package org.act.tgraph.demo.benchmark.client.neo4j;
 
 /**
  * Created by song on 16-2-4.

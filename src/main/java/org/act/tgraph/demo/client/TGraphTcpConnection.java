@@ -1,5 +1,6 @@
 package org.act.tgraph.demo.client;
 
+import org.act.tgraph.demo.utils.Helper;
 import org.act.tgraph.demo.utils.TimeMonitor;
 
 import java.io.BufferedReader;
@@ -19,6 +20,14 @@ public class TGraphTcpConnection {
         this.conn.setTcpNoDelay(true);
         this.in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
         this.out = new PrintWriter(conn.getOutputStream(), true);
+        testServerClientCompatibility();
+    }
+
+    private void testServerClientCompatibility() throws IOException {
+        out.println("VERSION");
+        String result = in.readLine();
+        String clientVersion = Helper.currentCodeVersion();
+        assert clientVersion.equals(result) : String.format("server(%s) client(%s) version not match!", result, clientVersion);
     }
 
     public void close() throws IOException {

@@ -12,7 +12,7 @@ public class RoadRel{
     public final int length;
     public final int angle;
 
-    private int type;
+    public int type;
     private int inNum = 0;
     private int outNum = 0;
 
@@ -28,7 +28,7 @@ public class RoadRel{
         String id = buildId( fields[1], fields[2] );
         RoadRel road = map.get(id);
         if(road==null){
-            road = new RoadRel(id, fields[4], fields[8]);
+            road = new RoadRel(id, Integer.parseInt(fields[4]), Integer.parseInt(fields[8]));
             map.put(id, road);
         }
         road.type = Byte.parseByte(fields[5]);
@@ -38,7 +38,7 @@ public class RoadRel{
             String neighborId = buildId(fields[9 + i * 5], fields[10 + i * 5]);
             RoadRel neighbor = map.get(neighborId);
             if(neighbor==null){
-                neighbor = new RoadRel(neighborId,fields[12+i*5],fields[13+i*5]); // fields[11+i*5] is useless for identify a unique road.
+                neighbor = new RoadRel(neighborId, Integer.parseInt(fields[12+i*5]), Integer.parseInt(fields[13+i*5])); // fields[11+i*5] is useless for identify a unique road.
                 map.put(neighborId, neighbor);
             }
             if(i<road.inNum){
@@ -49,10 +49,10 @@ public class RoadRel{
         }
     }
 
-    private RoadRel(String roadId, String length, String angle) {
+    public RoadRel(String roadId, int length, int angle) {
         this.id = roadId;
-        this.length = Integer.parseInt(length);
-        this.angle = Integer.parseInt(angle);
+        this.length = length;
+        this.angle = angle;
     }
 
     public String toString(){

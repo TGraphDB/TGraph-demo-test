@@ -36,25 +36,6 @@ public class DataDownloader
             "20101108.tar.gz" };
     private static long[] fileSize = new long[]{67805801};
 
-    public static File download( String url, File out ) throws IOException {
-        if(out.exists() && out.isFile()){
-            return out;
-        }
-        URL website = new URL(url);
-        ReadableByteChannel rbc = Channels.newChannel(website.openStream());
-        FileOutputStream fos = new FileOutputStream(out);
-        fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
-        return out;
-    }
-
-
-    public static File decompressGZip( File input, File outFile ) throws IOException {
-        try (GzipCompressorInputStream in = new GzipCompressorInputStream(new FileInputStream(input))){
-            IOUtils.copy(in, new FileOutputStream(outFile));
-        }
-        return outFile;
-    }
-
     /**
      * Tar.gz文件解压方法
      *
@@ -110,7 +91,7 @@ public class DataDownloader
     {
         File topoFile = new File(tmpDir, "Topo.csv");
         if(!topoFile.exists()){
-            File out = download( urlHeader + topoFileName, topoFile );
+            File out = Helper.download( urlHeader + topoFileName, topoFile );
             decompressTarGZip( out, tmpDir );
         }
         return topoFile.getAbsolutePath();
@@ -121,7 +102,7 @@ public class DataDownloader
         File dataDir = new File(dataPathDir);
         for ( String fileName : fileList )
         {
-            File out = download( urlHeader + fileName, new File(dataDir, fileName) );
+            File out = Helper.download( urlHeader + fileName, new File(dataDir, fileName) );
             decompressTarGZip( out, dataDir );
         }
     }

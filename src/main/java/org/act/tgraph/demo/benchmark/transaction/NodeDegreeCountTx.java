@@ -4,17 +4,14 @@ import org.act.tgraph.demo.benchmark.ResultChecker;
 import org.act.tgraph.demo.benchmark.DBOperation;
 import org.act.tgraph.demo.utils.LoggerProxy;
 
-public class NodeDegreeCountTx implements AbstractTransaction {
+public class NodeDegreeCountTx extends AbstractTransaction {
 
-
-    @Override
-    public boolean execute(LoggerProxy log, DBOperation db, ResultChecker checker) {
-
-        return false;
+    protected NodeDegreeCountTx(TxType txType) {
+        super(txType);
     }
 
     @Override
-    public String encodeArgs() {
+    public String encode() {
         return null;
     }
 }

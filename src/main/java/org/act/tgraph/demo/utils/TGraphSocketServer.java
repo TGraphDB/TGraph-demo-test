@@ -7,11 +7,7 @@ import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import oshi.SystemInfo;
 import oshi.hardware.HWDiskStore;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
+import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -151,7 +147,6 @@ public class TGraphSocketServer {
             try {
                 while(true){
                     time.mark("Send", "Wait");
-                    long previousSendTime = time.duration("Send");
                     String line;
                     try {
                         line = fromClient.readLine();
@@ -170,13 +165,13 @@ public class TGraphSocketServer {
                         shouldRun = false;
                         System.out.println("client ask server exit.");
                         break;
-                    }else if("GC".equals(line)){
-                        Runtime.getRuntime().gc();
-                        System.out.println("client ask server gc.");
+                    }else if("VERSION".equals(line)){
+                        toClient.println(Helper.currentCodeVersion());
+                        System.out.println("client ask server version.");
                         continue;
                     }
                     time.mark("Wait", "Transaction");
-                    JsonObject exeResult;
+                    JsonObject exeResult = new JsonObject();
                     boolean success = true;
                     try {
                         exeResult = reqExecutor.execute(line);
@@ -187,8 +182,6 @@ public class TGraphSocketServer {
                     String result = generateResult(
                             exeResult,
                             success,
-                            time.endT("Wait"),
-                            previousSendTime,
                             time.duration("Transaction"),
                             monitor.serverStatus);
                     toClient.println(result);
@@ -201,24 +194,25 @@ public class TGraphSocketServer {
             System.out.println(Thread.currentThread().getName()+" exit. process "+reqCnt+" queries.");
         }
 
-        private String generateResult(String results, boolean success, long reqGotTime, long previousSendTime, long txTime, ServerStatus s) {
+        private String generateResult(JsonObject results, boolean success, long txTime, ServerStatus s) {
             JsonObject obj = new JsonObject();
             obj.add("success", success);
-            obj.add("resultSize", results.length());
-            obj.add("results", results);
+            obj.add("result", results);
 
-            obj.add("t_ReqGot", reqGotTime);
-            obj.add("t_PreSend", previousSendTime);
-            obj.add("t_Tx", txTime);
+            JsonObject metrics = new JsonObject();
+            metrics.add("exe_tD", txTime);
+            obj.add("metrics", metrics);
 
-            obj.add("s_updateTime", s.time);
-            obj.add("s_memory", s.curMem);
-            obj.add("s_connCnt", s.activeConn);
-            obj.add("s_pCPU", s.processCpuLoad);
-            obj.add("s_CPU", s.systemCpuLoad);
-            obj.add("s_disk_qLen", s.diskQueueLength);
-            obj.add("s_disk_read", s.diskReadSpeed);
-            obj.add("s_disk_write", s.diskWriteSpeed);
+            JsonObject o = new JsonObject();
+            o.add("s_update_t", s.time);
+            o.add("s_memory", s.curMem);
+            o.add("s_connCnt", s.activeConn);
+            o.add("s_pCPU", s.processCpuLoad);
+            o.add("s_CPU", s.systemCpuLoad);
+            o.add("s_disk_qLen", s.diskQueueLength);
+            o.add("s_disk_read", s.diskReadSpeed);
+            o.add("s_disk_write", s.diskWriteSpeed);
+            obj.add("server", o);
             return obj.toString();
         }
     }

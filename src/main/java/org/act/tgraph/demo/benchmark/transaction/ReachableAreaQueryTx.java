@@ -8,12 +8,14 @@ public class ReachableAreaQueryTx extends AbstractTransaction {
     public final int travelTime;
 
     public ReachableAreaQueryTx(long startCrossId, int departureTime, int travelTime){
+        super(TxType.tx_query_reachable_area);
         this.startCrossId = startCrossId;
         this.departureTime = departureTime;
         this.travelTime = travelTime;
     }
 
     public ReachableAreaQueryTx(JsonObject o) {
+        super(TxType.tx_query_reachable_area);
         assert TxType.valueOf(o.get("type").asString()) == TxType.tx_query_reachable_area;
         this.startCrossId = o.get("startCrossId").asLong();
         this.departureTime = o.get("departureTime").asInt();
@@ -21,12 +23,13 @@ public class ReachableAreaQueryTx extends AbstractTransaction {
     }
 
     @Override
-    public JsonObject encodeArgs() {
+    public String encode() {
         JsonObject obj = newTx(TxType.tx_query_reachable_area);
         obj.add("startCrossId", startCrossId);
         obj.add("departureTime", departureTime);
         obj.add("travelTime", travelTime);
-        return obj;
+        obj.add("result", getResult());
+        return obj.toString();
     }
 
 

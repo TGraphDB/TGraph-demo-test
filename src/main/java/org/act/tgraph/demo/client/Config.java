@@ -6,10 +6,6 @@ import com.aliyun.openservices.aliyun.log.producer.ProducerConfig;
 import com.aliyun.openservices.aliyun.log.producer.ProjectConfig;
 import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
 import com.eclipsesource.json.JsonObject;
-import org.act.tgraph.demo.client.driver.OperationProxy;
-import org.act.tgraph.demo.client.driver.tgraph.Neo4jTemporalProxy;
-import org.neo4j.graphdb.GraphDatabaseService;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,8 +20,6 @@ import java.util.Properties;
  * Created by song on 16-2-24.
  */
 public class Config extends JsonObject{
-    public GraphDatabaseService db;
-    public OperationProxy proxy = new Neo4jTemporalProxy();
 
     public String dataPathNetwork;
     public String dataPathDir;

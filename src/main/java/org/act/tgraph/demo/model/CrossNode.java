@@ -1,7 +1,5 @@
 package org.act.tgraph.demo.model;
 
-import org.act.tgraph.demo.client.vo.RoadChain;
-
 import java.util.*;
 
 /**
@@ -9,7 +7,7 @@ import java.util.*;
  */
 public class CrossNode {
 
-    public final String id;
+    public final String name;
     public final Set<RoadRel> outRoads;
     public final Set<RoadRel> inRoads;
 
@@ -17,7 +15,13 @@ public class CrossNode {
     public CrossNode(Set<RoadRel> inRoads, Set<RoadRel> outRoads) {
         this.inRoads = inRoads;
         this.outRoads = outRoads;
-        this.id = getCrossId(inRoads, outRoads);
+        this.name = getCrossId(inRoads, outRoads);
+    }
+
+    public CrossNode(String name) {
+        this.inRoads = new HashSet<>();
+        this.outRoads = new HashSet<>();
+        this.name = name;
     }
     /**
      * we have to do this because the data has some 'strange' case:
@@ -64,17 +68,17 @@ public class CrossNode {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         CrossNode crossNode = (CrossNode) o;
-        return id.equals(crossNode.id);
+        return name.equals(crossNode.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(name);
     }
 
     public String detail(){
         StringBuilder sb = new StringBuilder();
-        sb.append(id).append('\n');
+        sb.append(name).append('\n');
         inRoads.forEach(roadRel -> sb.append(roadRel).append('\n'));
         outRoads.forEach(roadRel -> sb.append(roadRel).append('\n'));
         return sb.toString();

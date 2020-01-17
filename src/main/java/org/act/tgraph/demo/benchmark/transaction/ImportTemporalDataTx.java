@@ -8,10 +8,12 @@ import java.util.List;
 public class ImportTemporalDataTx extends AbstractTransaction {
     public final StatusUpdate[] data;
     public ImportTemporalDataTx(List<StatusUpdate> lines) {
+        super(TxType.tx_import_temporal_data);
         this.data = lines.toArray(new StatusUpdate[0]);
     }
 
     public ImportTemporalDataTx(JsonObject obj){
+        super(TxType.tx_import_temporal_data);
         assert TxType.valueOf(obj.get("type").asString()) == TxType.tx_import_temporal_data;
         JsonArray idArr = obj.get("id").asArray();
         JsonArray timeArr = obj.get("time").asArray();
@@ -25,7 +27,7 @@ public class ImportTemporalDataTx extends AbstractTransaction {
     }
 
     @Override
-    public JsonObject encodeArgs() {
+    public String encode() {
         JsonObject obj = newTx(TxType.tx_import_temporal_data);
         JsonArray idArr = new JsonArray();
         JsonArray timeArr = new JsonArray();
@@ -44,7 +46,12 @@ public class ImportTemporalDataTx extends AbstractTransaction {
         obj.add("travelTime", travelTimeArr);
         obj.add("jamStatus", jamStatusArr);
         obj.add("segCnt", segCntArr);
-        return obj;
+        return obj.toString();
+    }
+
+    @Override
+    public int dataCount() {
+        return data.length;
     }
 
     public static class StatusUpdate{

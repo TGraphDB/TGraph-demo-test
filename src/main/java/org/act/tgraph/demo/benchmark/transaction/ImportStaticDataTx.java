@@ -14,11 +14,13 @@ public class ImportStaticDataTx extends AbstractTransaction {
 
     // this constructor is used when generating benchmarks.
     public ImportStaticDataTx(List<Pair<Long, String>> crosses, List<StaticRoadRel> roads) {
+        super(TxType.tx_import_static_data);
         this.crosses = crosses;
         this.roads = roads;
     }
 
     public ImportStaticDataTx(JsonObject obj){
+        super(TxType.tx_import_static_data);
         assert TxType.valueOf(obj.get("type").asString()) == TxType.tx_import_static_data;
         crosses = new ArrayList<>();
         roads = new ArrayList<>();
@@ -33,8 +35,8 @@ public class ImportStaticDataTx extends AbstractTransaction {
         }
     }
     @Override
-    public JsonObject encodeArgs() {
-        JsonObject obj = newTx(TxType.tx_import_static_data);
+    public String encode() {
+        JsonObject obj = newTx(this.txType);
         JsonArray arr = new JsonArray();
         StringBuilder sb = new StringBuilder();
         for(Pair<Long, String> cross : crosses){
@@ -49,7 +51,12 @@ public class ImportStaticDataTx extends AbstractTransaction {
             roadArr.add(r.encode());
         }
         obj.add("road", roadArr);
-        return obj;
+        return obj.toString();
+    }
+
+    @Override
+    public int dataCount() {
+        return crosses.size()+roads.size();
     }
 
     public static class StaticRoadRel{

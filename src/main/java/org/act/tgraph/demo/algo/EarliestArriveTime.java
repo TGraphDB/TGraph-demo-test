@@ -25,6 +25,7 @@ public abstract class EarliestArriveTime {
         NodeCross startNode = getNodeCross(start);
         setStatus(startNode, Status.Calculating);
         startNode.arriveTime = startTime;
+        startNode.parent = start;
 
         Set<NodeCross> result = new HashSet<>();
         NodeCross node;
@@ -53,14 +54,14 @@ public abstract class EarliestArriveTime {
                 switch (neighbor.status) {
                     case NotCalculate:
                         neighbor.arriveTime = getEarliestArriveTime(rId, curTime);
-                        neighbor.parent = node;
+                        neighbor.parent = node.id;
                         setStatus(neighbor, Status.Calculating);
                         break;
                     case Calculating:
                         arriveTime = getEarliestArriveTime(rId, curTime);
                         if (neighbor.arriveTime > arriveTime) {
                             neighbor.arriveTime = arriveTime;
-                            neighbor.parent = node;
+                            neighbor.parent = node.id;
                         }
                         break;
                 }
@@ -129,7 +130,7 @@ public abstract class EarliestArriveTime {
     public static class NodeCross {
         public final long id;
         public int arriveTime = Integer.MAX_VALUE;
-        public NodeCross parent;
+        public long parent;
         private Status status = Status.NotCalculate;
 
         NodeCross(long id) {

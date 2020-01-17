@@ -85,8 +85,8 @@ public class Helper {
         return Integer.parseInt(file.getName().substring(10, 21));
     }
 
-    public static void deleteExistDB(Config config){
-        File dir = new File(config.dbPath);
+    public static void deleteExistDB(String dbPath){
+        File dir = new File(dbPath);
         if (dir.exists()){
             Helper.deleteAllFilesOfDir(dir);
         }

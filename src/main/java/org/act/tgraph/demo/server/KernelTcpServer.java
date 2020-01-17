@@ -4,6 +4,7 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import org.act.tgraph.demo.algo.EarliestArriveTime;
+import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction;
 import org.act.tgraph.demo.benchmark.transaction.ImportStaticDataTx;
 import org.act.tgraph.demo.benchmark.transaction.ImportTemporalDataTx;
 import org.act.tgraph.demo.benchmark.transaction.ReachableAreaQueryTx;
@@ -34,14 +35,14 @@ public class KernelTcpServer extends TGraphSocketServer.ReqExecutor {
     @Override
     protected JsonObject execute(String line) throws RuntimeException {
         JsonObject req = Json.parse(line).asObject();
-        switch (req.get("type").asString()){
-            case "tx_import_static_data":
+        switch (AbstractTransaction.TxType.valueOf(req.get("type").asString())){
+            case tx_import_static_data:
                 execute(new ImportStaticDataTx(req));
                 return Json.object();
-            case "tx_import_temporal_data":
+            case tx_import_temporal_data:
                 execute(new ImportTemporalDataTx(req));
                 return Json.object();
-            case "tx_reachable_area_query":
+            case tx_query_reachable_area:
                 return execute(new ReachableAreaQueryTx(req));
             default:
                 throw new UnsupportedOperationException();
@@ -89,7 +90,7 @@ public class KernelTcpServer extends TGraphSocketServer.ReqExecutor {
             for(EarliestArriveTime.NodeCross node : result){
                 nodeIdArr.add(node.id);
                 arriveTimeArr.add(node.arriveTime);
-                parentIdArr.add(node.parent.id);
+                parentIdArr.add(node.parent);
             }
             res.add("nodeId", nodeIdArr);
             res.add("arriveTime", arriveTimeArr);

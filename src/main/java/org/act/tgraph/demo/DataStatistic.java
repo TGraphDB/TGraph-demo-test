@@ -1,6 +1,10 @@
-package org.act.tgraph.demo.model;
+package org.act.tgraph.demo;
 
 import org.act.tgraph.demo.algo.BreadthFirstRelTraversal;
+import org.act.tgraph.demo.model.RoadRel;
+import org.act.tgraph.demo.model.TimePointInt;
+import org.act.tgraph.demo.model.TrafficTemporalPropertyGraph;
+import org.act.tgraph.demo.utils.Helper;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -18,14 +22,14 @@ public class DataStatistic {
     public static void main(String[] args) throws IOException {
         TrafficTemporalPropertyGraph tgraph = new TrafficTemporalPropertyGraph();
         long start = System.currentTimeMillis();
-        tgraph.importTopology(new File("/tmp/road_topology.csv"));
+        tgraph.importTopology(new File("/tmp/road_topology.csv.gz"));
 //        isolatedGraph(tgraph);
 //        confirmDualReference(tgraph);
 //        System.out.println(tgraph.getRoadEndCross("595662_42964").detail());
 //        addNewRouteCount(tgraph);
         System.out.println("import topology time: "+ (System.currentTimeMillis()-start));
         start = System.currentTimeMillis();
-        tgraph.importTraffic(buildFileList("/tmp/traffic", Arrays.asList("0503.csv", "0504.csv", "0505.csv", "0506.csv", "0507.csv"))); //"0501.csv", "0502.csv",
+        tgraph.importTraffic(Helper.trafficFileList("/tmp/traffic", "0503", "0507")); //"0501.csv", "0502.csv",
         System.out.println("import time: "+ (System.currentTimeMillis()-start)/1000);
 //        new Scanner(System.in).nextLine();
         start = System.currentTimeMillis();
@@ -42,12 +46,6 @@ public class DataStatistic {
         System.out.println("data percent: "+dataPercent);
         System.out.println("calc time: "+ (System.currentTimeMillis()-start));
 //        new Scanner(System.in).nextLine();
-    }
-
-    private static List<File> buildFileList(String dir, List<String> files) {
-        File folder = new File(dir);
-        if(!folder.exists() && !folder.mkdirs()) throw new RuntimeException("can not create dir.");
-        return files.stream().map(s -> new File(folder, s)).collect(Collectors.toList());
     }
 
     /**

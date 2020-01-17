@@ -2,13 +2,20 @@ package org.act.tgraph.demo.utils;
 
 import com.google.common.collect.PeekingIterator;
 import org.act.tgraph.demo.client.Config;
+import org.act.tgraph.demo.client.vo.RuntimeEnv;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.apache.commons.compress.utils.IOUtils;
 
-import java.io.File;
+import java.io.*;
+import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Created by song on 16-2-23.
@@ -157,7 +164,7 @@ public class Helper {
         if (!folder.exists() && !folder.mkdirs()) throw new RuntimeException("can not create dir.");
         List<String> files = new ArrayList<>();
         while(c.getTimeInMillis() <= endT) {
-            files.add(String.format("%02d%02d.csv", c.get(Calendar.MONTH) + 1, c.get(Calendar.DAY_OF_MONTH)));
+            files.add(String.format("%02d%02d.csv.gz", c.get(Calendar.MONTH) + 1, c.get(Calendar.DAY_OF_MONTH)));
             c.add(Calendar.HOUR, 24);
         }
         return files.stream().map(s -> new File(folder, s)).collect(Collectors.toList());
@@ -165,16 +172,43 @@ public class Helper {
 
     public static long monthDayStr2Time(String monthDayStr){
         Calendar c = Calendar.getInstance();
-        c.set(Calendar.YEAR, 2010);
-        c.set(Calendar.MONTH, Integer.parseInt(monthDayStr.substring(0, 2))-1);
-        c.set(Calendar.DAY_OF_MONTH, Integer.parseInt(monthDayStr.substring(2,4)));
+        int month = Integer.parseInt(monthDayStr.substring(0, 2))-1;
+        int day = Integer.parseInt(monthDayStr.substring(2,4));
+        c.set(2010, month, day, 0, 0 );
         return c.getTimeInMillis();
     }
 
     public static int monthDayStr2TimeInt(String monthDayStr){
-        return ((int) monthDayStr2Time(monthDayStr)/1000);
+        return ((int) (monthDayStr2Time(monthDayStr)/1000L));
     }
 
+    public static String currentCodeVersion(){
+        RuntimeEnv env = RuntimeEnv.getCurrentEnv();
+        return env.name() + "." + env.getConf().codeGitVersion();
+    }
+
+    public static File download( String url, File out ) throws IOException {
+        if(out.exists() && out.isFile()){
+            return out;
+        }
+        URL website = new URL(url);
+        ReadableByteChannel rbc = Channels.newChannel(website.openStream());
+        FileOutputStream fos = new FileOutputStream(out);
+        fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+        return out;
+    }
+
+
+    public static File decompressGZip( File input, File outFile ) throws IOException {
+        try (GzipCompressorInputStream in = new GzipCompressorInputStream(new FileInputStream(input))){
+            IOUtils.copy(in, new FileOutputStream(outFile));
+        }
+        return outFile;
+    }
+
+    public static BufferedReader gzipReader(File file) throws IOException {
+        return new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(file))));
+    }
 }
 
 

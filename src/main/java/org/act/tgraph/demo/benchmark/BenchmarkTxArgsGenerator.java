@@ -22,15 +22,15 @@ import java.util.*;
 /**
  * Generate an instance of benchmark (a iterator/list of transactions) from given arguments.
  */
-public class BenchmarkTransactionGenerator {
+public class BenchmarkTxArgsGenerator {
     public static void main(String[] args) throws IOException {
         TrafficTemporalPropertyGraph tgraph = new TrafficTemporalPropertyGraph();
-        tgraph.importTopology(new File("/tmp/road_topology.csv"));
-        BenchmarkTransactionGenerator gen = new BenchmarkTransactionGenerator();
+        tgraph.importTopology(new File("/tmp/road_topology.csv.gz"));
+        BenchmarkTxArgsGenerator gen = new BenchmarkTxArgsGenerator();
         BenchmarkWriter writer = new BenchmarkWriter("/tmp/benchmark");
-        writer.execute(gen.phaseImportStatic(tgraph));
-        writer.execute(gen.phaseWriteTemporalProp(100, Helper.trafficFileList("/tmp/traffic", "0503.csv", "0507.csv")));
-        writer.execute(gen.phaseRead(Helper.monthDayStr2TimeInt("0503"), Helper.monthDayStr2TimeInt("0507"), 100));
+        writer.write(gen.phaseImportStatic(tgraph));
+        writer.write(gen.phaseWriteTemporalProp(100, Helper.trafficFileList("/tmp/traffic", "0503.csv", "0507.csv")));
+        writer.write(gen.phaseRead(Helper.monthDayStr2TimeInt("0503"), Helper.monthDayStr2TimeInt("0507"), 100));
     }
 
     private Map<CrossNode, Long> crossIdMap = new HashMap<>();
@@ -43,7 +43,7 @@ public class BenchmarkTransactionGenerator {
         final List<ImportStaticDataTx.StaticRoadRel> roads = new ArrayList<>();
         long crossId = 0, roadId = 0;
         for(CrossNode cross : tgraph.getAllCross()){
-            crosses.add(Pair.of(crossId, cross.id));
+            crosses.add(Pair.of(crossId, cross.name));
             crossIdMap.put(cross, crossId);
             crossId++;
         }
@@ -59,7 +59,7 @@ public class BenchmarkTransactionGenerator {
         return new ImportStaticDataTx(crosses, roads);
     }
 
-    public Iterator<AbstractTransaction> phaseWriteTemporalProp(int linePerTx, List<File> files) throws FileNotFoundException {
+    public Iterator<AbstractTransaction> phaseWriteTemporalProp(int linePerTx, List<File> files) throws IOException {
         return new WriteTemporalDataTxIterator(linePerTx, files);
     }
 
@@ -75,22 +75,24 @@ public class BenchmarkTransactionGenerator {
         final int linePerTx;
         final Iterator<File> fileIter;
         BufferedReader br;
-        WriteTemporalDataTxIterator(int linePerTx, List<File> files) throws FileNotFoundException {
+        WriteTemporalDataTxIterator(int linePerTx, List<File> files) throws IOException {
             this.linePerTx = linePerTx;
             this.fileIter = files.iterator();
             assert fileIter.hasNext();
-            this.br = new BufferedReader(new FileReader(fileIter.next()));
+            this.br = Helper.gzipReader(fileIter.next());
         }
         @Override
         protected AbstractTransaction computeNext() {
             try {
                 AbstractTransaction result = readFile(br);
                 if(result==null && fileIter.hasNext()){
-                    this.br = new BufferedReader(new FileReader(fileIter.next()));
+                    if(this.br!=null) br.close();
+                    this.br = Helper.gzipReader(fileIter.next());
                     result = readFile(br);
                     assert result!=null;
                     return result;
                 }else if(result==null){
+                    this.br.close();
                     return endOfData();
                 }else{
                     return result;

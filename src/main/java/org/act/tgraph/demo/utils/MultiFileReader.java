@@ -3,7 +3,10 @@ package org.act.tgraph.demo.utils;
 import com.google.common.collect.AbstractIterator;
 import org.act.tgraph.demo.model.StatusUpdate;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -35,7 +38,7 @@ public class MultiFileReader extends AbstractIterator<StatusUpdate> implements C
                 Future<File> f = files.poll();
                 if(f==null) return endOfData();
                 File file = f.get();
-                curReader = new BufferedReader(new FileReader(file));
+                curReader = Helper.gzipReader(file);
                 String line = curReader.readLine();
                 return new StatusUpdate(line);
             }else{
@@ -44,7 +47,7 @@ public class MultiFileReader extends AbstractIterator<StatusUpdate> implements C
                     Future<File> f = files.poll();
                     if(f==null) return endOfData();
                     File file = f.get();
-                    curReader = new BufferedReader(new FileReader(file));
+                    curReader = Helper.gzipReader(file);
                     line = curReader.readLine();
                     return new StatusUpdate(line);
                 }else{
@@ -69,11 +72,8 @@ public class MultiFileReader extends AbstractIterator<StatusUpdate> implements C
         }
         @Override
         public File call() throws Exception {
-            if(file.exists()) return file;
-            File compressedFile = new File(file.getParent(), file.getName() + ".gz");
-            if(compressedFile.exists()) return DataDownloader.decompressGZip(compressedFile, file);
-            DataDownloader.download("http://amitabha.water-crystal.org/TGraphDemo/bj-traffic/"+compressedFile.getName(), compressedFile);
-            return DataDownloader.decompressGZip(compressedFile, file);
+            if(!file.exists()) Helper.download("http://amitabha.water-crystal.org/TGraphDemo/bj-traffic/"+file.getName(), file);
+            return file;
         }
     }
 }

@@ -1,5 +1,11 @@
-package org.act.tgraph.demo.client.driver.tgraph;
+package org.act.tgraph.demo.client;
 
+import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonObject;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import org.act.tgraph.demo.utils.Helper;
 import org.act.tgraph.demo.utils.TimeMonitor;
 
 import java.io.BufferedReader;
@@ -7,12 +13,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  *  create by sjh at 2019-09-23
@@ -20,8 +21,9 @@ import java.util.concurrent.TimeUnit;
  *  Test TGraph Server performance.
  */
 public abstract class TGraphSocketClient {
+    private final ThreadPoolExecutor exe;
     private BlockingQueue<Connection> connectionPool = new LinkedBlockingQueue<>();
-    private ThreadPoolExecutor service;
+    private ListeningExecutorService service;
 
     /**
      * Arguments:
@@ -29,22 +31,37 @@ public abstract class TGraphSocketClient {
      * @param parallelCnt number of threads to send queries.
      * @param queueLength queue to cache data/request read from disk.
      */
-    public TGraphSocketClient(String serverHost, int parallelCnt, int queueLength) throws IOException {
-        this.service = new ThreadPoolExecutor(parallelCnt, parallelCnt, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(queueLength), new ThreadPoolExecutor.CallerRunsPolicy());
+    public TGraphSocketClient(String serverHost, int parallelCnt, int queueLength) throws IOException, ExecutionException, InterruptedException {
+        this.exe = new ThreadPoolExecutor(parallelCnt, parallelCnt, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(queueLength), (r, executor) -> {
+            if (!executor.isShutdown()) try {
+                executor.getQueue().put(r);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+        exe.prestartAllCoreThreads();
+        this.service = MoreExecutors.listeningDecorator(exe);
         for(int i = 0; i< parallelCnt; i++) this.connectionPool.offer(new Connection(serverHost, 8438));
-        this.service.prestartAllCoreThreads();
+        testServerClientCompatibility();
     }
 
-    public Future<String> addQuery(String query) {
+    public ListenableFuture<JsonObject> addQuery(String query) {
         return service.submit(new Req(query));
+    }
+
+    private void testServerClientCompatibility() throws ExecutionException, InterruptedException {
+        Future<JsonObject> response = addQuery("VERSION");
+        String result = response.get().get("result").asString();
+        String clientVersion = Helper.currentCodeVersion();
+        if(!clientVersion.equals(result)) throw new UnsupportedOperationException(String.format("server(%s) client(%s) version not match!", result, clientVersion));
     }
 
     public void awaitTermination() throws InterruptedException, IOException {
         service.shutdown();
         while(!service.isTerminated()) {
             service.awaitTermination(10, TimeUnit.SECONDS);
-            long completeCnt = service.getCompletedTaskCount();
-            int remains = service.getQueue().size();
+            long completeCnt = exe.getCompletedTaskCount();
+            int remains = exe.getQueue().size();
             System.out.println( completeCnt+"/"+ (completeCnt+remains)+" query completed.");
         }
         while(true){
@@ -52,10 +69,10 @@ public abstract class TGraphSocketClient {
             if(conn!=null) conn.close();
             else break;
         }
-        System.out.println("Client exit. send "+ service.getCompletedTaskCount() +" lines.");
+        System.out.println("Client exit. send "+ exe.getCompletedTaskCount() +" lines.");
     }
 
-    public class Req implements Callable<String> {
+    public class Req implements Callable<JsonObject> {
         private final TimeMonitor timeMonitor = new TimeMonitor();
         private final String query;
 
@@ -65,7 +82,7 @@ public abstract class TGraphSocketClient {
         }
 
         @Override
-        public String call() throws Exception {
+        public JsonObject call() throws Exception {
             try {
                 Connection conn = connectionPool.take();
                 timeMonitor.mark("Wait in queue", "Send query");
@@ -74,9 +91,8 @@ public abstract class TGraphSocketClient {
                 String response = conn.in.readLine();
                 timeMonitor.end("Wait result");
                 if (response == null) throw new RuntimeException("[Got null. Server close connection]");
-                String result = onResponse(query, response, timeMonitor, Thread.currentThread(), conn);
                 connectionPool.put(conn);
-                return result;
+                return onResponse(query, response, timeMonitor, Thread.currentThread());
             }catch (Exception e){
                 e.printStackTrace();
                 throw e;
@@ -84,7 +100,7 @@ public abstract class TGraphSocketClient {
         }
     }
 
-    protected abstract String onResponse(String query, String response, TimeMonitor timeMonitor, Thread thread, Connection conn) throws Exception;
+    protected abstract JsonObject onResponse(String query, String response, TimeMonitor timeMonitor, Thread thread) throws Exception;
 
     public static class Connection{
         private Socket client;

@@ -1,17 +1,18 @@
 package org.act.tgraph.demo.model;
 
-import org.act.temporalProperty.query.TimeInterval;
-import org.act.temporalProperty.query.TimePointL;
-import org.act.tgraph.demo.utils.DataDownloader;
+import org.act.tgraph.demo.utils.Helper;
 import org.act.tgraph.demo.utils.MultiFileReader;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class TrafficTemporalPropertyGraph {
     private boolean isTopoSet = false;
@@ -25,11 +26,9 @@ public class TrafficTemporalPropertyGraph {
     public void importTopology(File roadTopology) throws IOException {
         assert !isTopoSet: "already set topology!";
         if(!roadTopology.exists()) {
-            File compressedFile = new File(roadTopology.getParent(), "Topo.csv.gz");
-            DataDownloader.download("http://amitabha.water-crystal.org/TGraphDemo/Topo.csv.gz", compressedFile);
-            DataDownloader.decompressGZip(compressedFile, roadTopology);
+            Helper.download("http://amitabha.water-crystal.org/TGraphDemo/Topo.csv.gz", roadTopology);
         }
-        try (BufferedReader br = new BufferedReader(new FileReader(roadTopology))) {
+        try (BufferedReader br = Helper.gzipReader(roadTopology)) {
             br.readLine();// skip first line;
             String line;
             while ((line = br.readLine()) != null) {
@@ -85,7 +84,7 @@ public class TrafficTemporalPropertyGraph {
     public static void main(String[] args) throws IOException {
         Map<String, Integer> edgePairSet = new HashMap<>();
         TrafficTemporalPropertyGraph tgraph = new TrafficTemporalPropertyGraph();
-        tgraph.importTopology(new File("/tmp/road_topology.csv"));
+        tgraph.importTopology(new File("/tmp/road_topology.csv.gz"));
         tgraph.roadRelMap.forEach((id, road) -> {
             road.inChains.forEach(roadRel -> edgePairSet.compute(roadRel.id + ", " + road.id, (s,cnt)-> cnt==null ? 1 : cnt+1));
             road.outChains.forEach(roadRel -> edgePairSet.compute(road.id+", "+roadRel.id, (s,cnt)-> cnt==null? 1: cnt+1));
