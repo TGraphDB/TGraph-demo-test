@@ -21,15 +21,14 @@ public class BenchmarkTxResultProcessor {
     public final Executor thread = Executors.newSingleThreadExecutor();
     private final Producer logger;
     private final String testName;
-    private String serverName = "ServerNameNotSet";
+    private final String clientVersion;
+    private final boolean verifyResult;
 
-    public BenchmarkTxResultProcessor(Producer logger, String testName, String serverName){
+    public BenchmarkTxResultProcessor(Producer logger, String testName, String clientVersion, boolean verifyResult){
         this.logger = logger;
         this.testName = testName;
-    }
-
-    public void setServerName(String serverName){
-        this.serverName = serverName;
+        this.clientVersion = clientVersion;
+        this.verifyResult = verifyResult;
     }
 
     public void logMetrics(AbstractTransaction tx, JsonObject serverResponse) throws ProducerException, InterruptedException {
@@ -39,7 +38,7 @@ public class BenchmarkTxResultProcessor {
         log.PushBack("type", "time");
         add2LogItem(log, metrics);
         add2LogItem(log, serverResponse.get("server").asObject());
-        logger.send("tgraph-demo-test", "tgraph-log", testName, serverName, log);
+        logger.send("tgraph-demo-test", "tgraph-log", testName, clientVersion, log);
     }
 
     private void add2LogItem(LogItem log, JsonObject metrics) {
@@ -84,7 +83,7 @@ public class BenchmarkTxResultProcessor {
             if(result==null) return;
             try {
                 logMetrics(tx, result);
-                validateResult(tx, result.get("result").asObject());
+                if(verifyResult) validateResult(tx, result.get("result").asObject());
             } catch (ProducerException | InterruptedException e) {
                 e.printStackTrace();
             }

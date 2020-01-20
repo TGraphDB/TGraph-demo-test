@@ -13,7 +13,13 @@ WORKDIR /tgraph/TGraph-demo-test
 RUN git pull
 RUN mvn -B install -DskipTests
 
-ENTRYPOINT /bin/bash
+VOLUME /tgraph/test
+
+ENV DB_TYPE tgraph
+ENV DB_HOST localhost
+ENV BENCHMARK_FILE_INPUT /tgraph/test/benchmark-with-result.gz
+ENV MAX_CONNECTION_CNT 1
+
 WORKDIR /tgraph/TGraph-demo-test
-VOLUME /test
-CMD ["mvn", "-B", "--offline", "exec:java", "-Dexec.mainClass=org.act.tgraph.demo.benchmark.BenchmarkRunner", "-Dexec.args=/test" ]
+ENTRYPOINT /bin/bash
+CMD ["mvn", "-B", "--offline", "exec:java", "-Dexec.mainClass=org.act.tgraph.demo.benchmark.BenchmarkRunner" ]

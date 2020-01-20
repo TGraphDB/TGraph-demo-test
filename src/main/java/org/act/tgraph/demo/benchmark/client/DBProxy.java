@@ -10,7 +10,7 @@ import java.io.IOException;
  * Created by song on 16-2-23.
  */
 public interface DBProxy {
-    // return server name.
+    // return server version.
     String testServerClientCompatibility() throws UnsupportedOperationException;
 
     ListenableFuture<JsonObject> execute(AbstractTransaction tx ) throws Exception;

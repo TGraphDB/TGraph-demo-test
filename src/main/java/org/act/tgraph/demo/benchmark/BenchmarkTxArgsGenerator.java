@@ -15,23 +15,51 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * Generate an instance of benchmark (a iterator/list of transactions) from given arguments.
  */
 public class BenchmarkTxArgsGenerator {
-    public static void main(String[] args) throws IOException {
-        TrafficTemporalPropertyGraph tgraph = new TrafficTemporalPropertyGraph();
-        tgraph.importTopology(new File("/tmp/road_topology.csv.gz"));
-        BenchmarkTxArgsGenerator gen = new BenchmarkTxArgsGenerator();
-        BenchmarkWriter writer = new BenchmarkWriter("/tmp/benchmark");
-        writer.write(gen.phaseImportStatic(tgraph));
-        writer.write(gen.phaseWriteTemporalProp(100, Helper.trafficFileList("/tmp/traffic", "0503.csv", "0507.csv")));
-        writer.write(gen.phaseRead(Helper.monthDayStr2TimeInt("0503"), Helper.monthDayStr2TimeInt("0507"), 100));
+    public static void main(String[] args){
+        String workDir = Helper.mustEnv("WORK_DIR");
+        boolean genResult = Boolean.parseBoolean(Helper.mustEnv("BENCHMARK_WITH_RESULT"));
+        String benchmarkFileName = Helper.mustEnv("BENCHMARK_FILE_OUTPUT");
+        int temporalDataPerTx = Integer.parseInt(Helper.mustEnv("TEMPORAL_DATA_PER_TX"));
+        String temporalDataStartT = Helper.mustEnv("TEMPORAL_DATA_START");
+        String temporalDataEndT = Helper.mustEnv("TEMPORAL_DATA_END");
+        int reachableAreaTxCnt = Integer.parseInt(Helper.mustEnv("REACHABLE_AREA_TX_CNT"));
+
+        try {
+            TrafficTemporalPropertyGraph tgraph = new TrafficTemporalPropertyGraph();
+            tgraph.importTopology(new File(workDir, "road_topology.csv.gz"));
+
+            BenchmarkTxArgsGenerator gen = new BenchmarkTxArgsGenerator();
+            BenchmarkWriter writer = new BenchmarkWriter(new File(workDir, benchmarkFileName + ".gz"));
+            writer.write(gen.phaseImportStatic(tgraph));
+            writer.write(gen.phaseWriteTemporalProp(temporalDataPerTx, Helper.trafficFileList(workDir, temporalDataStartT, temporalDataEndT)));
+            writer.write(gen.phaseRead(Helper.monthDayStr2TimeInt(temporalDataStartT), Helper.monthDayStr2TimeInt(temporalDataEndT), reachableAreaTxCnt));
+            writer.close();
+
+            if (genResult) {
+                BenchmarkTxResultGenerator resultGen = new BenchmarkTxResultGenerator();
+                BenchmarkReader reader = new BenchmarkReader(new File(workDir, benchmarkFileName + ".gz"));
+                writer = new BenchmarkWriter(new File(workDir, benchmarkFileName + "-with-result.gz"));
+                while (reader.hasNext()) {
+                    writer.write(resultGen.execute(reader.next()));
+                }
+                reader.close();
+                writer.close();
+            }
+        }catch (IOException e){
+            e.printStackTrace();
+        }
     }
 
     private Map<CrossNode, Long> crossIdMap = new HashMap<>();

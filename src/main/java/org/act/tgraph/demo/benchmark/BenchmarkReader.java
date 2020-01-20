@@ -10,14 +10,13 @@ import org.act.tgraph.demo.benchmark.transaction.ReachableAreaQueryTx;
 import org.act.tgraph.demo.utils.Helper;
 
 import java.io.*;
-import java.util.zip.GZIPInputStream;
 
 public class BenchmarkReader extends AbstractIterator<AbstractTransaction> {
 
     private final BufferedReader reader;
 
-    public BenchmarkReader(String file) throws IOException {
-        reader = Helper.gzipReader(new File(file));
+    public BenchmarkReader(File file) throws IOException {
+        reader = Helper.gzipReader(file);
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.aliyun.openservices.aliyun.log.producer.Producer;
 import com.aliyun.openservices.aliyun.log.producer.ProducerConfig;
 import com.aliyun.openservices.aliyun.log.producer.ProjectConfig;
 import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.PeekingIterator;
 import org.act.tgraph.demo.client.vo.RuntimeEnv;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
@@ -265,6 +266,12 @@ public class Helper {
 
     public static TimePoint time(int timestamp){
         return new TimePoint(timestamp);
+    }
+
+    public static String mustEnv(String name) {
+        String val = System.getenv(name);
+        Preconditions.checkNotNull(val);
+        return val;
     }
 }
 

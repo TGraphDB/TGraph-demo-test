@@ -1,52 +1,57 @@
 package org.act.tgraph.demo.benchmark;
 
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.Futures;
+import com.aliyun.openservices.aliyun.log.producer.Producer;
 import org.act.tgraph.demo.benchmark.client.DBProxy;
 import org.act.tgraph.demo.benchmark.client.SqlServerExecutorClient;
 import org.act.tgraph.demo.benchmark.client.TGraphExecutorClient;
 import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction;
 import org.act.tgraph.demo.utils.Helper;
 
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
+import java.io.File;
+import java.util.Calendar;
 
 public class BenchmarkRunner {
 
-    public static void main(String[] args) throws Exception {
-        BenchmarkWriter writer;
-        BenchmarkReader reader;
+    public static void main(String[] args) {
+        String benchmarkFileName = Helper.mustEnv("BENCHMARK_FILE_INPUT");
+        String dbType = Helper.mustEnv("DB_TYPE");
+        int maxConnCnt = Integer.parseInt(Helper.mustEnv("MAX_CONNECTION_CNT"));
+        String dbHost = Helper.mustEnv("DB_HOST");
+        boolean verifyResult = Boolean.parseBoolean(Helper.mustEnv("VERIFY_RESULT"));
 
-//        TrafficTemporalPropertyGraph tgraph = new TrafficTemporalPropertyGraph();
-//        tgraph.importTopology(new File("/tmp/road_topology.csv.gz"));
-//        writer = new BenchmarkWriter("/tmp/benchmark.gz");
-//        BenchmarkTxArgsGenerator argsGen = new BenchmarkTxArgsGenerator();
-//        writer.write(argsGen.phaseImportStatic(tgraph));
-//        writer.write(argsGen.phaseWriteTemporalProp(1000, Helper.downloadTrafficFiles("/tmp/traffic", "0501", "0503")));
-//        writer.write(argsGen.phaseRead(Helper.monthDayStr2TimeInt("0501"), Helper.monthDayStr2TimeInt("0503"), 10));
-//        writer.close();
-//
-//        BenchmarkTxResultGenerator resultGen = new BenchmarkTxResultGenerator();
-//        reader = new BenchmarkReader("/tmp/benchmark.gz");
-//        writer = new BenchmarkWriter("/tmp/benchmark-with-result.gz");
-//        while(reader.hasNext()){
-//            writer.write(resultGen.execute(reader.next()));
-//        }
-//        reader.close();
-//        writer.close();
-
-        reader = new BenchmarkReader("/tmp/benchmark-with-result.gz");
-
-        DBProxy client = new TGraphExecutorClient("localhost", 1, 800);
-//        DBProxy client = new SqlServerExecutorClient("localhost", 1, 800);
-        String serverName = client.testServerClientCompatibility();
-        BenchmarkTxResultProcessor validator = new BenchmarkTxResultProcessor(Helper.getLogger(),"test-test", serverName);
-        client.createDB();
-        while(reader.hasNext()){
-            AbstractTransaction tx = reader.next();
-            validator.process(client.execute(tx), tx);
+        try {
+            DBProxy client;
+            switch (dbType.toLowerCase()) {
+                case "tgraph_kernel":
+                    client = new TGraphExecutorClient(dbHost, maxConnCnt, 800);
+                    break;
+                case "sql_server":
+                    client = new SqlServerExecutorClient(dbHost, maxConnCnt, 800);
+                    break;
+                default:
+                    throw new UnsupportedOperationException();
+            }
+            String serverVersion = client.testServerClientCompatibility();
+            Producer logger = Helper.getLogger();
+            BenchmarkTxResultProcessor post = new BenchmarkTxResultProcessor(logger, getTestName(dbType, serverVersion), Helper.codeGitVersion(), verifyResult);
+            client.createDB();
+            BenchmarkReader reader = new BenchmarkReader(new File(benchmarkFileName));
+            while (reader.hasNext()) {
+                AbstractTransaction tx = reader.next();
+                post.process(client.execute(tx), tx);
+            }
+            reader.close();
+            client.close();
+            logger.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        reader.close();
-        client.close();
+    }
+
+    private static String getTestName(String dbType, String dbVersion){
+        Calendar c = Calendar.getInstance();
+        return "B_"+dbType.toLowerCase()+"("+dbVersion+")_"+
+                c.get(Calendar.YEAR)+"."+(c.get(Calendar.MONTH)+1)+"."+c.get(Calendar.DAY_OF_MONTH)+"_"+
+                c.get(Calendar.HOUR_OF_DAY)+":"+c.get(Calendar.MINUTE);
     }
 }

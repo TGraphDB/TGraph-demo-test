@@ -13,7 +13,7 @@ import java.util.zip.GZIPOutputStream;
 public class BenchmarkWriter {
     private final GZIPOutputStream writer;
 
-    public BenchmarkWriter(String file) throws IOException {
+    public BenchmarkWriter(File file) throws IOException {
         writer = new GZIPOutputStream(new FileOutputStream(file));
     }
 
