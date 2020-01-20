@@ -4,6 +4,7 @@ import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
 import org.apache.commons.lang3.tuple.Triple;
+import org.parboiled.common.Preconditions;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -20,8 +21,10 @@ public class TemporalValue<V>
     private final NavigableMap<TimePointInt, V> map = new ConcurrentSkipListMap<>();//new TreeMap<>();
 
     public void set( TimePointInt start, TimePointInt end, V value ) {
-        assert start!=null && end!=null && value!=null;
-        assert start.compareTo( end ) <= 0 : "invalid time interval! got ["+start+", "+ end+"]";
+        Preconditions.checkNotNull(start);
+        Preconditions.checkNotNull(end);
+        Preconditions.checkNotNull(value);
+        Preconditions.checkArgument(start.compareTo( end ) <= 0, "invalid time interval! got ["+start+", "+ end+"]");
         V endVal = map.get( end.next() );
         map.subMap( start, true, end, true ).clear();
         map.put( start, value );

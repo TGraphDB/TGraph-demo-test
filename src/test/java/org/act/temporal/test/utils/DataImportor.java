@@ -1,5 +1,5 @@
 //package org.act.temporal.test.utils;
-//import org.act.tgraph.demo.benchmark.DBOperation;
+//import org.act.tgraph.demo.benchmark.client.DBProxy;
 //import org.act.tgraph.demo.client.vo.Cross;
 //import org.act.tgraph.demo.client.vo.RelType;
 //import org.act.tgraph.demo.client.vo.RoadChain;
@@ -57,7 +57,7 @@
 //
 //
 //
-//    private void importFileTemporalData(DBOperation proxy, int toBeImported, int totalPartCount) throws IOException {
+//    private void importFileTemporalData(DBProxy proxy, int toBeImported, int totalPartCount) throws IOException {
 //        int[] tmp  = Helper.calcSplit(toBeImported, totalPartCount, fileList.size());
 //        int start = tmp[0];
 //        int end = tmp[1];
@@ -102,7 +102,7 @@
 //
 //    private int OpCountPerTransaction = 28000;
 //
-//    private void importOneFileTemporalData(DBOperation proxy) throws IOException {
+//    private void importOneFileTemporalData(DBProxy proxy) throws IOException {
 //        long time_last=System.currentTimeMillis();
 //        boolean inc=true;
 //

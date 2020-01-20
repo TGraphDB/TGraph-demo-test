@@ -1,13 +1,13 @@
 //package org.act.tgraph.demo.benchmark.client.neo4j;
 //
-//import org.act.tgraph.demo.benchmark.DBOperation;
+//import org.act.tgraph.demo.benchmark.client.DBProxy;
 //
 //import org.neo4j.graphdb.PropertyContainer;
 //
 ///**
 // * Created by song on 16-2-27.
 // */
-//public class ArraySimulationProxy implements DBOperation
+//public class ArraySimulationProxy implements DBProxy
 //{
 //
 //    @Override

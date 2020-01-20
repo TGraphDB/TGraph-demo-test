@@ -1,24 +1,33 @@
 package org.act.tgraph.demo.server;
 
-import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import org.act.tgraph.demo.utils.TGraphSocketServer;
-import org.act.tgraph.demo.client.vo.RuntimeEnv;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.tooling.GlobalGraphOperations;
 
+import java.io.File;
 import java.io.IOException;
 
-public class TCypherTCPServer {
+public class TCypherTcpServer {
     public static void main(String[] args){
-        TGraphSocketServer server = new TGraphSocketServer(RuntimeEnv.getCurrentEnv().getConf().dbPath, new TCypherReqExecutor());
+        TGraphSocketServer server = new TGraphSocketServer(dbDir(args), new TCypherReqExecutor());
         try {
             server.start();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static File dbDir(String[] args){
+        if(args.length<1){
+            throw new IllegalArgumentException("need arg: dbDir");
+        }
+        File dbDir = new File(args[0]);
+        if( !dbDir.exists() || !dbDir.isDirectory()){
+            throw new IllegalArgumentException("invalid dbDir");
+        }
+        return dbDir;
     }
 
     private static class TCypherReqExecutor extends TGraphSocketServer.ReqExecutor{

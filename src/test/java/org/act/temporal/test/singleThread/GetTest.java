@@ -1,7 +1,7 @@
 //package org.act.temporal.test.singleThread;
 //
 //import org.act.tgraph.demo.client.vo.RelType;
-//import org.act.tgraph.demo.benchmark.DBOperation;
+//import org.act.tgraph.demo.benchmark.client.DBProxy;
 //import org.act.tgraph.demo.benchmark.client.neo4j.TemporalSimulationProxy;
 //import org.act.temporal.test.utils.Helper;
 //import org.act.temporal.test.utils.Monitor;
@@ -28,7 +28,7 @@
 //@RunWith(Parameterized.class)
 //public class GetTest {
 //    private GraphDatabaseService db;
-//    private DBOperation temporalDB=new TemporalSimulationProxy();
+//    private DBProxy temporalDB=new TemporalSimulationProxy();
 //    private Logger logger= LoggerFactory.getLogger(GetTest.class);
 //    private Monitor monitor=new Monitor(logger);
 //

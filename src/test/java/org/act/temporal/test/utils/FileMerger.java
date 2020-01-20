@@ -2,25 +2,26 @@ package org.act.temporal.test.utils;
 
 import org.act.tgraph.demo.client.vo.RoadChain;
 import org.act.tgraph.demo.client.vo.TemporalStatus;
-import org.act.tgraph.demo.client.Config;
 import org.junit.Test;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 
 /**
  * Created by song on 16-2-26.
  */
 public class FileMerger {
-
-    private Config config = new Config();
+    String dataPathDir="D:\\java_project\\data\\北京道路数据";
+    String dataPathNetwork = "D:\\java_project\\data\\北京道路数据\\Topo.csv";
+    String dataPathFile = "D:\\java_project\\data\\北京道路数据\\merged."+System.currentTimeMillis()+".data";
+    Logger logger = LoggerFactory.getLogger(FileMerger.class);
 
     public void readNetworkFile() throws IOException {
         int lineCount = 0;
-        try (BufferedReader br = new BufferedReader(new FileReader(config.dataPathNetwork))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(dataPathNetwork))) {
             String line;
             while ((line = br.readLine()) != null) {
                 if(lineCount>0){
@@ -33,20 +34,11 @@ public class FileMerger {
     }
     @Test
     public void mergeInOne() throws IOException {
-        config.dataPathDir="D:\\java_project\\data\\北京道路数据";
-        config.dataPathFile = config.Default.dataPathFile+System.currentTimeMillis()+".data";
-        Logger logger = config.logger;
-
         readNetworkFile();
 
         ArrayList<File> fileList= new ArrayList<>();
-        Helper.getFileRecursive(new File(config.dataPathDir), fileList, 15);
-        Collections.sort(fileList, new Comparator<File>() {
-            @Override
-            public int compare(File o1, File o2) {
-                return -(o2.getName().compareTo(o1.getName()));
-            }
-        });
+        Helper.getFileRecursive(new File(dataPathDir), fileList, 15);
+        fileList.sort(Comparator.comparing(File::getName));
         for(int i=1;i<fileList.size();i++){
 //            System.out.println(fileList.get(i).getName());
             if(fileList.get(i).getName().equals(fileList.get(i-1).getName()))break;
@@ -56,7 +48,7 @@ public class FileMerger {
         long totalLine=0;
         long skipLine = 0;
         long timestamp=System.currentTimeMillis();
-        try(BufferedWriter writer = new BufferedWriter(new FileWriter(config.dataPathFile),20000)) {
+        try(BufferedWriter writer = new BufferedWriter(new FileWriter(dataPathFile),20000)) {
             for (int i = 0; i < fileList.size(); i++) {
                 int time = Helper.getFileTime(fileList.get(i));
                 try (BufferedReader br = new BufferedReader(new FileReader(fileList.get(i)))) {

@@ -1,6 +1,7 @@
 package org.act.tgraph.demo.benchmark.transaction;
 
 import com.eclipsesource.json.JsonObject;
+import com.google.common.base.Preconditions;
 
 public class ReachableAreaQueryTx extends AbstractTransaction {
     public final long startCrossId;
@@ -16,7 +17,7 @@ public class ReachableAreaQueryTx extends AbstractTransaction {
 
     public ReachableAreaQueryTx(JsonObject o) {
         super(TxType.tx_query_reachable_area);
-        assert TxType.valueOf(o.get("type").asString()) == TxType.tx_query_reachable_area;
+        Preconditions.checkArgument( TxType.valueOf(o.get("type").asString()) == TxType.tx_query_reachable_area );
         this.startCrossId = o.get("startCrossId").asLong();
         this.departureTime = o.get("departureTime").asInt();
         this.travelTime = o.get("travelTime").asInt();

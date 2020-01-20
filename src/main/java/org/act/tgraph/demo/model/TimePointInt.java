@@ -1,5 +1,7 @@
 package org.act.tgraph.demo.model;
 
+import com.google.common.base.Preconditions;
+
 import java.util.Calendar;
 import java.util.Objects;
 import java.util.TimeZone;
@@ -26,7 +28,7 @@ public class TimePointInt implements Comparable<TimePointInt>
     protected int time;
 
     public TimePointInt( int time ) {
-        assert (time>=0 && time< NOW_VAL -1): new IllegalArgumentException("invalid time value "+ time +", only support 0 to "+(NOW_VAL -2));
+        Preconditions.checkArgument(time>=0 && time< NOW_VAL -1, "invalid time value "+ time +", only support 0 to "+(NOW_VAL -2));
         this.time = time;
     }
 

@@ -1,6 +1,6 @@
 //package org.act.tgraph.demo.benchmark.client.neo4j;
 //
-//import org.act.tgraph.demo.benchmark.DBOperation;
+//import org.act.tgraph.demo.benchmark.client.DBProxy;
 //
 //import org.neo4j.graphdb.NotFoundException;
 //import org.neo4j.graphdb.PropertyContainer;
@@ -14,7 +14,7 @@
 ///**
 // * Created by song on 16-2-26.
 // */
-//public class TreeMapKVSimulationProxy implements DBOperation
+//public class TreeMapKVSimulationProxy implements DBProxy
 //{
 //    @Override
 //    public String getAggregate(PropertyContainer container, String key, int from, int to, Aggregator aggregator) {

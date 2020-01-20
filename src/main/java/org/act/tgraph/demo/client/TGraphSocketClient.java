@@ -42,18 +42,20 @@ public abstract class TGraphSocketClient {
         exe.prestartAllCoreThreads();
         this.service = MoreExecutors.listeningDecorator(exe);
         for(int i = 0; i< parallelCnt; i++) this.connectionPool.offer(new Connection(serverHost, 8438));
-        testServerClientCompatibility();
     }
 
     public ListenableFuture<JsonObject> addQuery(String query) {
         return service.submit(new Req(query));
     }
 
-    private void testServerClientCompatibility() throws ExecutionException, InterruptedException {
+    public String testServerClientCompatibility() throws ExecutionException, InterruptedException {
         Future<JsonObject> response = addQuery("VERSION");
         String result = response.get().get("result").asString();
-        String clientVersion = Helper.currentCodeVersion();
-        if(!clientVersion.equals(result)) throw new UnsupportedOperationException(String.format("server(%s) client(%s) version not match!", result, clientVersion));
+        String clientVersion = Helper.codeGitVersion();
+        if (!clientVersion.equals(result)) {
+            throw new UnsupportedOperationException(String.format("server(%s) client(%s) version not match!", result, clientVersion));
+        }
+        return result;
     }
 
     public void awaitTermination() throws InterruptedException, IOException {
@@ -92,7 +94,8 @@ public abstract class TGraphSocketClient {
                 timeMonitor.end("Wait result");
                 if (response == null) throw new RuntimeException("[Got null. Server close connection]");
                 connectionPool.put(conn);
-                return onResponse(query, response, timeMonitor, Thread.currentThread());
+                if(query.equals("VERSION")) return Json.parse(response).asObject();
+                else return onResponse(query, response, timeMonitor, Thread.currentThread());
             }catch (Exception e){
                 e.printStackTrace();
                 throw e;

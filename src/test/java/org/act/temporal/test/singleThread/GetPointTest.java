@@ -1,6 +1,6 @@
 //package org.act.temporal.test.singleThread;
 //
-//import org.act.tgraph.demo.benchmark.DBOperation;
+//import org.act.tgraph.demo.benchmark.client.DBProxy;
 //import org.act.tgraph.demo.client.Config;
 //import org.act.tgraph.demo.benchmark.client.neo4j.ArraySimulationProxy;
 //import org.act.temporal.test.utils.Helper;
@@ -27,7 +27,7 @@
 //    private static Config config = new Config();
 //    private static List<Integer> timeList = new ArrayList<>();
 //    private float percent = 0.01f;//test count total.
-//    private DBOperation proxy = config.proxy;
+//    private DBProxy proxy = config.proxy;
 //    private GraphDatabaseService db;
 //    private Logger logger = LoggerFactory.getLogger(GetRangeAggregateTest.class);
 //    private Monitor monitor = new Monitor(logger);

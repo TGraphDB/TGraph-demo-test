@@ -7,6 +7,8 @@ import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction;
 import org.act.tgraph.demo.benchmark.transaction.ReachableAreaQueryTx;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -21,7 +23,7 @@ public class BenchmarkTxResultProcessor {
     private final String testName;
     private String serverName = "ServerNameNotSet";
 
-    public BenchmarkTxResultProcessor(Producer logger, String testName){
+    public BenchmarkTxResultProcessor(Producer logger, String testName, String serverName){
         this.logger = logger;
         this.testName = testName;
     }
@@ -56,15 +58,19 @@ public class BenchmarkTxResultProcessor {
         for(JsonObject.Member m : expected){
             JsonArray expArr = m.getValue().asArray();
             JsonArray gotArr = got.get(m.getName()).asArray();
-            Preconditions.checkArgument(expArr.size()==gotArr.size(), "");
+            Preconditions.checkState(expArr.size()==gotArr.size());
             for(int i=0; i<expArr.size(); i++){
-                Preconditions.checkArgument(Objects.equals(expArr.get(i), gotArr.get(i)), "");
+                Preconditions.checkState(Objects.equals(expArr.get(i), gotArr.get(i)));
             }
         }
     }
 
     public PostProcessing callback(AbstractTransaction tx){
         return new PostProcessing(tx);
+    }
+
+    public void process(ListenableFuture<JsonObject> result, AbstractTransaction tx) {
+        Futures.addCallback( result, callback(tx), this.thread);
     }
 
     public class PostProcessing implements FutureCallback<JsonObject>{

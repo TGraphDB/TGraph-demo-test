@@ -1,6 +1,6 @@
 //package org.act.temporal.test.multiThread.clients;
 //
-//import org.act.tgraph.demo.benchmark.DBOperation;
+//import org.act.tgraph.demo.benchmark.client.DBProxy;
 //import org.act.tgraph.demo.client.Config;
 //import org.act.temporal.test.utils.Monitor;
 //import org.neo4j.graphdb.GraphDatabaseService;
@@ -19,7 +19,7 @@
 //public class Client extends Thread{
 //    protected long id;
 //    protected String type;
-//    protected DBOperation proxy;
+//    protected DBProxy proxy;
 //    protected GraphDatabaseService db;
 //    protected List<Monitor.SnapShot> log;
 //    protected Monitor monitor;

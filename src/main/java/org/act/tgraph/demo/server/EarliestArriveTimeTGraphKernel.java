@@ -1,7 +1,9 @@
 package org.act.tgraph.demo.server;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import org.act.tgraph.demo.algo.EarliestArriveTime;
+import org.act.tgraph.demo.utils.Helper;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -32,10 +34,10 @@ public class EarliestArriveTimeTGraphKernel extends EarliestArriveTime {
     protected int getEarliestArriveTime(Long roadId, int departureTime) throws UnsupportedOperationException {
         int minArriveTime = Integer.MAX_VALUE;
         Relationship r = db.getRelationshipById(roadId);
-        assert r.hasProperty( travelTimePropertyKey ) : new UnsupportedOperationException();
+        if( !r.hasProperty( travelTimePropertyKey )) throw new UnsupportedOperationException();
         for(int curT = departureTime; curT<minArriveTime; curT++){
-            Object tObj = r.getTemporalProperty( travelTimePropertyKey, TimePoint.unix(departureTime));
-            assert tObj != null : new UnsupportedOperationException();
+            Object tObj = r.getTemporalProperty( travelTimePropertyKey, Helper.time(departureTime));
+            if(tObj==null) throw new UnsupportedOperationException();
             int period = (Integer) tObj;
             if (curT + period < minArriveTime) {
                 minArriveTime = curT + period;

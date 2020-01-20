@@ -1,19 +1,21 @@
 package org.act.tgraph.demo.utils;
 
+import com.aliyun.openservices.aliyun.log.producer.LogProducer;
+import com.aliyun.openservices.aliyun.log.producer.Producer;
+import com.aliyun.openservices.aliyun.log.producer.ProducerConfig;
+import com.aliyun.openservices.aliyun.log.producer.ProjectConfig;
+import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
 import com.google.common.collect.PeekingIterator;
-import org.act.tgraph.demo.client.Config;
 import org.act.tgraph.demo.client.vo.RuntimeEnv;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.utils.IOUtils;
+import org.neo4j.temporal.TimePoint;
 
 import java.io.*;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
@@ -21,6 +23,38 @@ import java.util.zip.GZIPInputStream;
  * Created by song on 16-2-23.
  */
 public class Helper {
+    public static String codeGitVersion() {
+        try (InputStream input = Helper.class.getResourceAsStream("/git.properties")) {
+            Properties prop = new Properties();
+            prop.load(input);
+            String gitCommitId = prop.getProperty("git.commit.id.describe-short");
+            if(gitCommitId.endsWith("-Modified")){
+                return gitCommitId.replace("-Modified", "(M)");
+            }else{
+                return gitCommitId;
+            }
+        } catch (IOException ex) {
+            if(ex instanceof FileNotFoundException) return "NoGit";
+            ex.printStackTrace();
+            return "Git-Err";
+        }
+    }
+
+    public static Producer getLogger(){
+        ProducerConfig pConf = new ProducerConfig();
+        pConf.setIoThreadCount( 1 ); // one thread to upload
+        Producer onlineLogger = new LogProducer( pConf );
+        onlineLogger.putProjectConfig(new ProjectConfig("tgraph-demo-test", "cn-beijing.log.aliyuncs.com", "LTAIeA55PGyOpgZs", "H0XzCznABsioSI4TQpwXblH269eBm6"));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                onlineLogger.close();
+            } catch (InterruptedException | ProducerException e) {
+                e.printStackTrace();
+            }
+        }));
+        return onlineLogger;
+    }
+
     public static void deleteAllFilesOfDir(File path) {
         if (!path.exists())
             return;
@@ -96,8 +130,7 @@ public class Helper {
         return timeStr2int(file.getName().substring(9, 21));
     }
 
-    public static void deleteExistDB(Config config){
-        File dir = new File(config.dbPath);
+    public static void deleteExistDB(File dir){
         if (dir.exists()){
             Helper.deleteAllFilesOfDir(dir);
         }
@@ -170,6 +203,22 @@ public class Helper {
         return files.stream().map(s -> new File(folder, s)).collect(Collectors.toList());
     }
 
+    public static List<File> downloadTrafficFiles(String dir, String fileStart, String fileEnd) throws IOException {
+        Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(monthDayStr2Time(fileStart));
+        long endT = monthDayStr2Time(fileEnd);
+        File folder = new File(dir);
+        if (!folder.exists() && !folder.mkdirs()) throw new RuntimeException("can not create dir.");
+        List<File> files = new ArrayList<>();
+        while(c.getTimeInMillis() <= endT) {
+            File f = new File(folder, String.format("%02d%02d.csv.gz", c.get(Calendar.MONTH) + 1, c.get(Calendar.DAY_OF_MONTH)));
+            files.add(f);
+            if(!f.exists()) download("http://amitabha.water-crystal.org/TGraphDemo/bj-traffic/"+f.getName(), f);
+            c.add(Calendar.HOUR, 24);
+        }
+        return files;
+    }
+
     public static long monthDayStr2Time(String monthDayStr){
         Calendar c = Calendar.getInstance();
         int month = Integer.parseInt(monthDayStr.substring(0, 2))-1;
@@ -184,7 +233,7 @@ public class Helper {
 
     public static String currentCodeVersion(){
         RuntimeEnv env = RuntimeEnv.getCurrentEnv();
-        return env.name() + "." + env.getConf().codeGitVersion();
+        return env.name() + "." + codeGitVersion();
     }
 
     public static File download( String url, File out ) throws IOException {
@@ -208,6 +257,14 @@ public class Helper {
 
     public static BufferedReader gzipReader(File file) throws IOException {
         return new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(file))));
+    }
+
+    public static int time2int(TimePoint timestamp){
+        return timestamp.valInt();
+    }
+
+    public static TimePoint time(int timestamp){
+        return new TimePoint(timestamp);
     }
 }
 

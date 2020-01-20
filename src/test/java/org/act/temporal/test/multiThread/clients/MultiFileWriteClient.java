@@ -1,6 +1,6 @@
 //package org.act.temporal.test.multiThread.clients;
 //
-//import org.act.tgraph.demo.benchmark.DBOperation;
+//import org.act.tgraph.demo.benchmark.client.DBProxy;
 //import org.act.tgraph.demo.client.vo.RoadChain;
 //import org.act.tgraph.demo.client.vo.TemporalStatus;
 //import org.act.tgraph.demo.client.Config;
@@ -19,7 +19,7 @@
 //@Deprecated
 //public class MultiFileWriteClient extends Thread{
 //
-//    private final DBOperation proxy;
+//    private final DBProxy proxy;
 //    private final GraphDatabaseService db;
 //    private List<File> files;
 //    private Map<Integer,BufferedReader> readers = new HashMap<>();

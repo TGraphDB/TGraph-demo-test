@@ -1,5 +1,6 @@
 package org.act.tgraph.demo.benchmark;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
 import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction;
 import org.act.tgraph.demo.benchmark.transaction.ImportStaticDataTx;
@@ -78,7 +79,7 @@ public class BenchmarkTxArgsGenerator {
         WriteTemporalDataTxIterator(int linePerTx, List<File> files) throws IOException {
             this.linePerTx = linePerTx;
             this.fileIter = files.iterator();
-            assert fileIter.hasNext();
+            Preconditions.checkArgument(fileIter.hasNext());
             this.br = Helper.gzipReader(fileIter.next());
         }
         @Override
@@ -89,7 +90,7 @@ public class BenchmarkTxArgsGenerator {
                     if(this.br!=null) br.close();
                     this.br = Helper.gzipReader(fileIter.next());
                     result = readFile(br);
-                    assert result!=null;
+                    Preconditions.checkArgument(result!=null, "should not happen!");
                     return result;
                 }else if(result==null){
                     this.br.close();
@@ -136,7 +137,7 @@ public class BenchmarkTxArgsGenerator {
         }
         @Override
         protected AbstractTransaction computeNext() {
-            if(curCnt>txCount) return endOfData();
+            if(curCnt>=txCount) return endOfData();
             curCnt++;
             long startCrossId = rand.nextInt(crossIdMap.size());
             int departureTime = rand.nextInt(endTime - startTime )+ startTime;

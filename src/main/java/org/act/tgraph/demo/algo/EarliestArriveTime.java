@@ -13,7 +13,7 @@ public abstract class EarliestArriveTime {
     private final Map<Long, NodeCross> nodeCrossMap = new HashMap<>();
     private final long start;
     private final int startTime;
-    private final int travelTime;
+    protected final int travelTime;
 
     public EarliestArriveTime(long startId, int startTime, int travelTime){
         this.start = startId;

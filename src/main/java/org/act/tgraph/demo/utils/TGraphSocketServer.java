@@ -17,7 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class TGraphSocketServer {
-    private final String dbPath;
+    private final File dbPath;
     private final ReqExecutor reqExecutor;
 
     private GraphDatabaseService db;
@@ -25,13 +25,13 @@ public class TGraphSocketServer {
     private ServerSocket server;
     private final List<Thread> threads = Collections.synchronizedList(new LinkedList<>());
 
-    public TGraphSocketServer(String dbPath, ReqExecutor reqExecutor) {
+    public TGraphSocketServer(File dbPath, ReqExecutor reqExecutor) {
         this.dbPath = dbPath;
         this.reqExecutor = reqExecutor;
     }
 
     public void start() throws IOException {
-        db = new GraphDatabaseFactory().newEmbeddedDatabase( new File(dbPath));
+        db = new GraphDatabaseFactory().newEmbeddedDatabase( dbPath );
         Runtime.getRuntime().addShutdownHook(new Thread(() -> db.shutdown()));
 
         MonitorThread monitor = new MonitorThread();
@@ -166,7 +166,9 @@ public class TGraphSocketServer {
                         System.out.println("client ask server exit.");
                         break;
                     }else if("VERSION".equals(line)){
-                        toClient.println(Helper.currentCodeVersion());
+                        JsonObject result = new JsonObject();
+                        result.add("result", Helper.codeGitVersion());
+                        toClient.println(result);
                         System.out.println("client ask server version.");
                         continue;
                     }

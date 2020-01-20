@@ -1,6 +1,6 @@
 //package org.act.tgraph.demo.benchmark.client.neo4j;
 //
-//import org.act.tgraph.demo.benchmark.DBOperation;
+//import org.act.tgraph.demo.benchmark.client.DBProxy;
 //
 //import org.neo4j.graphdb.PropertyContainer;
 //
@@ -12,7 +12,7 @@
 ///**
 // * Created by song on 16-2-3.
 // */
-//public class Neo4jKVSimulationProxy implements DBOperation
+//public class Neo4jKVSimulationProxy implements DBProxy
 //{
 //    public void set(PropertyContainer propertyContainer, String name, int time, Object value){
 //        String key = name+":"+time;

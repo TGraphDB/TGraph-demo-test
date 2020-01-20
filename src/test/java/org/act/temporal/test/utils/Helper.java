@@ -1,7 +1,5 @@
 package org.act.temporal.test.utils;
 
-import org.act.tgraph.demo.client.Config;
-
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;

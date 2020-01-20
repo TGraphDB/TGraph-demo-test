@@ -2,6 +2,7 @@ package org.act.tgraph.demo.benchmark.transaction;
 
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
+import com.google.common.base.Preconditions;
 
 import java.util.List;
 
@@ -14,7 +15,7 @@ public class ImportTemporalDataTx extends AbstractTransaction {
 
     public ImportTemporalDataTx(JsonObject obj){
         super(TxType.tx_import_temporal_data);
-        assert TxType.valueOf(obj.get("type").asString()) == TxType.tx_import_temporal_data;
+        Preconditions.checkArgument( TxType.valueOf(obj.get("type").asString()) == TxType.tx_import_temporal_data );
         JsonArray idArr = obj.get("id").asArray();
         JsonArray timeArr = obj.get("time").asArray();
         JsonArray travelTimeArr = obj.get("travelTime").asArray();

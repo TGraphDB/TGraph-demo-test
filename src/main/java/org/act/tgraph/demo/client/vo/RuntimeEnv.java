@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import org.act.tgraph.demo.client.Config;
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
 import oshi.hardware.CentralProcessor.TickType;
@@ -37,14 +36,14 @@ public enum RuntimeEnv {
             4,
             "23.4 GiB",
             "GNU/Linux Ubuntu 18.04.3 LTS (Bionic Beaver) build 5.0.0-29-generic (64 bits)",
-            "Java(TM) SE Runtime Environment (1.8.0_131-b11) Java HotSpot(TM) 64-Bit Server VM (25.131-b11)", Config.sjh),
+            "Java(TM) SE Runtime Environment (1.8.0_131-b11) Java HotSpot(TM) 64-Bit Server VM (25.131-b11)"),
     zh("zhangh workstation",
             "Intel(R) Xeon(R) CPU E5-2650 v3 @ 2.30GHz",
             "2.3 GHz",
             20,
             "63.8 GiB",
             "Microsoft Windows 10 build 17763 (64 bits)",
-            "Java(TM) SE Runtime Environment (1.8.0_202-b08) Java HotSpot(TM) 64-Bit Server VM (25.202-b08)", Config.zhangh),
+            "Java(TM) SE Runtime Environment (1.8.0_202-b08) Java HotSpot(TM) 64-Bit Server VM (25.202-b08)"),
     unknown();
 
 
@@ -55,9 +54,8 @@ public enum RuntimeEnv {
     final String description;
     final String os;
     final String jvm;
-    final Config config;
 
-    RuntimeEnv(String description, String cpu, String cpuFreq, int numOfPhysicalCores, String physicalMem, String os, String jvm, Config config) {
+    RuntimeEnv(String description, String cpu, String cpuFreq, int numOfPhysicalCores, String physicalMem, String os, String jvm) {
         this.cpu = cpu;
         this.cpuFreq = cpuFreq;
         this.numOfPhysicalCores = numOfPhysicalCores;
@@ -65,7 +63,6 @@ public enum RuntimeEnv {
         this.description = description;
         this.os = os;
         this.jvm = jvm;
-        this.config = config;
     }
 
     RuntimeEnv(){
@@ -80,7 +77,6 @@ public enum RuntimeEnv {
         this.jvm = System.getProperty("java.runtime.name") +" ("+ System.getProperty("java.runtime.version")+") "+
                 System.getProperty("java.vm.name")+" ("+ System.getProperty("java.vm.version")+")";
         this.description = "unknown current runtime environment";
-        this.config = new Config();
     }
 
     private static RuntimeEnv currentEnv;
@@ -103,10 +99,6 @@ public enum RuntimeEnv {
         }else{
             return currentEnv;
         }
-    }
-
-    public Config getConf(){
-        return config;
     }
 
     public static void main(String[] args) {

@@ -1,6 +1,6 @@
 //package org.act.temporal.test.singleThread;
 //
-//import org.act.tgraph.demo.benchmark.DBOperation;
+//import org.act.tgraph.demo.benchmark.client.DBProxy;
 //import org.act.tgraph.demo.client.vo.RelType;
 //import org.act.tgraph.demo.client.Config;
 //import org.act.tgraph.demo.benchmark.client.neo4j.Aggregator;
@@ -37,8 +37,8 @@
 //        config.dbPath += "-simple-test";
 //        Helper.deleteExistDB(config);
 //        config.db = new GraphDatabaseFactory().newEmbeddedDatabase(new File(config.dbPath));
-////        DBOperation proxy = new TreeMapKVSimulationProxy();
-//        DBOperation proxy = new ArraySimulationProxy();
+////        DBProxy proxy = new TreeMapKVSimulationProxy();
+//        DBProxy proxy = new ArraySimulationProxy();
 //        config.proxy  = proxy;
 //        try(Transaction tx = config.db.beginTx()){
 //            Node node = config.db.createNode();

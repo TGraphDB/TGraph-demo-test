@@ -3,6 +3,7 @@ package org.act.tgraph.demo.benchmark.transaction;
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
+import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -21,7 +22,7 @@ public class ImportStaticDataTx extends AbstractTransaction {
 
     public ImportStaticDataTx(JsonObject obj){
         super(TxType.tx_import_static_data);
-        assert TxType.valueOf(obj.get("type").asString()) == TxType.tx_import_static_data;
+        Preconditions.checkArgument( TxType.valueOf(obj.get("type").asString()) == TxType.tx_import_static_data );
         crosses = new ArrayList<>();
         roads = new ArrayList<>();
         JsonArray crossArr = obj.get("cross").asArray();
