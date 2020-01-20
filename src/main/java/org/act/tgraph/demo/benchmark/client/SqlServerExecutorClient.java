@@ -3,6 +3,7 @@ package org.act.tgraph.demo.benchmark.client;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -15,12 +16,20 @@ import org.act.tgraph.demo.utils.TimeMonitor;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class SqlServerExecutorClient implements DBProxy {
     private ThreadPoolExecutor exe;
@@ -39,7 +48,7 @@ public class SqlServerExecutorClient implements DBProxy {
         });
         exe.prestartAllCoreThreads();
         this.service = MoreExecutors.listeningDecorator(exe);
-        for(int i = 0; i< parallelCnt; i++) this.connectionPool.offer(DriverManager.getConnection(dbURL, "sa", ""));
+        for(int i = 0; i< parallelCnt; i++) this.connectionPool.offer(DriverManager.getConnection(dbURL, "sa", "SQLServer2019@Benchmark"));
     }
 
     @Override
@@ -58,7 +67,19 @@ public class SqlServerExecutorClient implements DBProxy {
 
     @Override
     public void createDB() throws IOException {
-
+        try {
+            Connection con = connectionPool.take();
+            Statement stmt = con.createStatement();
+            con.setAutoCommit(true);
+            Preconditions.checkState(stmt.execute("CREATE TABLE cross_node ( id int PRIMARY KEY, name char(255) )"));
+            Preconditions.checkState(stmt.execute("CREATE TABLE road ( id int PRIMARY KEY, r_name char(16), r_start int, r_end int, r_length int, r_type int)"));
+            Preconditions.checkState(stmt.execute("CREATE TABLE temporal_status (t int, rid int, status int, travel_t int, seg_cnt int)"));
+            stmt.close();
+            connectionPool.put(con);
+        } catch (SQLException | InterruptedException ex) {
+            ex.printStackTrace();
+            throw new IOException(ex);
+        }
     }
 
     @Override
@@ -74,10 +95,18 @@ public class SqlServerExecutorClient implements DBProxy {
     @Override
     public void close() throws IOException, InterruptedException {
         try {
-            while(connectionPool.size()>0){
+            service.shutdown();
+            while(!service.isTerminated()) {
+                service.awaitTermination(10, TimeUnit.SECONDS);
+                long completeCnt = exe.getCompletedTaskCount();
+                int remains = exe.getQueue().size();
+                System.out.println( completeCnt+"/"+ (completeCnt+remains)+" query completed.");
+            }
+            while(!connectionPool.isEmpty()){
                 Connection conn = connectionPool.take();
                 conn.close();
             }
+            System.out.println("Client exit. send "+ exe.getCompletedTaskCount() +" lines.");
         } catch (SQLException e) {
             e.printStackTrace();
             throw new IOException(e);
@@ -85,7 +114,26 @@ public class SqlServerExecutorClient implements DBProxy {
     }
 
     @Override
-    public String testServerClientCompatibility() {return "sql-server";}
+    public String testServerClientCompatibility() {
+        try {
+            Connection con = connectionPool.take();
+            Statement stmt = con.createStatement();
+            con.setAutoCommit(true);
+            ResultSet rs = stmt.executeQuery("SELECT CAST(SERVERPROPERTY('ProductVersion') AS NVARCHAR(128))");
+            String result;
+            if(rs.next()){
+                result = rs.getString(1);
+            }else{
+                result = "2019-GA-ubuntu-16.04";
+            }
+            stmt.close();
+            connectionPool.put(con);
+            return result;
+        } catch (InterruptedException | SQLException e) {
+            e.printStackTrace();
+            throw new UnsupportedOperationException(e);
+        }
+    }
 
     private Callable<JsonObject> execute(ImportStaticDataTx tx){
         return new Req(){
