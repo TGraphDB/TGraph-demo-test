@@ -1,13 +1,5 @@
 package org.act.tgraph.demo.benchmark.transaction;
 
-public class NodeDegreeCountTx extends AbstractTransaction {
+public class NodeDegreeCountTx {
 
-    protected NodeDegreeCountTx(TxType txType) {
-        super(txType);
-    }
-
-    @Override
-    public String encode() {
-        return null;
-    }
 }

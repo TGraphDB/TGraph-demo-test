@@ -1,13 +1,20 @@
 package org.act.tgraph.demo.utils;
 
-import com.eclipsesource.json.JsonObject;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.sun.management.OperatingSystemMXBean;
+import org.act.tgraph.demo.benchmark.client.DBProxy;
+import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import oshi.SystemInfo;
 import oshi.hardware.HWDiskStore;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -15,6 +22,8 @@ import java.net.SocketException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+
+import static org.act.tgraph.demo.benchmark.transaction.AbstractTransaction.*;
 
 public class TGraphSocketServer {
     private final File dbPath;
@@ -34,7 +43,7 @@ public class TGraphSocketServer {
         db = new GraphDatabaseFactory().newEmbeddedDatabase( dbPath );
         Runtime.getRuntime().addShutdownHook(new Thread(() -> db.shutdown()));
 
-        MonitorThread monitor = new MonitorThread();
+        ServerStatusMonitor monitor = new ServerStatusMonitor();
         monitor.start();
         reqExecutor.setDB(db);
 
@@ -70,12 +79,12 @@ public class TGraphSocketServer {
         private void setDB(GraphDatabaseService db){
             this.db = db;
         }
-        protected abstract JsonObject execute(String line) throws RuntimeException;
+        protected abstract Result execute(String line) throws RuntimeException;
     }
 
     public static class TransactionFailedException extends RuntimeException{}
 
-    private class MonitorThread extends Thread{
+    private class ServerStatusMonitor extends Thread{
         volatile ServerStatus serverStatus;
 
         public void run(){
@@ -112,25 +121,19 @@ public class TGraphSocketServer {
         }
     }
 
-    private class ServerStatus{
-        long time = System.currentTimeMillis();
-        int  activeConn;
-        long curMem;
-        long diskReadSpeed;
-        long diskWriteSpeed;
-        long diskQueueLength;
-        double processCpuLoad;
-        double systemCpuLoad;
-    }
 
     private class ServerThread extends Thread{
-        private final MonitorThread monitor;
+        private final ServerStatusMonitor monitor;
         Socket client;
         BufferedReader fromClient;
         PrintStream toClient;
         long reqCnt = 0;
+        SerializerFeature[] features = new SerializerFeature[] {
+                SerializerFeature.WriteClassName,
+                SerializerFeature.DisableCircularReferenceDetect
+        };
 
-        ServerThread(Socket client, MonitorThread monitor) throws IOException {
+        ServerThread(Socket client, ServerStatusMonitor monitor) throws IOException {
             this.client = client;
             this.monitor = monitor;
             client.setTcpNoDelay(true);
@@ -155,6 +158,8 @@ public class TGraphSocketServer {
                         client.close();
                         break;
                     }
+                    Result exeResult = null;
+                    boolean success = true;
                     if(line==null){
                         System.out.println("client close connection. read end.");
                         client.close();
@@ -165,29 +170,34 @@ public class TGraphSocketServer {
                         shouldRun = false;
                         System.out.println("client ask server exit.");
                         break;
-                    }else if("VERSION".equals(line)){
-                        JsonObject result = new JsonObject();
-                        result.add("result", Helper.codeGitVersion());
-                        toClient.println(result);
-                        System.out.println("client ask server version.");
-                        continue;
+                    }else{
+                        time.mark("Wait", "Transaction");
+                        if("VERSION".equals(line)){
+                            ServerVersionResult versionResult = new ServerVersionResult();
+                            versionResult.setVersion(Helper.codeGitVersion());
+                            exeResult = versionResult;
+                            System.out.println("client ask server version.");
+                        }else {
+                            try {
+                                exeResult = reqExecutor.execute(line);
+                            } catch (TransactionFailedException e) {
+                                success = false;
+                            }
+                        }
+                        time.mark("Transaction", "Send");
+
+                        Metrics metrics = new Metrics();
+                        metrics.setStatus(monitor.serverStatus);
+                        metrics.setTxSuccess(success);
+                        metrics.setTxTime(Math.toIntExact(time.duration("Transaction")));
+
+                        DBProxy.ServerResponse response = new DBProxy.ServerResponse();
+                        response.setResult(exeResult);
+                        response.setMetrics(metrics);
+
+                        toClient.println(JSON.toJSONString(response, features));
+                        reqCnt++;
                     }
-                    time.mark("Wait", "Transaction");
-                    JsonObject exeResult = new JsonObject();
-                    boolean success = true;
-                    try {
-                        exeResult = reqExecutor.execute(line);
-                    }catch (TransactionFailedException e){
-                        success = false;
-                    }
-                    time.mark("Transaction", "Send");
-                    String result = generateResult(
-                            exeResult,
-                            success,
-                            time.duration("Transaction"),
-                            monitor.serverStatus);
-                    toClient.println(result);
-                    reqCnt++;
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -195,33 +205,122 @@ public class TGraphSocketServer {
             threads.remove(this);
             System.out.println(Thread.currentThread().getName()+" exit. process "+reqCnt+" queries.");
         }
+    }
 
-        private String generateResult(JsonObject results, boolean success, long txTime, ServerStatus s) {
-            JsonObject obj = new JsonObject();
-            obj.add("success", success);
-            obj.add("result", results);
+    public static class Metrics extends AbstractTransaction.Metrics{
+        private int txTime;
+        private boolean txSuccess;
+        private ServerStatus status;
 
-            JsonObject metrics = new JsonObject();
-            metrics.add("exe_tD", txTime);
-            obj.add("metrics", metrics);
+        public int getTxTime() {
+            return txTime;
+        }
 
-            JsonObject o = new JsonObject();
-            o.add("s_update_t", s.time);
-            o.add("s_memory", s.curMem);
-            o.add("s_connCnt", s.activeConn);
-            o.add("s_pCPU", s.processCpuLoad);
-            o.add("s_CPU", s.systemCpuLoad);
-            o.add("s_disk_qLen", s.diskQueueLength);
-            o.add("s_disk_read", s.diskReadSpeed);
-            o.add("s_disk_write", s.diskWriteSpeed);
-            obj.add("server", o);
-            return obj.toString();
+        public void setTxTime(int txTime) {
+            this.txTime = txTime;
+        }
+
+        public boolean isTxSuccess() {
+            return txSuccess;
+        }
+
+        public void setTxSuccess(boolean txSuccess) {
+            this.txSuccess = txSuccess;
+        }
+
+        public ServerStatus getStatus() {
+            return status;
+        }
+
+        public void setStatus(ServerStatus status) {
+            this.status = status;
         }
     }
 
+    public static class ServerStatus{
+        private long time = System.currentTimeMillis();
+        private int  activeConn;
+        private long curMem;
+        private long diskReadSpeed;
+        private long diskWriteSpeed;
+        private long diskQueueLength;
+        private double processCpuLoad;
+        private double systemCpuLoad;
 
+        public long getTime() {
+            return time;
+        }
 
+        public void setTime(long time) {
+            this.time = time;
+        }
 
+        public int getActiveConn() {
+            return activeConn;
+        }
 
+        public void setActiveConn(int activeConn) {
+            this.activeConn = activeConn;
+        }
 
+        public long getCurMem() {
+            return curMem;
+        }
+
+        public void setCurMem(long curMem) {
+            this.curMem = curMem;
+        }
+
+        public long getDiskReadSpeed() {
+            return diskReadSpeed;
+        }
+
+        public void setDiskReadSpeed(long diskReadSpeed) {
+            this.diskReadSpeed = diskReadSpeed;
+        }
+
+        public long getDiskWriteSpeed() {
+            return diskWriteSpeed;
+        }
+
+        public void setDiskWriteSpeed(long diskWriteSpeed) {
+            this.diskWriteSpeed = diskWriteSpeed;
+        }
+
+        public long getDiskQueueLength() {
+            return diskQueueLength;
+        }
+
+        public void setDiskQueueLength(long diskQueueLength) {
+            this.diskQueueLength = diskQueueLength;
+        }
+
+        public double getProcessCpuLoad() {
+            return processCpuLoad;
+        }
+
+        public void setProcessCpuLoad(double processCpuLoad) {
+            this.processCpuLoad = processCpuLoad;
+        }
+
+        public double getSystemCpuLoad() {
+            return systemCpuLoad;
+        }
+
+        public void setSystemCpuLoad(double systemCpuLoad) {
+            this.systemCpuLoad = systemCpuLoad;
+        }
     }
+
+    public static class ServerVersionResult extends Result{
+        String version;
+
+        public String getVersion() {
+            return version;
+        }
+
+        public void setVersion(String version) {
+            this.version = version;
+        }
+    }
+}

@@ -1,6 +1,7 @@
 package org.act.tgraph.demo.benchmark;
 
 
+import com.alibaba.fastjson.JSON;
 import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction;
 
 import java.io.*;
@@ -18,7 +19,7 @@ public class BenchmarkWriter {
     }
 
     public void write(AbstractTransaction tx) throws IOException {
-        writer.write(tx.encode().getBytes());
+        writer.write(JSON.toJSONString(tx).getBytes());
         writer.write('\n');
     }
 

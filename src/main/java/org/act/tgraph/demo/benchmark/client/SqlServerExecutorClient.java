@@ -1,8 +1,5 @@
 package org.act.tgraph.demo.benchmark.client;
 
-import com.eclipsesource.json.Json;
-import com.eclipsesource.json.JsonArray;
-import com.eclipsesource.json.JsonObject;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -24,7 +21,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -35,6 +34,7 @@ public class SqlServerExecutorClient implements DBProxy {
     private ThreadPoolExecutor exe;
     private BlockingQueue<Connection> connectionPool = new LinkedBlockingQueue<>();
     private ListeningExecutorService service;
+    private Map<Connection, Integer> connIdMap = new HashMap<>();
 
     public SqlServerExecutorClient(String serverHost, int parallelCnt, int queueLength) throws IOException, ClassNotFoundException, SQLException {
         Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
@@ -48,16 +48,20 @@ public class SqlServerExecutorClient implements DBProxy {
         });
         exe.prestartAllCoreThreads();
         this.service = MoreExecutors.listeningDecorator(exe);
-        for(int i = 0; i< parallelCnt; i++) this.connectionPool.offer(DriverManager.getConnection(dbURL, "sa", "SQLServer2019@Benchmark"));
+        for(int i = 0; i< parallelCnt; i++) {
+            Connection conn = DriverManager.getConnection(dbURL, "sa", "SQLServer2019@Benchmark");
+            this.connectionPool.offer(conn);
+            connIdMap.put(conn, i);
+        }
     }
 
     @Override
-    public ListenableFuture<JsonObject> execute(AbstractTransaction tx) {
-        switch (tx.txType){
+    public ListenableFuture<DBProxy.ServerResponse> execute(AbstractTransaction tx) {
+        switch (tx.getTxType()){
             case tx_import_static_data:
                 return this.service.submit(execute((ImportStaticDataTx) tx));
             case tx_import_temporal_data:
-                return this.service.submit(execute((ImportTemporalDataTx)tx));
+                return this.service.submit(execute((ImportTemporalDataTx) tx));
             case tx_query_reachable_area:
                 return this.service.submit(execute((ReachableAreaQueryTx) tx));
             default:
@@ -135,13 +139,13 @@ public class SqlServerExecutorClient implements DBProxy {
         }
     }
 
-    private Callable<JsonObject> execute(ImportStaticDataTx tx){
+    private Callable<DBProxy.ServerResponse> execute(ImportStaticDataTx tx){
         return new Req(){
             @Override
-            protected JsonObject executeQuery(Connection conn) throws Exception{
+            protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception{
                 conn.setAutoCommit(false);
                 PreparedStatement stat1 = conn.prepareStatement("INSERT INTO cross_node VALUES (?,?)");
-                for(Pair<Long, String> p : tx.crosses){
+                for(Pair<Long, String> p : tx.getCrosses()){
                     stat1.setInt(1, Math.toIntExact(p.getLeft()));
                     stat1.setString(2, p.getRight());
                     stat1.addBatch();
@@ -149,94 +153,96 @@ public class SqlServerExecutorClient implements DBProxy {
                 stat1.executeBatch();
                 stat1.close();
                 PreparedStatement stat2 = conn.prepareStatement("INSERT INTO road VALUES (?,?,?,?,?,?)");
-                for(ImportStaticDataTx.StaticRoadRel r : tx.roads){
-                    stat2.setInt(1, Math.toIntExact(r.roadId));
-                    stat2.setString(2, r.id);
-                    stat2.setInt(3, Math.toIntExact(r.startCrossId));
-                    stat2.setInt(4, Math.toIntExact(r.endCrossId));
-                    stat2.setInt(5, r.length);
-                    stat2.setInt(6, r.type);
+                for(ImportStaticDataTx.StaticRoadRel r : tx.getRoads()){
+                    stat2.setInt(1, Math.toIntExact(r.getRoadId()));
+                    stat2.setString(2, r.getId());
+                    stat2.setInt(3, Math.toIntExact(r.getStartCrossId()));
+                    stat2.setInt(4, Math.toIntExact(r.getEndCrossId()));
+                    stat2.setInt(5, r.getLength());
+                    stat2.setInt(6, r.getType());
                     stat2.addBatch();
                 }
                 stat2.executeBatch();
                 stat2.close();
                 conn.commit();
                 conn.setAutoCommit(true);
-                Statement stat = conn.createStatement();
-                stat.execute("");
-                return new JsonObject();
+//                Statement stat = conn.createStatement();
+//                stat.execute("");
+                return new AbstractTransaction.Result();
             }
         };
     }
 
-    private Callable<JsonObject> execute(ImportTemporalDataTx tx){
+    private Callable<DBProxy.ServerResponse> execute(ImportTemporalDataTx tx){
         return new Req(){
             @Override
-            protected JsonObject executeQuery(Connection conn) throws Exception{
+            protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception{
                 conn.setAutoCommit(false);
                 PreparedStatement stat = conn.prepareStatement("INSERT INTO temporal_status VALUES (?,?)");
                 for(ImportTemporalDataTx.StatusUpdate s : tx.data){
-                    stat.setInt(1, s.time);
-                    stat.setInt(2, Math.toIntExact(s.roadId));
-                    stat.setInt(3, s.jamStatus);
-                    stat.setInt(4, s.travelTime);
-                    stat.setInt(5, s.segmentCount);
+                    stat.setInt(1, s.getTime());
+                    stat.setInt(2, Math.toIntExact(s.getRoadId()));
+                    stat.setInt(3, s.getJamStatus());
+                    stat.setInt(4, s.getTravelTime());
+                    stat.setInt(5, s.getSegmentCount());
                     stat.addBatch();
                 }
                 stat.executeBatch();
                 stat.close();
                 conn.commit();
                 conn.setAutoCommit(true);
-                return new JsonObject();
+                return new AbstractTransaction.Result();
             }
         };
     }
 
-    private Callable<JsonObject> execute(ReachableAreaQueryTx tx){
+    private Callable<DBProxy.ServerResponse> execute(ReachableAreaQueryTx tx){
         return new Req(){
             @Override
-            protected JsonObject executeQuery(Connection conn) throws Exception{
+            protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception{
                 conn.setAutoCommit(true);
-                EarliestArriveTime algo = new EarliestArriveTimeSQL(tx.startCrossId, tx.departureTime, tx.travelTime, conn);
-                List<EarliestArriveTime.NodeCross> result = new ArrayList<>(algo.run());
-                result.sort(Comparator.comparingLong(o -> o.id));
-                JsonObject res = Json.object();
-                JsonArray nodeIdArr = Json.array();
-                JsonArray arriveTimeArr = Json.array();
-                JsonArray parentIdArr = Json.array();
-                for(EarliestArriveTime.NodeCross node : result){
-                    nodeIdArr.add(node.id);
-                    arriveTimeArr.add(node.arriveTime);
-                    parentIdArr.add(node.parent);
-                }
-                res.add("nodeId", nodeIdArr);
-                res.add("arriveTime", arriveTimeArr);
-                res.add("parentId", parentIdArr);
-                return res;
+                EarliestArriveTime algo = new EarliestArriveTimeSQL(tx.getStartCrossId(), tx.getDepartureTime(), tx.getTravelTime(), conn);
+                List<EarliestArriveTime.NodeCross> answer = new ArrayList<>(algo.run());
+                answer.sort(Comparator.comparingLong(o -> o.id));
+                ReachableAreaQueryTx.Result result = new ReachableAreaQueryTx.Result();
+                result.setNodeArriveTime(answer);
+                metrics.setReturnSize(answer.size());
+                return result;
             }
         };
     }
 
-    private abstract class Req implements Callable<JsonObject>{
+    private abstract class Req implements Callable<DBProxy.ServerResponse>{
         private final TimeMonitor timeMonitor = new TimeMonitor();
+        final AbstractTransaction.Metrics metrics = new AbstractTransaction.Metrics();
+        private Req(){
+            timeMonitor.begin("Wait in queue");
+        }
 
         @Override
-        public JsonObject call() throws Exception {
+        public DBProxy.ServerResponse call() throws Exception {
             try {
                 Connection conn = connectionPool.take();
                 timeMonitor.mark("Wait in queue", "query");
-                JsonObject result = executeQuery(conn);
+                AbstractTransaction.Result result = executeQuery(conn);
                 timeMonitor.end("query");
                 if (result == null) throw new RuntimeException("[Got null. Server close connection]");
                 connectionPool.put(conn);
-                return result;
+                metrics.setWaitTime(Math.toIntExact(timeMonitor.duration("Wait in queue")));
+                metrics.setSendTime(timeMonitor.beginT("query"));
+                metrics.setExeTime(Math.toIntExact(timeMonitor.duration("query")));
+                metrics.setConnId(connIdMap.get(conn));
+                ServerResponse response = new ServerResponse();
+                response.setMetrics(metrics);
+                response.setResult(result);
+                return response;
             }catch (Exception e){
                 e.printStackTrace();
                 throw e;
             }
         }
 
-        protected abstract JsonObject executeQuery(Connection conn) throws Exception;
+        protected abstract AbstractTransaction.Result executeQuery(Connection conn) throws Exception;
     }
 
     private static class EarliestArriveTimeSQL extends EarliestArriveTime {

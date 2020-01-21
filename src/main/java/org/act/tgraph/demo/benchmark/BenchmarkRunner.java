@@ -1,5 +1,9 @@
 package org.act.tgraph.demo.benchmark;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.annotation.JSONType;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.aliyun.openservices.aliyun.log.producer.Producer;
 import org.act.tgraph.demo.benchmark.client.DBProxy;
 import org.act.tgraph.demo.benchmark.client.SqlServerExecutorClient;
@@ -13,6 +17,17 @@ import java.util.Calendar;
 public class BenchmarkRunner {
 
     public static void main(String[] args) {
+        SerializerFeature[] features = new SerializerFeature[] {
+                SerializerFeature.WriteClassName,
+                //SerializerFeature.SkipTransientField,
+                //SerializerFeature.DisableCircularReferenceDetect
+        };
+        String x = JSON.toJSONString(new TestJsonClassB(5), features);
+        System.out.println(x);
+        TestJsonClass xx = JSONObject.parseObject(x, TestJsonClass.class);
+        System.out.println(xx);
+        System.exit(0);
+
         String benchmarkFileName = Helper.mustEnv("BENCHMARK_FILE_INPUT");
         String dbType = Helper.mustEnv("DB_TYPE");
         int maxConnCnt = Integer.parseInt(Helper.mustEnv("MAX_CONNECTION_CNT"));
@@ -53,5 +68,32 @@ public class BenchmarkRunner {
         return "B_"+dbType.toLowerCase()+"("+dbVersion+")_"+
                 c.get(Calendar.YEAR)+"."+(c.get(Calendar.MONTH)+1)+"."+c.get(Calendar.DAY_OF_MONTH)+"_"+
                 c.get(Calendar.HOUR_OF_DAY)+":"+c.get(Calendar.MINUTE);
+    }
+
+    @JSONType
+    private static class TestJsonClass{
+        int a=0;
+
+        public int getA() {
+            return a;
+        }
+
+        public void setA(int a) {
+            this.a = a;
+        }
+    }
+
+    private static class TestJsonClassB extends TestJsonClass{
+        public TestJsonClassB(int b){this.b=b;}
+        public TestJsonClassB(){}
+        public int getB() {
+            return b;
+        }
+
+        public void setB(int b) {
+            this.b = b;
+        }
+
+        public int b=1;
     }
 }

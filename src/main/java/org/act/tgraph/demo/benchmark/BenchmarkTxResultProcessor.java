@@ -1,19 +1,18 @@
 package org.act.tgraph.demo.benchmark;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.aliyun.openservices.aliyun.log.producer.Producer;
 import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
 import com.aliyun.openservices.log.common.LogItem;
-import com.eclipsesource.json.JsonArray;
-import com.eclipsesource.json.JsonObject;
-import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.act.tgraph.demo.benchmark.client.DBProxy;
 import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction;
-import org.act.tgraph.demo.benchmark.transaction.ReachableAreaQueryTx;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction.Metrics;
 
-import java.util.Objects;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -31,36 +30,16 @@ public class BenchmarkTxResultProcessor {
         this.verifyResult = verifyResult;
     }
 
-    public void logMetrics(AbstractTransaction tx, JsonObject serverResponse) throws ProducerException, InterruptedException {
-        JsonObject metrics = serverResponse.get("metrics").asObject();
-        metrics.add("data_per_tx", tx.dataCount());
+    public void logMetrics(AbstractTransaction tx, DBProxy.ServerResponse response) throws ProducerException, InterruptedException {
+        Metrics m = response.getMetrics();
         LogItem log = new LogItem();
-        log.PushBack("type", "time");
-        add2LogItem(log, metrics);
-        add2LogItem(log, serverResponse.get("server").asObject());
+        add2LogItem(log, (JSONObject)JSON.toJSON(m));
         logger.send("tgraph-demo-test", "tgraph-log", testName, clientVersion, log);
     }
 
-    private void add2LogItem(LogItem log, JsonObject metrics) {
-        for(JsonObject.Member m : metrics){
-            log.PushBack(m.getName(), m.getValue().toString());
-        }
-    }
-
-    public void validateResult(AbstractTransaction tx, JsonObject result){
-        if(tx instanceof ReachableAreaQueryTx){
-            validateResult(tx.getResult(), result);
-        }
-    }
-
-    private void validateResult(JsonObject expected, JsonObject got){
-        for(JsonObject.Member m : expected){
-            JsonArray expArr = m.getValue().asArray();
-            JsonArray gotArr = got.get(m.getName()).asArray();
-            Preconditions.checkState(expArr.size()==gotArr.size());
-            for(int i=0; i<expArr.size(); i++){
-                Preconditions.checkState(Objects.equals(expArr.get(i), gotArr.get(i)));
-            }
+    private void add2LogItem(LogItem log, JSONObject metrics) {
+        for(Map.Entry<String, Object> e : metrics.entrySet()){
+            log.PushBack(e.getKey(), e.getValue().toString());
         }
     }
 
@@ -68,22 +47,22 @@ public class BenchmarkTxResultProcessor {
         return new PostProcessing(tx);
     }
 
-    public void process(ListenableFuture<JsonObject> result, AbstractTransaction tx) {
+    public void process(ListenableFuture<DBProxy.ServerResponse> result, AbstractTransaction tx) {
         Futures.addCallback( result, callback(tx), this.thread);
     }
 
-    public class PostProcessing implements FutureCallback<JsonObject>{
+    public class PostProcessing implements FutureCallback<DBProxy.ServerResponse>{
         AbstractTransaction tx;
         PostProcessing(AbstractTransaction tx){
             this.tx = tx;
         }
 
         @Override
-        public void onSuccess(@Nullable JsonObject result) {
+        public void onSuccess(DBProxy.ServerResponse result) {
             if(result==null) return;
             try {
                 logMetrics(tx, result);
-                if(verifyResult) validateResult(tx, result.get("result").asObject());
+                if(verifyResult) tx.validateResult(result.getResult());
             } catch (ProducerException | InterruptedException e) {
                 e.printStackTrace();
             }

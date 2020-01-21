@@ -1,11 +1,14 @@
 package org.act.tgraph.demo.client;
 
-import com.eclipsesource.json.Json;
-import com.eclipsesource.json.JsonObject;
+import com.alibaba.fastjson.JSON;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import org.act.tgraph.demo.benchmark.client.DBProxy;
+import org.act.tgraph.demo.benchmark.client.DBProxy.ServerResponse;
+import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction.Result;
 import org.act.tgraph.demo.utils.Helper;
+import org.act.tgraph.demo.utils.TGraphSocketServer;
 import org.act.tgraph.demo.utils.TimeMonitor;
 
 import java.io.BufferedReader;
@@ -13,7 +16,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  *  create by sjh at 2019-09-23
@@ -44,18 +53,18 @@ public abstract class TGraphSocketClient {
         for(int i = 0; i< parallelCnt; i++) this.connectionPool.offer(new Connection(serverHost, 8438));
     }
 
-    public ListenableFuture<JsonObject> addQuery(String query) {
+    public ListenableFuture<ServerResponse> addQuery(String query) {
         return service.submit(new Req(query));
     }
 
     public String testServerClientCompatibility() throws ExecutionException, InterruptedException {
-        Future<JsonObject> response = addQuery("VERSION");
-        String result = response.get().get("result").asString();
+        Future<ServerResponse> response = addQuery("VERSION");
+        TGraphSocketServer.ServerVersionResult result = (TGraphSocketServer.ServerVersionResult) response.get().getResult();
         String clientVersion = Helper.codeGitVersion();
-        if (!clientVersion.equals(result)) {
-            throw new UnsupportedOperationException(String.format("server(%s) client(%s) version not match!", result, clientVersion));
+        if (!clientVersion.equals(result.getVersion())) {
+            throw new UnsupportedOperationException(String.format("server(%s) client(%s) version not match!", result.getVersion(), clientVersion));
         }
-        return result;
+        return result.getVersion();
     }
 
     public void awaitTermination() throws InterruptedException, IOException {
@@ -74,7 +83,7 @@ public abstract class TGraphSocketClient {
         System.out.println("Client exit. send "+ exe.getCompletedTaskCount() +" lines.");
     }
 
-    public class Req implements Callable<JsonObject> {
+    public class Req implements Callable<ServerResponse> {
         private final TimeMonitor timeMonitor = new TimeMonitor();
         private final String query;
 
@@ -84,7 +93,7 @@ public abstract class TGraphSocketClient {
         }
 
         @Override
-        public JsonObject call() throws Exception {
+        public ServerResponse call() throws Exception {
             try {
                 Connection conn = connectionPool.take();
                 timeMonitor.mark("Wait in queue", "Send query");
@@ -94,7 +103,7 @@ public abstract class TGraphSocketClient {
                 timeMonitor.end("Wait result");
                 if (response == null) throw new RuntimeException("[Got null. Server close connection]");
                 connectionPool.put(conn);
-                if(query.equals("VERSION")) return Json.parse(response).asObject();
+                if(query.equals("VERSION")) return JSON.parseObject(response, ServerResponse.class);
                 else return onResponse(query, response, timeMonitor, Thread.currentThread());
             }catch (Exception e){
                 e.printStackTrace();
@@ -103,7 +112,7 @@ public abstract class TGraphSocketClient {
         }
     }
 
-    protected abstract JsonObject onResponse(String query, String response, TimeMonitor timeMonitor, Thread thread) throws Exception;
+    protected abstract ServerResponse onResponse(String query, String response, TimeMonitor timeMonitor, Thread thread) throws Exception;
 
     public static class Connection{
         private Socket client;

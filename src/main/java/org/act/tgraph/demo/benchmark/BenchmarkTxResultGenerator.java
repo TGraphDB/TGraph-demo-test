@@ -1,8 +1,5 @@
 package org.act.tgraph.demo.benchmark;
 
-import com.eclipsesource.json.Json;
-import com.eclipsesource.json.JsonArray;
-import com.eclipsesource.json.JsonObject;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterators;
 import org.act.tgraph.demo.algo.EarliestArriveTime;
@@ -12,10 +9,15 @@ import org.act.tgraph.demo.benchmark.transaction.ImportTemporalDataTx;
 import org.act.tgraph.demo.benchmark.transaction.ReachableAreaQueryTx;
 import org.act.tgraph.demo.model.TimePointInt;
 import org.act.tgraph.demo.model.TrafficTGraph;
-import org.act.tgraph.demo.model.TrafficTGraph.*;
+import org.act.tgraph.demo.model.TrafficTGraph.JamStatus;
+import org.act.tgraph.demo.model.TrafficTGraph.NodeCross;
+import org.act.tgraph.demo.model.TrafficTGraph.RelRoad;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
 
 public class BenchmarkTxResultGenerator extends AbstractTransactionExecutor {
 
@@ -23,33 +25,33 @@ public class BenchmarkTxResultGenerator extends AbstractTransactionExecutor {
 
     @Override
     public void execute(ImportStaticDataTx tx){
-        for(Pair<Long, String> p : tx.crosses){
+        for(Pair<Long, String> p : tx.getCrosses()){
             NodeCross n = new NodeCross(p.getLeft(), p.getRight());
             tgraph.crosses.put(p.getLeft(), n);
         }
-        for(ImportStaticDataTx.StaticRoadRel road : tx.roads){
-            RelRoad r = new RelRoad(road.roadId, road.id, road.length, road.angle, road.type,
-                    tgraph.crosses.get(road.startCrossId), tgraph.crosses.get(road.endCrossId));
+        for(ImportStaticDataTx.StaticRoadRel road : tx.getRoads()){
+            RelRoad r = new RelRoad(road.getRoadId(), road.getId(), road.getLength(), road.getAngle(), road.getType(),
+                    tgraph.crosses.get(road.getStartCrossId()), tgraph.crosses.get(road.getEndCrossId()));
             if(r.start !=null) r.start.out.add(r);
             if(r.end !=null) r.end.in.add(r);
-            tgraph.roads.put(road.roadId, r);
+            tgraph.roads.put(road.getRoadId(), r);
         }
     }
 
     @Override
     public void execute(ImportTemporalDataTx tx){
         for(ImportTemporalDataTx.StatusUpdate s : tx.data){
-            RelRoad r = tgraph.roads.get(s.roadId);
-            TimePointInt time = new TimePointInt(s.time);
-            r.tpJamStatus.setToNow(time, JamStatus.valueOf(s.jamStatus));
-            r.tpTravelTime.setToNow(time, s.travelTime);
-            r.tpSegCount.setToNow(time, (byte) s.segmentCount);
+            RelRoad r = tgraph.roads.get(s.getRoadId());
+            TimePointInt time = new TimePointInt(s.getTime());
+            r.tpJamStatus.setToNow(time, JamStatus.valueOf(s.getJamStatus()));
+            r.tpTravelTime.setToNow(time, s.getTravelTime());
+            r.tpSegCount.setToNow(time, (byte) s.getSegmentCount());
         }
     }
 
     @Override
     public void execute(ReachableAreaQueryTx tx){
-        EarliestArriveTime algo = new EarliestArriveTime(tx.startCrossId, tx.departureTime, tx.travelTime) {
+        EarliestArriveTime algo = new EarliestArriveTime(tx.getStartCrossId(), tx.getDepartureTime(), tx.getTravelTime()) {
             @Override
             protected int getEarliestArriveTime(Long roadId, int departureTime) throws UnsupportedOperationException {
                 int minArriveTime = Integer.MAX_VALUE;
@@ -74,22 +76,12 @@ public class BenchmarkTxResultGenerator extends AbstractTransactionExecutor {
                 return tgraph.roads.get(roadId).end.id;
             }
         };
-        List<EarliestArriveTime.NodeCross> result = new ArrayList<>(algo.run());
-        System.out.println("result size: "+result.size());
-        result.sort(Comparator.comparingLong(o -> o.id));
-        JsonObject res = Json.object();
-        JsonArray nodeIdArr = Json.array();
-        JsonArray arriveTimeArr = Json.array();
-        JsonArray parentIdArr = Json.array();
-        for(EarliestArriveTime.NodeCross node : result){
-            nodeIdArr.add(node.id);
-            arriveTimeArr.add(node.arriveTime);
-            parentIdArr.add(node.parent);
-        }
-        res.add("arriveTime", arriveTimeArr);
-        res.add("nodeId", nodeIdArr);
-        res.add("parentId", parentIdArr);
-        tx.setResult(res);
+        List<EarliestArriveTime.NodeCross> answer = new ArrayList<>(algo.run());
+        System.out.println("result size: "+answer.size());
+        answer.sort(Comparator.comparingLong(o -> o.id));
+        ReachableAreaQueryTx.Result result = new ReachableAreaQueryTx.Result();
+        result.setNodeArriveTime(answer);
+        tx.setResult(result);
     }
 
     public Iterator<AbstractTransaction> eval(Iterator<AbstractTransaction> transactionIterator) {

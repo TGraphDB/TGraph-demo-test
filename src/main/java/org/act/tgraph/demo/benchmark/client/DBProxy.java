@@ -1,8 +1,10 @@
 package org.act.tgraph.demo.benchmark.client;
 
-import com.eclipsesource.json.JsonObject;
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction;
+import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction.Metrics;
+import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction.Result;
 
 import java.io.IOException;
 
@@ -13,7 +15,7 @@ public interface DBProxy {
     // return server version.
     String testServerClientCompatibility() throws UnsupportedOperationException;
 
-    ListenableFuture<JsonObject> execute(AbstractTransaction tx ) throws Exception;
+    ListenableFuture<ServerResponse> execute(AbstractTransaction tx ) throws Exception;
 
     void createDB() throws IOException;
 
@@ -23,4 +25,25 @@ public interface DBProxy {
     void shutdownDB() throws IOException;
 
     void close() throws IOException, InterruptedException;
+
+    class ServerResponse{
+        private Result result;
+        private Metrics metrics;
+
+        public Result getResult() {
+            return result;
+        }
+
+        public void setResult(Result result) {
+            this.result = result;
+        }
+
+        public Metrics getMetrics() {
+            return metrics;
+        }
+
+        public void setMetrics(Metrics metrics) {
+            this.metrics = metrics;
+        }
+    }
 }

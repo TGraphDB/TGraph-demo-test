@@ -1,69 +1,45 @@
 package org.act.tgraph.demo.benchmark.transaction;
 
-import com.eclipsesource.json.JsonArray;
-import com.eclipsesource.json.JsonObject;
-import com.eclipsesource.json.JsonValue;
-import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ImportStaticDataTx extends AbstractTransaction {
-    public final List<Pair<Long, String>> crosses;
-    public final List<StaticRoadRel> roads;
+    private List<Pair<Long, String>> crosses;
+    private List<StaticRoadRel> roads;
 
     // this constructor is used when generating benchmarks.
     public ImportStaticDataTx(List<Pair<Long, String>> crosses, List<StaticRoadRel> roads) {
-        super(TxType.tx_import_static_data);
+        this.setTxType(TxType.tx_import_static_data);
         this.crosses = crosses;
+        this.roads = roads;
+        Metrics m = new Metrics();
+        m.setReqSize(crosses.size()+roads.size());
+        this.setMetrics(m);
+    }
+
+    public ImportStaticDataTx(){}
+
+    public List<Pair<Long, String>> getCrosses() {
+        return crosses;
+    }
+
+    public void setCrosses(List<Pair<Long, String>> crosses) {
+        this.crosses = crosses;
+    }
+
+    public List<StaticRoadRel> getRoads() {
+        return roads;
+    }
+
+    public void setRoads(List<StaticRoadRel> roads) {
         this.roads = roads;
     }
 
-    public ImportStaticDataTx(JsonObject obj){
-        super(TxType.tx_import_static_data);
-        Preconditions.checkArgument( TxType.valueOf(obj.get("type").asString()) == TxType.tx_import_static_data );
-        crosses = new ArrayList<>();
-        roads = new ArrayList<>();
-        JsonArray crossArr = obj.get("cross").asArray();
-        for(JsonValue v : crossArr){
-            JsonObject c = v.asObject();
-            crosses.add(Pair.of(c.get("id").asLong(), c.get("name").asString()));
-        }
-        for(JsonValue v : obj.get("road").asArray()){
-            JsonObject r = v.asObject();
-            roads.add(new StaticRoadRel(r));
-        }
-    }
-    @Override
-    public String encode() {
-        JsonObject obj = newTx(this.txType);
-        JsonArray arr = new JsonArray();
-        StringBuilder sb = new StringBuilder();
-        for(Pair<Long, String> cross : crosses){
-            JsonObject c = new JsonObject();
-            c.add("id", cross.getLeft());
-            c.add("name", cross.getRight());
-            arr.add(c);
-        }
-        obj.add("cross", arr);
-        JsonArray roadArr = new JsonArray();
-        for(StaticRoadRel r : roads){
-            roadArr.add(r.encode());
-        }
-        obj.add("road", roadArr);
-        return obj.toString();
-    }
-
-    @Override
-    public int dataCount() {
-        return crosses.size()+roads.size();
-    }
-
     public static class StaticRoadRel{
-        public final long roadId, startCrossId, endCrossId;
-        public final String id;
-        public final int length, angle, type;
+        private long roadId, startCrossId, endCrossId;
+        private String id;
+        private int length, angle, type;
         public StaticRoadRel(long roadId, long startCrossId, long endCrossId, String id, int length, int angle, int type) {
             this.roadId = roadId;
             this.startCrossId = startCrossId;
@@ -74,26 +50,60 @@ public class ImportStaticDataTx extends AbstractTransaction {
             this.type = type;
         }
 
-        StaticRoadRel(JsonObject obj) {
-            this.roadId = obj.get("id").asLong();
-            this.startCrossId = obj.get("start").asLong();
-            this.endCrossId = obj.get("end").asLong();
-            this.id = obj.get("name").asString();
-            this.length = obj.get("length").asInt();
-            this.angle = obj.get("angle").asInt();
-            this.type = obj.get("type").asInt();
+        public long getRoadId() {
+            return roadId;
         }
 
-        JsonObject encode(){
-            JsonObject obj = new JsonObject();
-            obj.add("id", roadId);
-            obj.add("start", startCrossId);
-            obj.add("end", endCrossId);
-            obj.add("name", id);
-            obj.add("length", length);
-            obj.add("type", type);
-            obj.add("angle", angle);
-            return obj;
+        public void setRoadId(long roadId) {
+            this.roadId = roadId;
+        }
+
+        public long getStartCrossId() {
+            return startCrossId;
+        }
+
+        public void setStartCrossId(long startCrossId) {
+            this.startCrossId = startCrossId;
+        }
+
+        public long getEndCrossId() {
+            return endCrossId;
+        }
+
+        public void setEndCrossId(long endCrossId) {
+            this.endCrossId = endCrossId;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public int getLength() {
+            return length;
+        }
+
+        public void setLength(int length) {
+            this.length = length;
+        }
+
+        public int getAngle() {
+            return angle;
+        }
+
+        public void setAngle(int angle) {
+            this.angle = angle;
+        }
+
+        public int getType() {
+            return type;
+        }
+
+        public void setType(int type) {
+            this.type = type;
         }
     }
 }

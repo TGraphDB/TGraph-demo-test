@@ -1,9 +1,10 @@
 package org.act.tgraph.demo.benchmark.client;
 
-import com.eclipsesource.json.Json;
-import com.eclipsesource.json.JsonObject;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction;
+import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction.Result;
 import org.act.tgraph.demo.client.TGraphSocketClient;
 import org.act.tgraph.demo.utils.TimeMonitor;
 
@@ -30,9 +31,8 @@ public class TGraphExecutorClient extends TGraphSocketClient implements DBProxy 
     }
 
     @Override
-    public ListenableFuture<JsonObject> execute(AbstractTransaction tx) throws Exception{
-        String req = tx.encode();
-        return this.addQuery(req);
+    public ListenableFuture<ServerResponse> execute(AbstractTransaction tx) throws Exception{
+        return this.addQuery(JSON.toJSONString(tx));
     }
 
     @Override
@@ -50,16 +50,15 @@ public class TGraphExecutorClient extends TGraphSocketClient implements DBProxy 
     }
 
     @Override
-    protected JsonObject onResponse(String query, String response, TimeMonitor timeMonitor, Thread thread) throws Exception {
-        JsonObject res = Json.parse(response).asObject();
-        JsonObject metrics = res.get("metrics").asObject();
-        metrics.add("thread", "T." + Thread.currentThread().getId());
-        metrics.add("queue_tD", timeMonitor.duration("Wait in queue"));
-        metrics.add("send_t", timeMonitor.beginT("Send query"));
-        metrics.add("send_tD", timeMonitor.duration("Send query"));
-        metrics.add("wait_tD", timeMonitor.duration("Wait result"));
-        metrics.add("request_size", query.length());
-        metrics.add("response_size", response.length());
+    protected ServerResponse onResponse(String query, String response, TimeMonitor timeMonitor, Thread thread) throws Exception {
+        ServerResponse res = JSON.parseObject(response, ServerResponse.class);
+        AbstractTransaction.Metrics metrics = res.getMetrics();
+        metrics.setConnId(Math.toIntExact(Thread.currentThread().getId()));
+        metrics.setExeTime(Math.toIntExact(timeMonitor.duration("Send query") + timeMonitor.duration("Wait result")));
+        metrics.setWaitTime(Math.toIntExact(timeMonitor.duration("Wait in queue")));
+        metrics.setSendTime(timeMonitor.beginT("Send query"));
+        metrics.setReqSize(query.length());
+        metrics.setReturnSize(response.length());
         return res;
     }
 
