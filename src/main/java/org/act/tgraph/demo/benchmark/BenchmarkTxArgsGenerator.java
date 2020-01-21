@@ -39,6 +39,7 @@ public class BenchmarkTxArgsGenerator {
         try {
             TrafficTemporalPropertyGraph tgraph = new TrafficTemporalPropertyGraph();
             tgraph.importTopology(new File(workDir, "road_topology.csv.gz"));
+            Helper.downloadTrafficFiles(workDir, temporalDataStartT, temporalDataEndT);
 
             BenchmarkTxArgsGenerator gen = new BenchmarkTxArgsGenerator();
             BenchmarkWriter writer = new BenchmarkWriter(new File(workDir, benchmarkFileName + ".gz"));
