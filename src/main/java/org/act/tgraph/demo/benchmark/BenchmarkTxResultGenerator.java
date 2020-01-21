@@ -25,9 +25,9 @@ public class BenchmarkTxResultGenerator extends AbstractTransactionExecutor {
 
     @Override
     public void execute(ImportStaticDataTx tx){
-        for(Pair<Long, String> p : tx.getCrosses()){
-            NodeCross n = new NodeCross(p.getLeft(), p.getRight());
-            tgraph.crosses.put(p.getLeft(), n);
+        for(ImportStaticDataTx.StaticCrossNode node : tx.getCrosses()){
+            NodeCross n = new NodeCross(node.getId(), node.getName());
+            tgraph.crosses.put(node.getId(), n);
         }
         for(ImportStaticDataTx.StaticRoadRel road : tx.getRoads()){
             RelRoad r = new RelRoad(road.getRoadId(), road.getId(), road.getLength(), road.getAngle(), road.getType(),

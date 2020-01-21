@@ -122,7 +122,7 @@ public abstract class TGraphSocketClient {
         Connection(String host, int port) throws IOException {
             this.client = new Socket(host, port);
 //            client.setSoTimeout(8000);
-            this.client.setTcpNoDelay(true);
+//            this.client.setTcpNoDelay(true);
             this.in = new BufferedReader(new InputStreamReader(client.getInputStream()));
             this.out = new PrintWriter(client.getOutputStream(), true);
         }

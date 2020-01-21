@@ -11,7 +11,6 @@ import org.act.tgraph.demo.benchmark.transaction.ReachableAreaQueryTx;
 import org.act.tgraph.demo.client.vo.RuntimeEnv;
 import org.act.tgraph.demo.utils.Helper;
 import org.act.tgraph.demo.utils.TGraphSocketServer;
-import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
@@ -25,7 +24,7 @@ import java.util.List;
 
 public class KernelTcpServer extends TGraphSocketServer.ReqExecutor {
     public static void main(String[] args){
-        TGraphSocketServer server = new TGraphSocketServer( dbDir(args), new KernelTcpServer() );
+        TGraphSocketServer server = new TGraphSocketServer( dbDir(), new KernelTcpServer() );
         RuntimeEnv env = RuntimeEnv.getCurrentEnv();
         String serverCodeVersion = env.name() + "." + Helper.codeGitVersion();
         System.out.println("server code version: "+ serverCodeVersion);
@@ -36,11 +35,10 @@ public class KernelTcpServer extends TGraphSocketServer.ReqExecutor {
         }
     }
 
-    private static File dbDir(String[] args){
-        if(args.length<1){
-            throw new IllegalArgumentException("need arg: dbDir");
-        }
-        File dbDir = new File(args[0]);
+    private static File dbDir(){
+        String path = Helper.mustEnv("DB_PATH");
+        Preconditions.checkNotNull(path, "need arg: DB_PATH");
+        File dbDir = new File(path);
         if( !dbDir.exists()){
             if(dbDir.mkdirs()) return dbDir;
             else throw new IllegalArgumentException("invalid dbDir");
@@ -64,10 +62,10 @@ public class KernelTcpServer extends TGraphSocketServer.ReqExecutor {
 
     private Result execute(ImportStaticDataTx tx){
         try(Transaction t = db.beginTx()) {
-            for (Pair<Long, String> p : tx.getCrosses()) {
+            for (ImportStaticDataTx.StaticCrossNode p : tx.getCrosses()) {
                 Node n = db.createNode();
-                n.setProperty("name", p.getRight());
-                Preconditions.checkArgument(n.getId()==p.getLeft(), "id not match!");
+                n.setProperty("name", p.getName());
+                Preconditions.checkArgument(n.getId()==p.getId(), "id not match!");
             }
             for (ImportStaticDataTx.StaticRoadRel sr : tx.getRoads()) {
                 Node start = db.getNodeById(sr.getStartCrossId());

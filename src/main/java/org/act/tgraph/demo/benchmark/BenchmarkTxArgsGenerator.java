@@ -49,6 +49,7 @@ public class BenchmarkTxArgsGenerator {
             writer.close();
 
             if (genResult) {
+                System.gc();
                 BenchmarkTxResultGenerator resultGen = new BenchmarkTxResultGenerator();
                 BenchmarkReader reader = new BenchmarkReader(new File(workDir, benchmarkFileName + ".gz"));
                 writer = new BenchmarkWriter(new File(workDir, benchmarkFileName + "-with-result.gz"));
@@ -69,11 +70,14 @@ public class BenchmarkTxArgsGenerator {
 
     //
     public AbstractTransaction phaseImportStatic(TrafficTemporalPropertyGraph tgraph){
-        final List<Pair<Long, String>> crosses = new ArrayList<>();
+        final List<ImportStaticDataTx.StaticCrossNode> crosses = new ArrayList<>();
         final List<ImportStaticDataTx.StaticRoadRel> roads = new ArrayList<>();
         long crossId = 0, roadId = 0;
         for(CrossNode cross : tgraph.getAllCross()){
-            crosses.add(Pair.of(crossId, cross.name));
+            ImportStaticDataTx.StaticCrossNode node = new ImportStaticDataTx.StaticCrossNode();
+            node.setId(crossId);
+            node.setName(cross.name);
+            crosses.add(node);
             crossIdMap.put(cross, crossId);
             crossId++;
         }

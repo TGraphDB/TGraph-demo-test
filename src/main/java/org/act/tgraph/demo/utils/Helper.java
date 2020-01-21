@@ -1,5 +1,6 @@
 package org.act.tgraph.demo.utils;
 
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.aliyun.openservices.aliyun.log.producer.LogProducer;
 import com.aliyun.openservices.aliyun.log.producer.Producer;
 import com.aliyun.openservices.aliyun.log.producer.ProducerConfig;
@@ -16,7 +17,11 @@ import java.io.*;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
@@ -24,6 +29,11 @@ import java.util.zip.GZIPInputStream;
  * Created by song on 16-2-23.
  */
 public class Helper {
+    public static SerializerFeature[] serializerFeatures = new SerializerFeature[] {
+            SerializerFeature.WriteClassName,
+            SerializerFeature.DisableCircularReferenceDetect
+    };
+
     public static String codeGitVersion() {
         try (InputStream input = Helper.class.getResourceAsStream("/git.properties")) {
             Properties prop = new Properties();

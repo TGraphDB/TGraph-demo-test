@@ -145,9 +145,9 @@ public class SqlServerExecutorClient implements DBProxy {
             protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception{
                 conn.setAutoCommit(false);
                 PreparedStatement stat1 = conn.prepareStatement("INSERT INTO cross_node VALUES (?,?)");
-                for(Pair<Long, String> p : tx.getCrosses()){
-                    stat1.setInt(1, Math.toIntExact(p.getLeft()));
-                    stat1.setString(2, p.getRight());
+                for(ImportStaticDataTx.StaticCrossNode p : tx.getCrosses()){
+                    stat1.setInt(1, Math.toIntExact(p.getId()));
+                    stat1.setString(2, p.getName());
                     stat1.addBatch();
                 }
                 stat1.executeBatch();

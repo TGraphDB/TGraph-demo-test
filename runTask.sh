@@ -78,64 +78,32 @@ function tcypherClientWriteTpropTest() {
 }
 
 
-
-# Function: output utility of data set evaluated by Trajectory Simple Concatenation (TSC) Model
-# Example: tsc  path-to-data  path-to-nwa.exe  path-to-map.pbf  39.6797 40.2523 116.0074 116.7380  path-to-params  20
-# Explain:
-#   path-to-data is the raw data file
-#   path-to-nwa.exe is the executable file compiled from the "Never Walk Along" project
-#   path-to-map.pbf is the OSM map file used for map-matching
-#   follow are geography bound filter, south north west east
-#   follow are param file.
-#   finally is the max number of threads to run this program.
-# Notes:
-#   pass no param to generate a example param.csv file in current working dir.
-function tsc() {
-    if [ -z "$1" ]
-    then
-        mvn -B clean compile exec:java \
-            -Dexec.mainClass="task.EvalUtilityByTSC" \
-            -Dexec.args=""
-    else
-        if [ -z ${PREPARE_TSC+x} ]
-        then
-            PREPARE_TSC=' clean compile '
-        else
-            PREPARE_TSC=''
-        fi
-        printf "$1 $2 $3 $4 $5 $6 $7 $8 $9\n"
-        mvn -B ${PREPARE_TSC} exec:java \
-            -Dexec.mainClass="task.EvalUtilityByTSC" \
-            -Dexec.args="$1 $2 $3 $4 $5 $6 $7 $8 $9"
-    fi
+function genBenchmark() {
+  export WORK_DIR=/tmp/test
+  export BENCHMARK_WITH_RESULT=true
+  export BENCHMARK_FILE_OUTPUT=benchmark
+  export TEMPORAL_DATA_PER_TX=100
+  export TEMPORAL_DATA_START=0503
+  export TEMPORAL_DATA_END=0504
+  export REACHABLE_AREA_TX_CNT=20
+  mvn -B --offline compile exec:java -Dexec.mainClass="org.act.tgraph.demo.benchmark.BenchmarkTxArgsGenerator"
 }
 
-
-# Function: output all (start,end) time pair of all car's trajectories
-# Example: extract_time  path-to-data  39.6797 40.2523 116.0074 116.7380
-# Explain:
-#   path-to-data is the raw data file
-#   follow are geography bound filter, south north west east
-function extract_time() {
-    if [ -z ${PREPARE_TIME+x} ]
-    then
-        PREPARE_TIME=' clean compile '
-    else
-        PREPARE_TIME=''
-    fi
-    printf "$1 $2 $3 $4 $5\n"
-    mvn -B ${PREPARE_TIME} exec:java \
-        -Dexec.mainClass="task.MaxOverlapTime" \
-        -Dexec.args="$1 $2 $3 $4 $5"
+function runBenchmark() {
+  export DB_TYPE=tgraph_kernel
+  export DB_HOST=localhost
+  export BENCHMARK_FILE_INPUT=/tmp/test/benchmark-with-result.gz
+  export MAX_CONNECTION_CNT=1
+  export VERIFY_RESULT=true
+  mvn -B --offline compile exec:java -Dexec.mainClass="org.act.tgraph.demo.benchmark.BenchmarkRunner"
 }
 
-function test_code(){
-    if [ -z ${PREPARE_TEST+x} ]
-    then
-        PREPARE_TEST=' clean compile '
-    else
-        PREPARE_TEST=''
-    fi
-    mvn -B clean test -Dtest=$1 -Djvm.args="-Xmx50g -Xms5g"
-    #echo ${PREPARE_TEST}
+function runTGraphKernelServer(){
+  export DB_PATH=/tmp/testdb
+  mvn -B --offline compile exec:java -Dexec.mainClass="org.act.tgraph.demo.server.KernelTcpServer"
+}
+
+function runSQLServer(){
+  export DB_PATH=/tmp/testdb
+  mvn -B --offline compile exec:java -Dexec.mainClass="org.act.tgraph.demo.server.KernelTcpServer"
 }

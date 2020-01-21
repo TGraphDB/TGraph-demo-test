@@ -3,8 +3,11 @@ package org.act.tgraph.demo.benchmark;
 
 import com.alibaba.fastjson.JSON;
 import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction;
+import org.act.tgraph.demo.utils.Helper;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.zip.GZIPOutputStream;
 
@@ -19,7 +22,7 @@ public class BenchmarkWriter {
     }
 
     public void write(AbstractTransaction tx) throws IOException {
-        writer.write(JSON.toJSONString(tx).getBytes());
+        writer.write(JSON.toJSONString(tx, Helper.serializerFeatures).getBytes());
         writer.write('\n');
     }
 

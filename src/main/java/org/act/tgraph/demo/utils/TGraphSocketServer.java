@@ -128,10 +128,6 @@ public class TGraphSocketServer {
         BufferedReader fromClient;
         PrintStream toClient;
         long reqCnt = 0;
-        SerializerFeature[] features = new SerializerFeature[] {
-                SerializerFeature.WriteClassName,
-                SerializerFeature.DisableCircularReferenceDetect
-        };
 
         ServerThread(Socket client, ServerStatusMonitor monitor) throws IOException {
             this.client = client;
@@ -195,7 +191,7 @@ public class TGraphSocketServer {
                         response.setResult(exeResult);
                         response.setMetrics(metrics);
 
-                        toClient.println(JSON.toJSONString(response, features));
+                        toClient.println(JSON.toJSONString(response, Helper.serializerFeatures));
                         reqCnt++;
                     }
                 }

@@ -1,15 +1,13 @@
 package org.act.tgraph.demo.benchmark.transaction;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.util.List;
 
 public class ImportStaticDataTx extends AbstractTransaction {
-    private List<Pair<Long, String>> crosses;
+    private List<StaticCrossNode> crosses;
     private List<StaticRoadRel> roads;
 
     // this constructor is used when generating benchmarks.
-    public ImportStaticDataTx(List<Pair<Long, String>> crosses, List<StaticRoadRel> roads) {
+    public ImportStaticDataTx(List<StaticCrossNode> crosses, List<StaticRoadRel> roads) {
         this.setTxType(TxType.tx_import_static_data);
         this.crosses = crosses;
         this.roads = roads;
@@ -20,11 +18,11 @@ public class ImportStaticDataTx extends AbstractTransaction {
 
     public ImportStaticDataTx(){}
 
-    public List<Pair<Long, String>> getCrosses() {
+    public List<StaticCrossNode> getCrosses() {
         return crosses;
     }
 
-    public void setCrosses(List<Pair<Long, String>> crosses) {
+    public void setCrosses(List<StaticCrossNode> crosses) {
         this.crosses = crosses;
     }
 
@@ -34,6 +32,27 @@ public class ImportStaticDataTx extends AbstractTransaction {
 
     public void setRoads(List<StaticRoadRel> roads) {
         this.roads = roads;
+    }
+
+    public static class StaticCrossNode{
+        private long id;
+        private String name;
+
+        public long getId() {
+            return id;
+        }
+
+        public void setId(long id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
     }
 
     public static class StaticRoadRel{

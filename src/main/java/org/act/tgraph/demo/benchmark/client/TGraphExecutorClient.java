@@ -1,11 +1,10 @@
 package org.act.tgraph.demo.benchmark.client;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction;
-import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction.Result;
 import org.act.tgraph.demo.client.TGraphSocketClient;
+import org.act.tgraph.demo.utils.Helper;
 import org.act.tgraph.demo.utils.TimeMonitor;
 
 import java.io.IOException;
@@ -32,7 +31,7 @@ public class TGraphExecutorClient extends TGraphSocketClient implements DBProxy 
 
     @Override
     public ListenableFuture<ServerResponse> execute(AbstractTransaction tx) throws Exception{
-        return this.addQuery(JSON.toJSONString(tx));
+        return this.addQuery(JSON.toJSONString(tx, Helper.serializerFeatures));
     }
 
     @Override
