@@ -203,7 +203,7 @@ public class SqlServerExecutorClient implements DBProxy {
                 conn.setAutoCommit(true);
                 EarliestArriveTime algo = new EarliestArriveTimeSQL(tx.getStartCrossId(), tx.getDepartureTime(), tx.getTravelTime(), conn);
                 List<EarliestArriveTime.NodeCross> answer = new ArrayList<>(algo.run());
-                answer.sort(Comparator.comparingLong(o -> o.id));
+                answer.sort(Comparator.comparingLong(EarliestArriveTime.NodeCross::getId));
                 ReachableAreaQueryTx.Result result = new ReachableAreaQueryTx.Result();
                 result.setNodeArriveTime(answer);
                 metrics.setReturnSize(answer.size());

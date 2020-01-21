@@ -49,21 +49,21 @@ public abstract class EarliestArriveTime {
         int curTime = node.arriveTime;
         if( curTime > travelTime + startTime ) return;
         result.add( node );
-        for( Long rId : getAllOutRoads( node.id )){
+        for( Long rId : getAllOutRoads( node.getId() )){
             NodeCross neighbor = getNodeCross( getEndNodeId( rId ));
             int arriveTime;
             try {
                 switch (neighbor.status) {
                     case NotCalculate:
                         neighbor.arriveTime = getEarliestArriveTime(rId, curTime);
-                        neighbor.parent = node.id;
+                        neighbor.parent = node.getId();
                         setStatus(neighbor, Status.Calculating);
                         break;
                     case Calculating:
                         arriveTime = getEarliestArriveTime(rId, curTime);
                         if (neighbor.arriveTime > arriveTime) {
                             neighbor.arriveTime = arriveTime;
-                            neighbor.parent = node.id;
+                            neighbor.parent = node.getId();
                         }
                         break;
                 }

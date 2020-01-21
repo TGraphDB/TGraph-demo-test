@@ -97,7 +97,7 @@ public class KernelTcpServer extends TGraphSocketServer.ReqExecutor {
         try(Transaction t = db.beginTx()) {
             EarliestArriveTime algo = new EarliestArriveTimeTGraphKernel(db, "travel_time", tx.getStartCrossId(), tx.getDepartureTime(), tx.getTravelTime());
             List<EarliestArriveTime.NodeCross> answers = new ArrayList<>(algo.run());
-            answers.sort(Comparator.comparingLong(o -> o.id));
+            answers.sort(Comparator.comparingLong(EarliestArriveTime.NodeCross::getId));
             ReachableAreaQueryTx.Result result = new ReachableAreaQueryTx.Result();
             result.setNodeArriveTime(answers);
 //            t.failure();//do not commit;

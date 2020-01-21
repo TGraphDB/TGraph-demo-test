@@ -1,6 +1,7 @@
 package edu.buaa.utils;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.annotation.JSONField;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.sun.management.OperatingSystemMXBean;
 import edu.buaa.benchmark.client.DBProxy;
@@ -206,6 +207,7 @@ public class TGraphSocketServer {
     public static class Metrics extends AbstractTransaction.Metrics{
         private int txTime;
         private boolean txSuccess;
+//        @JSONField(unwrapped = true)
         private ServerStatus status;
 
         public int getTxTime() {

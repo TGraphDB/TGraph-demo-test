@@ -39,6 +39,9 @@ public class BenchmarkTxResultProcessor {
 
     private void add2LogItem(LogItem log, JSONObject metrics) {
         for(Map.Entry<String, Object> e : metrics.entrySet()){
+            if(e.getValue() instanceof JSONObject){
+                
+            }
             log.PushBack(e.getKey(), e.getValue().toString());
         }
     }
