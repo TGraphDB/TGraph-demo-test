@@ -1,4 +1,4 @@
-package org.act.tgraph.demo.benchmark.transaction;
+package edu.buaa.benchmark.transaction;
 
 import java.util.List;
 

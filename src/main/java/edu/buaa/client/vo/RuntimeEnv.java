@@ -1,4 +1,4 @@
-package org.act.tgraph.demo.client.vo;
+package edu.buaa.client.vo;
 
 import java.time.Instant;
 import java.util.Arrays;

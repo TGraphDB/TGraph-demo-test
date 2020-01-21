@@ -1,8 +1,8 @@
-package org.act.tgraph.demo.algo;
+package edu.buaa.algo;
 
 import com.google.common.collect.AbstractIterator;
-import org.act.tgraph.demo.model.RoadRel;
-import org.act.tgraph.demo.model.TrafficTemporalPropertyGraph;
+import edu.buaa.model.RoadRel;
+import edu.buaa.model.TrafficTemporalPropertyGraph;
 
 import java.util.HashSet;
 import java.util.LinkedList;

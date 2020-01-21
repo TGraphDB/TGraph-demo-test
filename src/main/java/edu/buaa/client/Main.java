@@ -1,4 +1,4 @@
-package org.act.tgraph.demo.client;
+package edu.buaa.client;
 
 import org.junit.internal.TextListener;
 import org.junit.runner.*;

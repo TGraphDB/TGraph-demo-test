@@ -1,8 +1,8 @@
 //package org.act.temporal.test.multiThread.clients;
 //
-//import org.act.tgraph.demo.client.vo.RoadChain;
-//import org.act.tgraph.demo.client.vo.TemporalStatus;
-//import org.act.tgraph.demo.client.Config;
+//import edu.buaa.client.vo.RoadChain;
+//import edu.buaa.client.vo.TemporalStatus;
+//import edu.buaa.client.Config;
 //import org.act.temporal.test.utils.Helper;
 //import org.act.temporal.test.utils.Monitor;
 //import org.neo4j.graphdb.GraphDatabaseService;

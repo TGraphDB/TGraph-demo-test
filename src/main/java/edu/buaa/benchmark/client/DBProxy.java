@@ -1,10 +1,10 @@
-package org.act.tgraph.demo.benchmark.client;
+package edu.buaa.benchmark.client;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction;
-import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction.Metrics;
-import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction.Result;
+import edu.buaa.benchmark.transaction.AbstractTransaction;
+import edu.buaa.benchmark.transaction.AbstractTransaction.Metrics;
+import edu.buaa.benchmark.transaction.AbstractTransaction.Result;
 
 import java.io.IOException;
 

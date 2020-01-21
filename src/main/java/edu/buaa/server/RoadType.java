@@ -1,4 +1,4 @@
-package org.act.tgraph.demo.server;
+package edu.buaa.server;
 
 import org.neo4j.graphdb.RelationshipType;
 

@@ -1,7 +1,7 @@
-package org.act.tgraph.demo.utils;
+package edu.buaa.utils;
 
 import com.google.common.collect.AbstractIterator;
-import org.act.tgraph.demo.model.StatusUpdate;
+import edu.buaa.model.StatusUpdate;
 
 import java.io.BufferedReader;
 import java.io.Closeable;

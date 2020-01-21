@@ -1,6 +1,6 @@
-//package org.act.tgraph.demo.benchmark.client.neo4j;
+//package edu.buaa.benchmark.client.neo4j;
 //
-//import org.act.tgraph.demo.benchmark.client.DBProxy;
+//import edu.buaa.benchmark.client.DBProxy;
 //
 //import org.neo4j.graphdb.PropertyContainer;
 //

@@ -1,7 +1,7 @@
 //package org.act.temporal.test.multiThread.clients;
 //
-//import org.act.tgraph.demo.client.Config;
-//import org.act.tgraph.demo.benchmark.client.neo4j.Aggregator;
+//import edu.buaa.client.Config;
+//import edu.buaa.benchmark.client.neo4j.Aggregator;
 //import org.act.temporal.test.utils.Monitor;
 //import org.neo4j.graphdb.Relationship;
 //import org.neo4j.graphdb.Transaction;

@@ -1,4 +1,4 @@
-package org.act.tgraph.demo.benchmark;
+package edu.buaa.benchmark;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -8,9 +8,9 @@ import com.aliyun.openservices.log.common.LogItem;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.act.tgraph.demo.benchmark.client.DBProxy;
-import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction;
-import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction.Metrics;
+import edu.buaa.benchmark.client.DBProxy;
+import edu.buaa.benchmark.transaction.AbstractTransaction;
+import edu.buaa.benchmark.transaction.AbstractTransaction.Metrics;
 
 import java.util.Map;
 import java.util.concurrent.Executor;

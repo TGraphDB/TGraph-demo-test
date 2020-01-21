@@ -1,6 +1,6 @@
 //package org.act.temporal.test.multiThread.clients;
 //
-//import org.act.tgraph.demo.client.Config;
+//import edu.buaa.client.Config;
 //import org.act.temporal.test.utils.Monitor;
 //import org.neo4j.graphdb.Relationship;
 //import org.neo4j.graphdb.Transaction;

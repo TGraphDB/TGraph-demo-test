@@ -1,11 +1,11 @@
-package org.act.tgraph.demo.benchmark.client;
+package edu.buaa.benchmark.client;
 
 import com.alibaba.fastjson.JSON;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction;
-import org.act.tgraph.demo.client.TGraphSocketClient;
-import org.act.tgraph.demo.utils.Helper;
-import org.act.tgraph.demo.utils.TimeMonitor;
+import edu.buaa.benchmark.transaction.AbstractTransaction;
+import edu.buaa.client.TGraphSocketClient;
+import edu.buaa.utils.Helper;
+import edu.buaa.utils.TimeMonitor;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;

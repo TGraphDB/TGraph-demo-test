@@ -16,4 +16,4 @@ ENV DB_PATH /tgraph/db
 
 WORKDIR /tgraph/TGraph-demo-test
 ENTRYPOINT /bin/bash
-CMD ["mvn", "-B", "--offline", "exec:java", "-Dexec.mainClass=org.act.tgraph.demo.server.KernelTcpServer" ]
+CMD ["mvn", "-B", "--offline", "exec:java", "-Dexec.mainClass=edu.buaa.server.KernelTcpServer" ]

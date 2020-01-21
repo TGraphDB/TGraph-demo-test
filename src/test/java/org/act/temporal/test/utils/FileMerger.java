@@ -1,7 +1,7 @@
 package org.act.temporal.test.utils;
 
-import org.act.tgraph.demo.client.vo.RoadChain;
-import org.act.tgraph.demo.client.vo.TemporalStatus;
+import edu.buaa.client.vo.RoadChain;
+import edu.buaa.client.vo.TemporalStatus;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

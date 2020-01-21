@@ -1,6 +1,6 @@
-package org.act.tgraph.demo.algo;
+package edu.buaa.algo;
 
-import org.act.tgraph.demo.utils.TransactionWrapper;
+import edu.buaa.utils.TransactionWrapper;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;

@@ -1,11 +1,11 @@
-package org.act.tgraph.demo.benchmark;
+package edu.buaa.benchmark;
 
 import com.aliyun.openservices.aliyun.log.producer.Producer;
-import org.act.tgraph.demo.benchmark.client.DBProxy;
-import org.act.tgraph.demo.benchmark.client.SqlServerExecutorClient;
-import org.act.tgraph.demo.benchmark.client.TGraphExecutorClient;
-import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction;
-import org.act.tgraph.demo.utils.Helper;
+import edu.buaa.benchmark.client.DBProxy;
+import edu.buaa.benchmark.client.SqlServerExecutorClient;
+import edu.buaa.benchmark.client.TGraphExecutorClient;
+import edu.buaa.benchmark.transaction.AbstractTransaction;
+import edu.buaa.utils.Helper;
 
 import java.io.File;
 import java.util.Calendar;

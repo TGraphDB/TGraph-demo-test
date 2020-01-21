@@ -1,6 +1,6 @@
 //package org.act.temporal.test.multiThread;
 //
-//import org.act.tgraph.demo.client.Config;
+//import edu.buaa.client.Config;
 //import org.act.temporal.test.multiThread.clients.ConsumerWriteClient;
 //import org.act.temporal.test.multiThread.clients.ReadFileServer;
 //import org.act.temporal.test.utils.DataImportor;

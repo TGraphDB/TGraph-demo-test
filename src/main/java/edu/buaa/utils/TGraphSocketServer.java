@@ -1,10 +1,10 @@
-package org.act.tgraph.demo.utils;
+package edu.buaa.utils;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.sun.management.OperatingSystemMXBean;
-import org.act.tgraph.demo.benchmark.client.DBProxy;
-import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction;
+import edu.buaa.benchmark.client.DBProxy;
+import edu.buaa.benchmark.transaction.AbstractTransaction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import oshi.SystemInfo;
@@ -23,7 +23,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.act.tgraph.demo.benchmark.transaction.AbstractTransaction.*;
+import static edu.buaa.benchmark.transaction.AbstractTransaction.*;
 
 public class TGraphSocketServer {
     private final File dbPath;

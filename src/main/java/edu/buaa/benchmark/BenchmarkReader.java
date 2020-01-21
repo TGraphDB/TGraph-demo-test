@@ -1,9 +1,9 @@
-package org.act.tgraph.demo.benchmark;
+package edu.buaa.benchmark;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.AbstractIterator;
-import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction;
-import org.act.tgraph.demo.utils.Helper;
+import edu.buaa.benchmark.transaction.AbstractTransaction;
+import edu.buaa.utils.Helper;
 
 import java.io.BufferedReader;
 import java.io.File;

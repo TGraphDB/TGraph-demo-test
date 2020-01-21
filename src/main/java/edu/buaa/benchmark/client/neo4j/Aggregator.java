@@ -1,4 +1,4 @@
-package org.act.tgraph.demo.benchmark.client.neo4j;
+package edu.buaa.benchmark.client.neo4j;
 
 /**
  * Created by song on 16-2-4.

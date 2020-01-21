@@ -1,4 +1,4 @@
-package org.act.tgraph.demo.utils;
+package edu.buaa.utils;
 
 import java.util.HashMap;
 import java.util.Map;

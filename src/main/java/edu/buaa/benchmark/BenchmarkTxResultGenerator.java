@@ -1,17 +1,17 @@
-package org.act.tgraph.demo.benchmark;
+package edu.buaa.benchmark;
 
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterators;
-import org.act.tgraph.demo.algo.EarliestArriveTime;
-import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction;
-import org.act.tgraph.demo.benchmark.transaction.ImportStaticDataTx;
-import org.act.tgraph.demo.benchmark.transaction.ImportTemporalDataTx;
-import org.act.tgraph.demo.benchmark.transaction.ReachableAreaQueryTx;
-import org.act.tgraph.demo.model.TimePointInt;
-import org.act.tgraph.demo.model.TrafficTGraph;
-import org.act.tgraph.demo.model.TrafficTGraph.JamStatus;
-import org.act.tgraph.demo.model.TrafficTGraph.NodeCross;
-import org.act.tgraph.demo.model.TrafficTGraph.RelRoad;
+import edu.buaa.algo.EarliestArriveTime;
+import edu.buaa.benchmark.transaction.AbstractTransaction;
+import edu.buaa.benchmark.transaction.ImportStaticDataTx;
+import edu.buaa.benchmark.transaction.ImportTemporalDataTx;
+import edu.buaa.benchmark.transaction.ReachableAreaQueryTx;
+import edu.buaa.model.TimePointInt;
+import edu.buaa.model.TrafficTGraph;
+import edu.buaa.model.TrafficTGraph.JamStatus;
+import edu.buaa.model.TrafficTGraph.NodeCross;
+import edu.buaa.model.TrafficTGraph.RelRoad;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -78,7 +78,7 @@ public class BenchmarkTxResultGenerator extends AbstractTransactionExecutor {
         };
         List<EarliestArriveTime.NodeCross> answer = new ArrayList<>(algo.run());
         System.out.println("result size: "+answer.size());
-        answer.sort(Comparator.comparingLong(o -> o.id));
+        answer.sort(Comparator.comparingLong(EarliestArriveTime.NodeCross::getId));
         ReachableAreaQueryTx.Result result = new ReachableAreaQueryTx.Result();
         result.setNodeArriveTime(answer);
         tx.setResult(result);

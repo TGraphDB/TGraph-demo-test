@@ -1,7 +1,7 @@
-package org.act.tgraph.demo.benchmark.transaction;
+package edu.buaa.benchmark.transaction;
 
 import com.google.common.base.Preconditions;
-import org.act.tgraph.demo.algo.EarliestArriveTime;
+import edu.buaa.algo.EarliestArriveTime;
 
 import java.util.List;
 

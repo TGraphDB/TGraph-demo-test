@@ -1,4 +1,4 @@
-package org.act.tgraph.demo.model;
+package edu.buaa.model;
 
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterators;

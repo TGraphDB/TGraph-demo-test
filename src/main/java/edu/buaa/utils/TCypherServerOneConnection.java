@@ -1,4 +1,4 @@
-package org.act.tgraph.demo.utils;
+package edu.buaa.utils;
 
 
 import com.aliyun.openservices.aliyun.log.producer.Producer;

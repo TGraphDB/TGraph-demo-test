@@ -1,6 +1,6 @@
 package org.act.temporal.test.vo;
 
-import org.act.tgraph.demo.client.vo.RoadChain;
+import edu.buaa.client.vo.RoadChain;
 
 /**
  * Created by song on 16-2-26.

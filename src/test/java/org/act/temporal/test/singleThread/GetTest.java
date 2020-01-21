@@ -1,8 +1,8 @@
 //package org.act.temporal.test.singleThread;
 //
-//import org.act.tgraph.demo.client.vo.RelType;
-//import org.act.tgraph.demo.benchmark.client.DBProxy;
-//import org.act.tgraph.demo.benchmark.client.neo4j.TemporalSimulationProxy;
+//import edu.buaa.client.vo.RelType;
+//import edu.buaa.benchmark.client.DBProxy;
+//import edu.buaa.benchmark.client.neo4j.TemporalSimulationProxy;
 //import org.act.temporal.test.utils.Helper;
 //import org.act.temporal.test.utils.Monitor;
 //import org.junit.*;

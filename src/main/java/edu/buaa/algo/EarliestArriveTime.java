@@ -1,5 +1,7 @@
-package org.act.tgraph.demo.algo;
+package edu.buaa.algo;
 
+
+import com.alibaba.fastjson.annotation.JSONType;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -127,14 +129,39 @@ public abstract class EarliestArriveTime {
 
     protected enum Status{ NotCalculate, Calculating, Calculated }
 
+    @JSONType(ignores = {"status"})
     public static class NodeCross {
-        public final long id;
-        public int arriveTime = Integer.MAX_VALUE;
-        public long parent;
+        public long id;
+        int arriveTime = Integer.MAX_VALUE;
+        long parent;
         private Status status = Status.NotCalculate;
-
+        NodeCross(){}
         NodeCross(long id) {
             this.id = id;
+        }
+
+        public long getId() {
+            return id;
+        }
+
+        public void setId(long id) {
+            this.id = id;
+        }
+
+        public int getArriveTime() {
+            return arriveTime;
+        }
+
+        public void setArriveTime(int arriveTime) {
+            this.arriveTime = arriveTime;
+        }
+
+        public long getParent() {
+            return parent;
+        }
+
+        public void setParent(long parent) {
+            this.parent = parent;
         }
 
         @Override

@@ -1,9 +1,9 @@
-package org.act.tgraph.demo.server;
+package edu.buaa.server;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
-import org.act.tgraph.demo.algo.EarliestArriveTime;
-import org.act.tgraph.demo.utils.Helper;
+import edu.buaa.algo.EarliestArriveTime;
+import edu.buaa.utils.Helper;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;

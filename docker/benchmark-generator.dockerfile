@@ -20,4 +20,4 @@ ENV TEMPORAL_DATA_END   0507
 ENV REACHABLE_AREA_TX_CNT 20
 
 WORKDIR /tgraph/TGraph-demo-test
-CMD ["mvn", "-B", "--offline", "exec:java", "-Dexec.mainClass=org.act.tgraph.demo.benchmark.BenchmarkTxArgsGenerator" ]
+CMD ["mvn", "-B", "--offline", "exec:java", "-Dexec.mainClass=edu.buaa.benchmark.BenchmarkTxArgsGenerator" ]

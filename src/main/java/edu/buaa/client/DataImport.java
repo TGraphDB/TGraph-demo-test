@@ -1,11 +1,11 @@
-//package org.act.tgraph.demo.client;
+//package edu.buaa.client;
 //
-//import org.act.tgraph.demo.utils.Helper;
-//import org.act.tgraph.demo.utils.TransactionWrapper;
-//import org.act.tgraph.demo.client.vo.Cross;
-//import org.act.tgraph.demo.client.vo.RelType;
-//import org.act.tgraph.demo.client.vo.RoadChain;
-//import org.act.tgraph.demo.client.vo.TemporalStatus;
+//import edu.buaa.utils.Helper;
+//import edu.buaa.utils.TransactionWrapper;
+//import edu.buaa.client.vo.Cross;
+//import edu.buaa.client.vo.RelType;
+//import edu.buaa.client.vo.RoadChain;
+//import edu.buaa.client.vo.TemporalStatus;
 //import org.neo4j.graphdb.*;
 //import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 //import org.neo4j.temporal.TimePoint;

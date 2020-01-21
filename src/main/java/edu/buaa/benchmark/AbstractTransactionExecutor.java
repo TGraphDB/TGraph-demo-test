@@ -1,9 +1,9 @@
-package org.act.tgraph.demo.benchmark;
+package edu.buaa.benchmark;
 
-import org.act.tgraph.demo.benchmark.transaction.AbstractTransaction;
-import org.act.tgraph.demo.benchmark.transaction.ImportStaticDataTx;
-import org.act.tgraph.demo.benchmark.transaction.ImportTemporalDataTx;
-import org.act.tgraph.demo.benchmark.transaction.ReachableAreaQueryTx;
+import edu.buaa.benchmark.transaction.AbstractTransaction;
+import edu.buaa.benchmark.transaction.ImportStaticDataTx;
+import edu.buaa.benchmark.transaction.ImportTemporalDataTx;
+import edu.buaa.benchmark.transaction.ReachableAreaQueryTx;
 
 import java.io.IOException;
 

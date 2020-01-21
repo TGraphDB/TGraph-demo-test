@@ -1,4 +1,4 @@
-package org.act.tgraph.demo.utils;
+package edu.buaa.utils;
 
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.aliyun.openservices.aliyun.log.producer.LogProducer;
@@ -8,7 +8,7 @@ import com.aliyun.openservices.aliyun.log.producer.ProjectConfig;
 import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.PeekingIterator;
-import org.act.tgraph.demo.client.vo.RuntimeEnv;
+import edu.buaa.client.vo.RuntimeEnv;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.neo4j.temporal.TimePoint;

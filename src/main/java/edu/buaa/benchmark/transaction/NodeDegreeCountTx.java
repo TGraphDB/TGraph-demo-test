@@ -1,4 +1,4 @@
-package org.act.tgraph.demo.benchmark.transaction;
+package edu.buaa.benchmark.transaction;
 
 public class NodeDegreeCountTx {
 

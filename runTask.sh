@@ -86,7 +86,7 @@ function genBenchmark() {
   export TEMPORAL_DATA_START=0503
   export TEMPORAL_DATA_END=0504
   export REACHABLE_AREA_TX_CNT=20
-  mvn -B --offline compile exec:java -Dexec.mainClass="org.act.tgraph.demo.benchmark.BenchmarkTxArgsGenerator"
+  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.benchmark.BenchmarkTxArgsGenerator"
 }
 
 function runBenchmark() {
@@ -95,15 +95,15 @@ function runBenchmark() {
   export BENCHMARK_FILE_INPUT=/tmp/test/benchmark-with-result.gz
   export MAX_CONNECTION_CNT=1
   export VERIFY_RESULT=true
-  mvn -B --offline compile exec:java -Dexec.mainClass="org.act.tgraph.demo.benchmark.BenchmarkRunner"
+  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.benchmark.BenchmarkRunner"
 }
 
 function runTGraphKernelServer(){
   export DB_PATH=/tmp/testdb
-  mvn -B --offline compile exec:java -Dexec.mainClass="org.act.tgraph.demo.server.KernelTcpServer"
+  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.server.KernelTcpServer"
 }
 
 function runSQLServer(){
   export DB_PATH=/tmp/testdb
-  mvn -B --offline compile exec:java -Dexec.mainClass="org.act.tgraph.demo.server.KernelTcpServer"
+  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.server.KernelTcpServer"
 }

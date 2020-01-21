@@ -1,7 +1,7 @@
-package org.act.tgraph.demo.model;
+package edu.buaa.model;
 
-import org.act.tgraph.demo.utils.Helper;
-import org.act.tgraph.demo.utils.MultiFileReader;
+import edu.buaa.utils.Helper;
+import edu.buaa.utils.MultiFileReader;
 
 import java.io.BufferedReader;
 import java.io.File;

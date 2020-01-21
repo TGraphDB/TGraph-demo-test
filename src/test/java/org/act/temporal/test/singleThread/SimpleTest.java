@@ -1,10 +1,10 @@
 //package org.act.temporal.test.singleThread;
 //
-//import org.act.tgraph.demo.benchmark.client.DBProxy;
-//import org.act.tgraph.demo.client.vo.RelType;
-//import org.act.tgraph.demo.client.Config;
-//import org.act.tgraph.demo.benchmark.client.neo4j.Aggregator;
-//import org.act.tgraph.demo.benchmark.client.neo4j.ArraySimulationProxy;
+//import edu.buaa.benchmark.client.DBProxy;
+//import edu.buaa.client.vo.RelType;
+//import edu.buaa.client.Config;
+//import edu.buaa.benchmark.client.neo4j.Aggregator;
+//import edu.buaa.benchmark.client.neo4j.ArraySimulationProxy;
 //import org.act.temporal.test.utils.DataImportor;
 //import org.act.temporal.test.utils.Helper;
 //import org.junit.After;

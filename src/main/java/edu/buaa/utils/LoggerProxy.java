@@ -1,4 +1,4 @@
-package org.act.tgraph.demo.utils;
+package edu.buaa.utils;
 
 public class LoggerProxy {
 }

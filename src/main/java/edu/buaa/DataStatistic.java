@@ -1,10 +1,10 @@
-package org.act.tgraph.demo;
+package edu.buaa;
 
-import org.act.tgraph.demo.algo.BreadthFirstRelTraversal;
-import org.act.tgraph.demo.model.RoadRel;
-import org.act.tgraph.demo.model.TimePointInt;
-import org.act.tgraph.demo.model.TrafficTemporalPropertyGraph;
-import org.act.tgraph.demo.utils.Helper;
+import edu.buaa.algo.BreadthFirstRelTraversal;
+import edu.buaa.model.RoadRel;
+import edu.buaa.model.TimePointInt;
+import edu.buaa.model.TrafficTemporalPropertyGraph;
+import edu.buaa.utils.Helper;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 

@@ -4,10 +4,10 @@
 //import com.aliyun.openservices.log.common.LogItem;
 //import com.eclipsesource.json.Json;
 //import com.eclipsesource.json.JsonObject;
-//import org.act.tgraph.demo.client.Config;
-//import org.act.tgraph.demo.benchmark.client.tgraph.TGraphSocketClient;
-//import org.act.tgraph.demo.utils.TimeMonitor;
-//import org.act.tgraph.demo.client.vo.RuntimeEnv;
+//import edu.buaa.client.Config;
+//import edu.buaa.benchmark.client.tgraph.TGraphSocketClient;
+//import edu.buaa.utils.TimeMonitor;
+//import edu.buaa.client.vo.RuntimeEnv;
 //import org.junit.Test;
 //import org.junit.runner.RunWith;
 //import org.junit.runners.Parameterized;

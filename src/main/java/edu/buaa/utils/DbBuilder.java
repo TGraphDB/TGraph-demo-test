@@ -1,8 +1,8 @@
-package org.act.tgraph.demo.utils;
+package edu.buaa.utils;
 
-import org.act.tgraph.demo.client.vo.Cross;
-import org.act.tgraph.demo.client.vo.RelType;
-import org.act.tgraph.demo.client.vo.RoadChain;
+import edu.buaa.client.vo.Cross;
+import edu.buaa.client.vo.RelType;
+import edu.buaa.client.vo.RoadChain;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;

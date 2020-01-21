@@ -18,4 +18,4 @@ ENV VERIFY_RESULT true
 
 WORKDIR /tgraph/TGraph-demo-test
 ENTRYPOINT /bin/bash
-CMD ["mvn", "-B", "--offline", "exec:java", "-Dexec.mainClass=org.act.tgraph.demo.benchmark.BenchmarkRunner" ]
+CMD ["mvn", "-B", "--offline", "exec:java", "-Dexec.mainClass=edu.buaa.benchmark.BenchmarkRunner" ]
