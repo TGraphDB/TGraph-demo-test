@@ -38,7 +38,7 @@ public class SqlServerExecutorClient implements DBProxy {
 
     public SqlServerExecutorClient(String serverHost, int parallelCnt, int queueLength) throws IOException, ClassNotFoundException, SQLException {
         Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-        String dbURL = "jdbc:sqlserver://" + serverHost + ":8438; DatabaseName=sample";
+        String dbURL = "jdbc:sqlserver://" + serverHost + ":1433";//; DatabaseName=sample
         this.exe = new ThreadPoolExecutor(parallelCnt, parallelCnt, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(queueLength), (r, executor) -> {
             if (!executor.isShutdown()) try {
                 executor.getQueue().put(r);
@@ -75,9 +75,11 @@ public class SqlServerExecutorClient implements DBProxy {
             Connection con = connectionPool.take();
             Statement stmt = con.createStatement();
             con.setAutoCommit(true);
-            Preconditions.checkState(stmt.execute("CREATE TABLE cross_node ( id int PRIMARY KEY, name char(255) )"));
-            Preconditions.checkState(stmt.execute("CREATE TABLE road ( id int PRIMARY KEY, r_name char(16), r_start int, r_end int, r_length int, r_type int)"));
-            Preconditions.checkState(stmt.execute("CREATE TABLE temporal_status (t int, rid int, status int, travel_t int, seg_cnt int)"));
+            stmt.execute("CREATE DATABASE beijing_traffic");
+            stmt.execute("USE beijing_traffic");
+            stmt.execute("CREATE TABLE cross_node ( id int PRIMARY KEY, name char(255) )");
+            stmt.execute("CREATE TABLE road ( id int PRIMARY KEY, r_name char(16), r_start int, r_end int, r_length int, r_type int)");
+            stmt.execute("CREATE TABLE temporal_status (t int, rid int, status int, travel_t int, seg_cnt int)");
             stmt.close();
             connectionPool.put(con);
         } catch (SQLException | InterruptedException ex) {
@@ -178,7 +180,7 @@ public class SqlServerExecutorClient implements DBProxy {
             @Override
             protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception{
                 conn.setAutoCommit(false);
-                PreparedStatement stat = conn.prepareStatement("INSERT INTO temporal_status VALUES (?,?)");
+                PreparedStatement stat = conn.prepareStatement("INSERT INTO temporal_status VALUES (?,?,?,?,?)");
                 for(ImportTemporalDataTx.StatusUpdate s : tx.data){
                     stat.setInt(1, s.getTime());
                     stat.setInt(2, Math.toIntExact(s.getRoadId()));
