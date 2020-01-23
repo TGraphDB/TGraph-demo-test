@@ -46,7 +46,7 @@ public class ReachableAreaQueryTx extends AbstractTransaction {
     public void validateResult(AbstractTransaction.Result result) {
         List<EarliestArriveTime.NodeCross> expected = ((Result) this.getResult()).getNodeArriveTime();
         List<EarliestArriveTime.NodeCross> got = ((Result) result).getNodeArriveTime();
-        Preconditions.checkArgument(got.size()==expected.size());
+        Preconditions.checkArgument(got.size()==expected.size(), "size not match, got "+got.size()+" expect "+expected.size());
         for(int i=0; i<got.size(); i++){
             Preconditions.checkState(got.get(i).equals(expected.get(i)));
         }

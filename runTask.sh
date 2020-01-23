@@ -27,7 +27,7 @@ function systemInfo() {
         IS_COMPILED=''
     fi
     mvn -B ${IS_COMPILED} exec:java \
-        -Dexec.mainClass="org.act.tgraph.demo.vo.RuntimeEnv"
+        -Dexec.mainClass="edu.buaa.vo.RuntimeEnv"
 }
 
 
@@ -79,7 +79,7 @@ function tcypherClientWriteTpropTest() {
 
 
 function genBenchmark() {
-  export WORK_DIR=/tmp/test
+  export WORK_DIR="E:\tgraph\test-data"
   export BENCHMARK_WITH_RESULT=true
   export BENCHMARK_FILE_OUTPUT=benchmark
   export TEMPORAL_DATA_PER_TX=100
@@ -91,15 +91,16 @@ function genBenchmark() {
 
 function runBenchmark() {
   export DB_TYPE=tgraph_kernel
-  export DB_HOST=localhost
-  export BENCHMARK_FILE_INPUT=/tmp/test/benchmark-with-result.gz
+  export DB_TYPE=sql_server
+  export DB_HOST=182.92.214.54
+  export BENCHMARK_FILE_INPUT=E:\tgraph\test-data\benchmark-with-result.gz
   export MAX_CONNECTION_CNT=1
   export VERIFY_RESULT=true
   mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.benchmark.BenchmarkRunner"
 }
 
 function runTGraphKernelServer(){
-  export DB_PATH=/tmp/testdb
+  export DB_PATH="E:\tgraph\test-db"
   mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.server.KernelTcpServer"
 }
 

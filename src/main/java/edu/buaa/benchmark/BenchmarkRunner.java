@@ -13,6 +13,8 @@ import java.util.Calendar;
 public class BenchmarkRunner {
 
     public static void main(String[] args) {
+        //test();
+        //System.exit(0);
         String benchmarkFileName = Helper.mustEnv("BENCHMARK_FILE_INPUT");
         String dbType = Helper.mustEnv("DB_TYPE");
         int maxConnCnt = Integer.parseInt(Helper.mustEnv("MAX_CONNECTION_CNT"));
@@ -53,5 +55,27 @@ public class BenchmarkRunner {
         return "B_"+dbType.toLowerCase()+"("+dbVersion+")_"+
                 c.get(Calendar.YEAR)+"."+(c.get(Calendar.MONTH)+1)+"."+c.get(Calendar.DAY_OF_MONTH)+"_"+
                 c.get(Calendar.HOUR_OF_DAY)+":"+c.get(Calendar.MINUTE);
+    }
+
+    private static void test(){
+        try {
+            DBProxy client = new TGraphExecutorClient("localhost", 1, 800);
+            String serverVersion = client.testServerClientCompatibility();
+            Producer logger = Helper.getLogger();
+            BenchmarkTxResultProcessor post = new BenchmarkTxResultProcessor(logger, getTestName("tgraph_kernel", serverVersion), Helper.codeGitVersion(), true);
+            client.createDB();
+            BenchmarkReader reader = new BenchmarkReader(new File("e:/tgraph/test-data/benchmark-with-result.gz"));
+            int i=133690;
+            while (reader.hasNext()) {
+                AbstractTransaction tx = reader.next();
+                i--;
+                if(i<0) post.process(client.execute(tx), tx);
+            }
+            reader.close();
+            client.close();
+            logger.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
