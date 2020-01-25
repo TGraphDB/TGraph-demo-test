@@ -169,12 +169,23 @@ public abstract class EarliestArriveTime {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             NodeCross nodeCross = (NodeCross) o;
-            return id == nodeCross.id;
+            return id == nodeCross.id &&
+                    arriveTime == nodeCross.arriveTime &&
+                    parent == nodeCross.parent;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(id);
+            return Objects.hash(id, arriveTime, parent);
+        }
+
+        @Override
+        public String toString() {
+            return "NodeCross{" +
+                    "id=" + id +
+                    ", arriveTime=" + arriveTime +
+                    ", parent=" + parent +
+                    '}';
         }
     }
 }

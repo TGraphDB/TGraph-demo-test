@@ -3,7 +3,9 @@ package edu.buaa.benchmark.transaction;
 import com.google.common.base.Preconditions;
 import edu.buaa.algo.EarliestArriveTime;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ReachableAreaQueryTx extends AbstractTransaction {
     private long startCrossId;
@@ -46,7 +48,19 @@ public class ReachableAreaQueryTx extends AbstractTransaction {
     public void validateResult(AbstractTransaction.Result result) {
         List<EarliestArriveTime.NodeCross> expected = ((Result) this.getResult()).getNodeArriveTime();
         List<EarliestArriveTime.NodeCross> got = ((Result) result).getNodeArriveTime();
-        Preconditions.checkArgument(got.size()==expected.size(), "size not match, got "+got.size()+" expect "+expected.size());
+        if(got.size()!=expected.size()){
+            System.out.println("size not match, got "+got.size()+" expect "+expected.size());
+            Set<EarliestArriveTime.NodeCross> intersection = new HashSet<>(expected);
+            intersection.retainAll(got);
+            Set<EarliestArriveTime.NodeCross> expDiff = new HashSet<>(expected);
+            expDiff.retainAll(intersection);
+            if(!expDiff.isEmpty()) expDiff.forEach(System.out::println);
+            System.out.println("exp-common ^^ vv got-common");
+            Set<EarliestArriveTime.NodeCross> gotDiff = new HashSet<>(got);
+            gotDiff.retainAll(intersection);
+            if(!gotDiff.isEmpty()) gotDiff.forEach(System.out::println);
+            return;
+        }
         for(int i=0; i<got.size(); i++){
             Preconditions.checkState(got.get(i).equals(expected.get(i)));
         }
