@@ -2,26 +2,20 @@ package edu.buaa.benchmark;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.Iterators;
+import edu.buaa.algo.EarliestArriveTime;
 import edu.buaa.benchmark.transaction.AbstractTransaction;
 import edu.buaa.benchmark.transaction.ImportStaticDataTx;
 import edu.buaa.benchmark.transaction.ImportTemporalDataTx;
 import edu.buaa.benchmark.transaction.ReachableAreaQueryTx;
-import edu.buaa.model.CrossNode;
-import edu.buaa.model.RoadRel;
-import edu.buaa.model.StatusUpdate;
-import edu.buaa.model.TrafficTemporalPropertyGraph;
+import edu.buaa.model.*;
 import edu.buaa.utils.Helper;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Generate an instance of benchmark (a iterator/list of transactions) from given arguments.
@@ -29,7 +23,6 @@ import java.util.Random;
 public class BenchmarkTxArgsGenerator {
     public static void main(String[] args){
         String workDir = Helper.mustEnv("WORK_DIR");
-        boolean genResult = Boolean.parseBoolean(Helper.mustEnv("BENCHMARK_WITH_RESULT"));
         String benchmarkFileName = Helper.mustEnv("BENCHMARK_FILE_OUTPUT");
         int temporalDataPerTx = Integer.parseInt(Helper.mustEnv("TEMPORAL_DATA_PER_TX"));
         String temporalDataStartT = Helper.mustEnv("TEMPORAL_DATA_START");
@@ -47,18 +40,6 @@ public class BenchmarkTxArgsGenerator {
             writer.write(gen.phaseWriteTemporalProp(temporalDataPerTx, Helper.trafficFileList(workDir, temporalDataStartT, temporalDataEndT)));
             writer.write(gen.phaseRead(Helper.monthDayStr2TimeInt(temporalDataStartT), Helper.monthDayStr2TimeInt(temporalDataEndT), reachableAreaTxCnt));
             writer.close();
-
-            if (genResult) {
-                System.gc();
-                BenchmarkTxResultGenerator resultGen = new BenchmarkTxResultGenerator();
-                BenchmarkReader reader = new BenchmarkReader(new File(workDir, benchmarkFileName + ".gz"));
-                writer = new BenchmarkWriter(new File(workDir, benchmarkFileName + "-with-result.gz"));
-                while (reader.hasNext()) {
-                    writer.write(resultGen.execute(reader.next()));
-                }
-                reader.close();
-                writer.close();
-            }
         }catch (IOException e){
             e.printStackTrace();
         }
@@ -177,4 +158,5 @@ public class BenchmarkTxArgsGenerator {
             return new ReachableAreaQueryTx(startCrossId, departureTime, 1800);
         }
     }
+
 }

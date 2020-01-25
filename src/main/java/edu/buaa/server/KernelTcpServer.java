@@ -3,11 +3,8 @@ package edu.buaa.server;
 import com.alibaba.fastjson.JSON;
 import com.google.common.base.Preconditions;
 import edu.buaa.algo.EarliestArriveTime;
-import edu.buaa.benchmark.transaction.AbstractTransaction;
+import edu.buaa.benchmark.transaction.*;
 import edu.buaa.benchmark.transaction.AbstractTransaction.Result;
-import edu.buaa.benchmark.transaction.ImportStaticDataTx;
-import edu.buaa.benchmark.transaction.ImportTemporalDataTx;
-import edu.buaa.benchmark.transaction.ReachableAreaQueryTx;
 import edu.buaa.client.vo.RuntimeEnv;
 import edu.buaa.utils.Helper;
 import edu.buaa.utils.TGraphSocketServer;
@@ -55,9 +52,33 @@ public class KernelTcpServer extends TGraphSocketServer.ReqExecutor {
             case tx_import_static_data: return execute((ImportStaticDataTx) tx);
             case tx_import_temporal_data: return execute((ImportTemporalDataTx) tx);
             case tx_query_reachable_area: return execute((ReachableAreaQueryTx) tx);
+            case tx_query_road_earliest_arrive_time_aggr: return execute((EarliestArriveTimeAggrTx)tx);
             default:
                 throw new UnsupportedOperationException();
         }
+    }
+
+    private Result execute(EarliestArriveTimeAggrTx tx) {
+        int minArriveTime = Integer.MAX_VALUE;
+        Relationship r = db.getRelationshipById(tx.getRoadId());
+        EarliestArriveTimeAggrTx.Result result = new EarliestArriveTimeAggrTx.Result();
+        if( !r.hasProperty( "travel_time" )){
+            result.setArriveTime(-1);
+            return result;
+        }
+        for(int curT = tx.getDepartureTime(); curT<minArriveTime && curT<=tx.getEndTime(); curT++){
+            Object tObj = r.getTemporalProperty( "travel_time", Helper.time(curT));
+            if(tObj==null) {
+                result.setArriveTime(-1);
+                return result;
+            }
+            int period = (Integer) tObj;
+            if (curT + period < minArriveTime) {
+                minArriveTime = curT + period;
+            }
+        }
+        result.setArriveTime(minArriveTime);
+        return result;
     }
 
     private Result execute(ImportStaticDataTx tx){

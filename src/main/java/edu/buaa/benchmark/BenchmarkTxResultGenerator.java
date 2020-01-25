@@ -1,29 +1,58 @@
 package edu.buaa.benchmark;
 
-import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterators;
 import edu.buaa.algo.EarliestArriveTime;
-import edu.buaa.benchmark.transaction.AbstractTransaction;
-import edu.buaa.benchmark.transaction.ImportStaticDataTx;
-import edu.buaa.benchmark.transaction.ImportTemporalDataTx;
-import edu.buaa.benchmark.transaction.ReachableAreaQueryTx;
+import edu.buaa.benchmark.transaction.*;
 import edu.buaa.model.TimePointInt;
 import edu.buaa.model.TrafficTGraph;
 import edu.buaa.model.TrafficTGraph.JamStatus;
 import edu.buaa.model.TrafficTGraph.NodeCross;
 import edu.buaa.model.TrafficTGraph.RelRoad;
-import org.apache.commons.lang3.tuple.Pair;
+import edu.buaa.utils.Helper;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
-public class BenchmarkTxResultGenerator extends AbstractTransactionExecutor {
+public class BenchmarkTxResultGenerator {
 
+    public static void main(String[] args){
+        boolean genResult = Boolean.parseBoolean(Helper.mustEnv("GENERATE_RESULT_VERIFY_TX"));
+        String benchmarkInputFileName = Helper.mustEnv("BENCHMARK_FILE_INPUT");
+        String benchmarkOutputFileName = Helper.mustEnv("BENCHMARK_FILE_OUTPUT");
+
+        try {
+            BenchmarkTxResultGenerator resultGen = new BenchmarkTxResultGenerator(genResult);
+            BenchmarkReader reader = new BenchmarkReader(new File(benchmarkInputFileName));
+            BenchmarkWriter writer = new BenchmarkWriter(new File(benchmarkOutputFileName));
+            while (reader.hasNext()) {
+                writer.write(resultGen.execute(reader.next()));
+            }
+            reader.close();
+            writer.close();
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    private final boolean verifyTxs;
     private TrafficTGraph tgraph = new TrafficTGraph();
 
-    @Override
+    public BenchmarkTxResultGenerator(boolean generateVerifyTxs) {
+        this.verifyTxs = generateVerifyTxs;
+    }
+
+    public List<AbstractTransaction> execute(AbstractTransaction tx) throws IOException {
+        if(tx instanceof ImportTemporalDataTx){
+            execute((ImportTemporalDataTx) tx);
+        }else if(tx instanceof ReachableAreaQueryTx){
+            return execute((ReachableAreaQueryTx) tx);
+        }else if(tx instanceof ImportStaticDataTx){
+            execute((ImportStaticDataTx) tx);
+        }
+        return Collections.singletonList(tx);
+    }
+
     public void execute(ImportStaticDataTx tx){
         for(ImportStaticDataTx.StaticCrossNode node : tx.getCrosses()){
             NodeCross n = new NodeCross(node.getId(), node.getName());
@@ -38,7 +67,6 @@ public class BenchmarkTxResultGenerator extends AbstractTransactionExecutor {
         }
     }
 
-    @Override
     public void execute(ImportTemporalDataTx tx){
         for(ImportTemporalDataTx.StatusUpdate s : tx.data){
             RelRoad r = tgraph.roads.get(s.getRoadId());
@@ -49,20 +77,21 @@ public class BenchmarkTxResultGenerator extends AbstractTransactionExecutor {
         }
     }
 
-    @Override
-    public void execute(ReachableAreaQueryTx tx){
+    public List<AbstractTransaction> execute(ReachableAreaQueryTx tx){
+        List<AbstractTransaction> resultTxArr = new ArrayList<>();
         EarliestArriveTime algo = new EarliestArriveTime(tx.getStartCrossId(), tx.getDepartureTime(), tx.getTravelTime()) {
             @Override
             protected int getEarliestArriveTime(Long roadId, int departureTime) throws UnsupportedOperationException {
                 int minArriveTime = Integer.MAX_VALUE;
                 RelRoad r = tgraph.roads.get(roadId);
-                for(int curT = departureTime; curT<minArriveTime; curT++){
+                for(int curT = departureTime; curT<minArriveTime && curT<=endTime; curT++){
                     Integer period = r.tpTravelTime.get( new TimePointInt(curT));
                     if(period == null) throw new UnsupportedOperationException();
                     if (curT + period < minArriveTime) {
                         minArriveTime = curT + period;
                     }
                 }
+                if(verifyTxs) resultTxArr.add(new EarliestArriveTimeAggrTx(roadId, departureTime, this.endTime, minArriveTime));
                 return minArriveTime;
             }
 
@@ -82,22 +111,7 @@ public class BenchmarkTxResultGenerator extends AbstractTransactionExecutor {
         ReachableAreaQueryTx.Result result = new ReachableAreaQueryTx.Result();
         result.setNodeArriveTime(answer);
         tx.setResult(result);
-    }
-
-    public Iterator<AbstractTransaction> eval(Iterator<AbstractTransaction> transactionIterator) {
-        return new AbstractIterator<AbstractTransaction>() {
-            @Override
-            protected AbstractTransaction computeNext() {
-                if(transactionIterator.hasNext()) {
-                    try {
-                        return execute(transactionIterator.next());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return endOfData();
-                    }
-                }
-                else return endOfData();
-            }
-        };
+        resultTxArr.add(tx);
+        return resultTxArr;
     }
 }

@@ -13,6 +13,7 @@ import edu.buaa.benchmark.transaction.AbstractTransaction;
 import edu.buaa.benchmark.transaction.AbstractTransaction.Metrics;
 
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -33,6 +34,7 @@ public class BenchmarkTxResultProcessor {
     public void logMetrics(AbstractTransaction tx, DBProxy.ServerResponse response) throws ProducerException, InterruptedException {
         Metrics m = response.getMetrics();
         LogItem log = new LogItem();
+        log.PushBack("type", tx.getTxType().name());
         add2LogItem(log, (JSONObject)JSON.toJSON(m));
         logger.send("tgraph-demo-test", "tgraph-log", testName, clientVersion, log);
     }
@@ -51,7 +53,12 @@ public class BenchmarkTxResultProcessor {
     }
 
     public void process(ListenableFuture<DBProxy.ServerResponse> result, AbstractTransaction tx) {
-        Futures.addCallback( result, callback(tx), this.thread);
+        //Futures.addCallback( result, callback(tx), this.thread);
+        try {
+            callback(tx).onSuccess(result.get());
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
     }
 
     public class PostProcessing implements FutureCallback<DBProxy.ServerResponse>{

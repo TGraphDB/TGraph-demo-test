@@ -1,6 +1,5 @@
 package edu.buaa.server;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import edu.buaa.algo.EarliestArriveTime;
 import edu.buaa.utils.Helper;
@@ -8,7 +7,6 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.temporal.TimePoint;
 
 public class EarliestArriveTimeTGraphKernel extends EarliestArriveTime {
     private final String travelTimePropertyKey;
@@ -35,8 +33,8 @@ public class EarliestArriveTimeTGraphKernel extends EarliestArriveTime {
         int minArriveTime = Integer.MAX_VALUE;
         Relationship r = db.getRelationshipById(roadId);
         if( !r.hasProperty( travelTimePropertyKey )) throw new UnsupportedOperationException();
-        for(int curT = departureTime; curT<minArriveTime; curT++){
-            Object tObj = r.getTemporalProperty( travelTimePropertyKey, Helper.time(departureTime));
+        for(int curT = departureTime; curT<minArriveTime && curT<=endTime; curT++){
+            Object tObj = r.getTemporalProperty( travelTimePropertyKey, Helper.time(curT));
             if(tObj==null) throw new UnsupportedOperationException();
             int period = (Integer) tObj;
             if (curT + period < minArriveTime) {

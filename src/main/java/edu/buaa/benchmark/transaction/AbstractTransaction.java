@@ -4,7 +4,8 @@ public abstract class AbstractTransaction {
     public enum TxType{
         tx_import_static_data,
         tx_import_temporal_data,
-        tx_query_reachable_area;
+        tx_query_reachable_area,
+        tx_query_road_earliest_arrive_time_aggr
     }
 
     private TxType txType;

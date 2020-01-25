@@ -13,6 +13,7 @@ import java.util.Calendar;
 public class BenchmarkRunner {
 
     public static void main(String[] args) {
+        // fast debug use.
         //test();
         //System.exit(0);
         String benchmarkFileName = Helper.mustEnv("BENCHMARK_FILE_INPUT");
@@ -59,13 +60,15 @@ public class BenchmarkRunner {
 
     private static void test(){
         try {
-            DBProxy client = new TGraphExecutorClient("localhost", 1, 800);
+            //DBProxy client = new TGraphExecutorClient("localhost", 1, 800);
+            DBProxy client = new SqlServerExecutorClient("182.92.214.54", 1, 800);
             String serverVersion = client.testServerClientCompatibility();
             Producer logger = Helper.getLogger();
-            BenchmarkTxResultProcessor post = new BenchmarkTxResultProcessor(logger, getTestName("tgraph_kernel", serverVersion), Helper.codeGitVersion(), true);
+            BenchmarkTxResultProcessor post = new BenchmarkTxResultProcessor(logger, getTestName("sql_server", serverVersion), Helper.codeGitVersion(), true);
+            //BenchmarkTxResultProcessor post = new BenchmarkTxResultProcessor(logger, getTestName("tgraph_kernel", serverVersion), Helper.codeGitVersion(), true);
             client.createDB();
             BenchmarkReader reader = new BenchmarkReader(new File("e:/tgraph/test-data/benchmark-with-result.gz"));
-            int i=133690;
+            int i=133680;
             while (reader.hasNext()) {
                 AbstractTransaction tx = reader.next();
                 i--;

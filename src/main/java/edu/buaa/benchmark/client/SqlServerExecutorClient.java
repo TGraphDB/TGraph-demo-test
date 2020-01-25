@@ -1,16 +1,11 @@
 package edu.buaa.benchmark.client;
 
-import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import edu.buaa.algo.EarliestArriveTime;
-import edu.buaa.benchmark.transaction.AbstractTransaction;
-import edu.buaa.benchmark.transaction.ImportStaticDataTx;
-import edu.buaa.benchmark.transaction.ImportTemporalDataTx;
-import edu.buaa.benchmark.transaction.ReachableAreaQueryTx;
+import edu.buaa.benchmark.transaction.*;
 import edu.buaa.utils.TimeMonitor;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -64,6 +59,8 @@ public class SqlServerExecutorClient implements DBProxy {
                 return this.service.submit(execute((ImportTemporalDataTx) tx));
             case tx_query_reachable_area:
                 return this.service.submit(execute((ReachableAreaQueryTx) tx));
+            case tx_query_road_earliest_arrive_time_aggr:
+                return this.service.submit(execute((EarliestArriveTimeAggrTx)tx));
             default:
                 throw new UnsupportedOperationException();
         }
@@ -75,11 +72,12 @@ public class SqlServerExecutorClient implements DBProxy {
             Connection con = connectionPool.take();
             Statement stmt = con.createStatement();
             con.setAutoCommit(true);
-            stmt.execute("CREATE DATABASE beijing_traffic");
+            //stmt.execute("CREATE DATABASE beijing_traffic");
             stmt.execute("USE beijing_traffic");
-            stmt.execute("CREATE TABLE cross_node ( id int PRIMARY KEY, name char(255) )");
-            stmt.execute("CREATE TABLE road ( id int PRIMARY KEY, r_name char(16), r_start int, r_end int, r_length int, r_type int)");
-            stmt.execute("CREATE TABLE temporal_status (t int, rid int, status int, travel_t int, seg_cnt int)");
+            //stmt.execute("CREATE TABLE cross_node ( id int PRIMARY KEY, name char(255) )");
+            //stmt.execute("CREATE TABLE road ( id int PRIMARY KEY, r_name char(16), r_start int, r_end int, r_length int, r_type int)");
+            //stmt.execute("CREATE TABLE temporal_status (t int, rid int, status int, travel_t int, seg_cnt int)");
+            //stmt.execute("create clustered index tt_index on temporal_status(t)");
             stmt.close();
             connectionPool.put(con);
         } catch (SQLException | InterruptedException ex) {
@@ -214,6 +212,50 @@ public class SqlServerExecutorClient implements DBProxy {
         };
     }
 
+    private Callable<DBProxy.ServerResponse> execute(EarliestArriveTimeAggrTx tx){
+        return new Req(){
+            @Override
+            protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception{
+                conn.setAutoCommit(true);
+                // top 1. limit is not support in sql server
+                PreparedStatement getTemporalStat = conn.prepareStatement("SELECT t, travel_t FROM temporal_status WHERE rid=? AND t>=? AND t<=?");
+                try {
+                    PreparedStatement getStartTStat = conn.prepareStatement("SELECT MAX(t) as ts FROM temporal_status WHERE rid=? AND t<=?");
+                    getStartTStat.setInt(1, Math.toIntExact(tx.getRoadId()));
+                    getStartTStat.setInt(2, tx.getDepartureTime());
+                    ResultSet rs = getStartTStat.executeQuery();
+                    int startT;
+                    if(rs.next()) {
+                        startT = rs.getInt("ts");
+                        rs.close();
+                    }else {
+                        throw new UnsupportedOperationException();
+                    }
+                    getTemporalStat.setInt(1, Math.toIntExact(tx.getRoadId()));
+                    getTemporalStat.setInt(2, startT);
+                    getTemporalStat.setInt(3, tx.getEndTime());
+                    rs = getTemporalStat.executeQuery();
+                    int minArriveTime = Integer.MAX_VALUE;
+                    int curT = tx.getDepartureTime();
+                    while(rs.next() && curT<minArriveTime){
+                        curT = rs.getInt("t");
+                        int travelT = rs.getInt("travel_t");
+                        if(curT<tx.getDepartureTime()){
+                            minArriveTime = tx.getDepartureTime()+travelT;
+                        }else if(curT+travelT<minArriveTime){
+                            minArriveTime = curT+travelT;
+                        }
+                    }
+                    if(minArriveTime!=Integer.MAX_VALUE) return new EarliestArriveTimeAggrTx.Result(minArriveTime);
+                    else throw new UnsupportedOperationException();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    throw new UnsupportedOperationException(e);
+                }
+            }
+        };
+    }
+
     private abstract class Req implements Callable<DBProxy.ServerResponse>{
         private final TimeMonitor timeMonitor = new TimeMonitor();
         final AbstractTransaction.Metrics metrics = new AbstractTransaction.Metrics();
@@ -257,7 +299,7 @@ public class SqlServerExecutorClient implements DBProxy {
             super(startId, startTime, travelTime);
             this.getEndNodeIdStat = conn.prepareStatement("SELECT r_end FROM road WHERE id=?");
             this.getCrossOutRoadStat = conn.prepareStatement("SELECT id FROM road WHERE r_start=?");
-            this.getStartTStat = conn.prepareStatement("SELECT MAX(t) as ts FROM temporal_status WHERE rid=? AND t<=? LIMIT 1");
+            this.getStartTStat = conn.prepareStatement("SELECT MAX(t) as ts FROM temporal_status WHERE rid=? AND t<=?");// top 1. limit is not support in sql server
             this.getTemporalStat = conn.prepareStatement("SELECT t, travel_t FROM temporal_status WHERE rid=? AND t>=? AND t<=?");
         }
 
@@ -265,7 +307,7 @@ public class SqlServerExecutorClient implements DBProxy {
         protected int getEarliestArriveTime(Long roadId, int departureTime) throws UnsupportedOperationException {
             try {
                 int startT = maxTimeLessOrEq(roadId, departureTime);
-                ResultSet rs = getTT(roadId, startT, departureTime + this.travelTime);
+                ResultSet rs = getTT(roadId, startT, endTime);
                 int minArriveTime = Integer.MAX_VALUE;
                 int curT = departureTime;
                 while(rs.next() && curT<minArriveTime){

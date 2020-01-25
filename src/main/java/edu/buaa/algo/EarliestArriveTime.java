@@ -15,12 +15,12 @@ public abstract class EarliestArriveTime {
     private final Map<Long, NodeCross> nodeCrossMap = new HashMap<>();
     private final long start;
     private final int startTime;
-    protected final int travelTime;
+    protected final int endTime;
 
     public EarliestArriveTime(long startId, int startTime, int travelTime){
         this.start = startId;
         this.startTime = startTime;
-        this.travelTime = travelTime;
+        this.endTime = startTime + travelTime;
     }
 
     public Set<NodeCross> run() {
@@ -47,7 +47,7 @@ public abstract class EarliestArriveTime {
     private void loopAllNeighborsUpdateArriveTime(NodeCross node, Set<NodeCross> result) {
         setStatus( node, Status.Calculated );
         int curTime = node.arriveTime;
-        if( curTime > travelTime + startTime ) return;
+        if( curTime > endTime ) return;
         result.add( node );
         for( Long rId : getAllOutRoads( node.getId() )){
             NodeCross neighbor = getNodeCross( getEndNodeId( rId ));

@@ -80,13 +80,19 @@ function tcypherClientWriteTpropTest() {
 
 function genBenchmark() {
   export WORK_DIR="E:\tgraph\test-data"
-  export BENCHMARK_WITH_RESULT=true
   export BENCHMARK_FILE_OUTPUT=benchmark
   export TEMPORAL_DATA_PER_TX=100
   export TEMPORAL_DATA_START=0503
   export TEMPORAL_DATA_END=0504
   export REACHABLE_AREA_TX_CNT=20
   mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.benchmark.BenchmarkTxArgsGenerator"
+}
+
+function genResult() {
+  export BENCHMARK_FILE_INPUT="E:\tgraph\test-data\benchmark.gz"
+  export BENCHMARK_FILE_OUTPUT="E:\tgraph\test-data\benchmark-with-result.gz"
+  export GENERATE_RESULT_VERIFY_TX=true
+  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.benchmark.BenchmarkTxResultGenerator"
 }
 
 function runBenchmark() {
