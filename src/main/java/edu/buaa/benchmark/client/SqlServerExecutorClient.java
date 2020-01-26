@@ -217,41 +217,8 @@ public class SqlServerExecutorClient implements DBProxy {
             @Override
             protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception{
                 conn.setAutoCommit(true);
-                // top 1. limit is not support in sql server
-                PreparedStatement getTemporalStat = conn.prepareStatement("SELECT t, travel_t FROM temporal_status WHERE rid=? AND t>=? AND t<=?");
-                try {
-                    PreparedStatement getStartTStat = conn.prepareStatement("SELECT MAX(t) as ts FROM temporal_status WHERE rid=? AND t<=?");
-                    getStartTStat.setInt(1, Math.toIntExact(tx.getRoadId()));
-                    getStartTStat.setInt(2, tx.getDepartureTime());
-                    ResultSet rs = getStartTStat.executeQuery();
-                    int startT;
-                    if(rs.next()) {
-                        startT = rs.getInt("ts");
-                        rs.close();
-                    }else {
-                        throw new UnsupportedOperationException();
-                    }
-                    getTemporalStat.setInt(1, Math.toIntExact(tx.getRoadId()));
-                    getTemporalStat.setInt(2, startT);
-                    getTemporalStat.setInt(3, tx.getEndTime());
-                    rs = getTemporalStat.executeQuery();
-                    int minArriveTime = Integer.MAX_VALUE;
-                    int curT = tx.getDepartureTime();
-                    while(rs.next() && curT<minArriveTime){
-                        curT = rs.getInt("t");
-                        int travelT = rs.getInt("travel_t");
-                        if(curT<tx.getDepartureTime()){
-                            minArriveTime = tx.getDepartureTime()+travelT;
-                        }else if(curT+travelT<minArriveTime){
-                            minArriveTime = curT+travelT;
-                        }
-                    }
-                    if(minArriveTime!=Integer.MAX_VALUE) return new EarliestArriveTimeAggrTx.Result(minArriveTime);
-                    else throw new UnsupportedOperationException();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    throw new UnsupportedOperationException(e);
-                }
+                RoadEarliestArriveTimeSQL algo = new RoadEarliestArriveTimeSQL(conn);
+                return new EarliestArriveTimeAggrTx.Result(algo.getEarliestArriveTime(tx.getRoadId(), tx.getDepartureTime(), tx.getEndTime()));
             }
         };
     }
@@ -292,19 +259,63 @@ public class SqlServerExecutorClient implements DBProxy {
     private static class EarliestArriveTimeSQL extends EarliestArriveTime {
         private final PreparedStatement getEndNodeIdStat;
         private final PreparedStatement getCrossOutRoadStat;
-        private final PreparedStatement getTemporalStat;
-        private final PreparedStatement getStartTStat;
+        private final RoadEarliestArriveTimeSQL earliestTime;
 
         EarliestArriveTimeSQL(long startId, int startTime, int travelTime, Connection conn) throws SQLException {
             super(startId, startTime, travelTime);
             this.getEndNodeIdStat = conn.prepareStatement("SELECT r_end FROM road WHERE id=?");
             this.getCrossOutRoadStat = conn.prepareStatement("SELECT id FROM road WHERE r_start=?");
-            this.getStartTStat = conn.prepareStatement("SELECT MAX(t) as ts FROM temporal_status WHERE rid=? AND t<=?");// top 1. limit is not support in sql server
-            this.getTemporalStat = conn.prepareStatement("SELECT t, travel_t FROM temporal_status WHERE rid=? AND t>=? AND t<=?");
+            this.earliestTime = new RoadEarliestArriveTimeSQL(conn);
         }
 
         @Override
         protected int getEarliestArriveTime(Long roadId, int departureTime) throws UnsupportedOperationException {
+            return earliestTime.getEarliestArriveTime(roadId, departureTime, endTime);
+        }
+
+        @Override
+        protected Iterable<Long> getAllOutRoads(long nodeId) {
+            try {
+                this.getCrossOutRoadStat.setInt(1, Math.toIntExact(nodeId));
+                ResultSet rs = this.getCrossOutRoadStat.executeQuery();
+                List<Long> result = new ArrayList<>();
+                while(rs.next()){
+                    result.add((long) rs.getInt("id"));
+                }
+                return result;
+            } catch (SQLException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        protected long getEndNodeId(long roadId) {
+            try {
+                this.getEndNodeIdStat.setInt(1, Math.toIntExact(roadId));
+                ResultSet rs = this.getEndNodeIdStat.executeQuery();
+                if(rs.next()){
+                    return rs.getInt("r_end");
+                }else{
+                    throw new RuntimeException("road not found, should not happen!");
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private static class RoadEarliestArriveTimeSQL{
+        private final PreparedStatement getStartTStat;
+        private final PreparedStatement getTemporalStat;
+
+        RoadEarliestArriveTimeSQL(Connection con) throws SQLException {
+            this.getStartTStat = con.prepareStatement("SELECT MAX(t) as ts FROM temporal_status WHERE rid=? AND t<=?");// top 1. limit is not support in sql server
+            this.getTemporalStat = con.prepareStatement("SELECT t, travel_t FROM temporal_status WHERE rid=? AND t>=? AND t<=?");
+        }
+
+        protected int getEarliestArriveTime(long roadId, int departureTime, int endTime) throws UnsupportedOperationException {
             try {
                 int startT = maxTimeLessOrEq(roadId, departureTime);
                 ResultSet rs = getTT(roadId, startT, endTime);
@@ -345,36 +356,5 @@ public class SqlServerExecutorClient implements DBProxy {
             return this.getTemporalStat.executeQuery();
         }
 
-        @Override
-        protected Iterable<Long> getAllOutRoads(long nodeId) {
-            try {
-                this.getCrossOutRoadStat.setInt(1, Math.toIntExact(nodeId));
-                ResultSet rs = this.getCrossOutRoadStat.executeQuery();
-                List<Long> result = new ArrayList<>();
-                while(rs.next()){
-                    result.add((long) rs.getInt("id"));
-                }
-                return result;
-            } catch (SQLException e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
-        }
-
-        @Override
-        protected long getEndNodeId(long roadId) {
-            try {
-                this.getEndNodeIdStat.setInt(1, Math.toIntExact(roadId));
-                ResultSet rs = this.getEndNodeIdStat.executeQuery();
-                if(rs.next()){
-                    return rs.getInt("r_end");
-                }else{
-                    throw new RuntimeException("road not found, should not happen!");
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
-        }
     }
 }

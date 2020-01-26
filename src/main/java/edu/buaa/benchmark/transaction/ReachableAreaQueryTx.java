@@ -2,10 +2,9 @@ package edu.buaa.benchmark.transaction;
 
 import com.google.common.base.Preconditions;
 import edu.buaa.algo.EarliestArriveTime;
+import edu.buaa.algo.EarliestArriveTime.NodeCross;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ReachableAreaQueryTx extends AbstractTransaction {
     private long startCrossId;
@@ -46,18 +45,19 @@ public class ReachableAreaQueryTx extends AbstractTransaction {
 
     @Override
     public void validateResult(AbstractTransaction.Result result) {
-        List<EarliestArriveTime.NodeCross> expected = ((Result) this.getResult()).getNodeArriveTime();
-        List<EarliestArriveTime.NodeCross> got = ((Result) result).getNodeArriveTime();
+        List<NodeCross> expected = ((Result) this.getResult()).getNodeArriveTime();
+        List<NodeCross> got = ((Result) result).getNodeArriveTime();
         if(got.size()!=expected.size()){
             System.out.println("size not match, got "+got.size()+" expect "+expected.size());
-            Set<EarliestArriveTime.NodeCross> intersection = new HashSet<>(expected);
+            Set<NodeCross> intersection = new HashSet<>(expected);
             intersection.retainAll(got);
-            Set<EarliestArriveTime.NodeCross> expDiff = new HashSet<>(expected);
-            expDiff.retainAll(intersection);
+            Set<NodeCross> expDiff = new HashSet<>(expected);
+            expDiff.removeAll(intersection);
             if(!expDiff.isEmpty()) expDiff.forEach(System.out::println);
             System.out.println("exp-common ^^ vv got-common");
-            Set<EarliestArriveTime.NodeCross> gotDiff = new HashSet<>(got);
-            gotDiff.retainAll(intersection);
+            Set<NodeCross> gotDiff = new HashSet<>(got);
+            gotDiff.removeAll(intersection);
+            Set<NodeCross> smaller = gotDiff.size()>expDiff.size() ? expDiff : gotDiff;
             if(!gotDiff.isEmpty()) gotDiff.forEach(System.out::println);
             return;
         }
@@ -66,14 +66,27 @@ public class ReachableAreaQueryTx extends AbstractTransaction {
         }
     }
 
-    public static class Result extends AbstractTransaction.Result{
-        List<EarliestArriveTime.NodeCross> nodeArriveTime;
+    private void printDiff(Set<NodeCross> bigger, Set<NodeCross> smaller){
+        Map<Long, NodeCross> b = new HashMap<>();
+        for(NodeCross n : bigger ){
+            b.put(n.getId(), n);
+        }
+        for(NodeCross n : smaller){
+            NodeCross nn = b.get(n.getId());
+            if(nn!=null){
+                System.out.println("");
+            }
+        }
+    }
 
-        public List<EarliestArriveTime.NodeCross> getNodeArriveTime() {
+    public static class Result extends AbstractTransaction.Result{
+        List<NodeCross> nodeArriveTime;
+
+        public List<NodeCross> getNodeArriveTime() {
             return nodeArriveTime;
         }
 
-        public void setNodeArriveTime(List<EarliestArriveTime.NodeCross> nodeArriveTime) {
+        public void setNodeArriveTime(List<NodeCross> nodeArriveTime) {
             this.nodeArriveTime = nodeArriveTime;
         }
     }
