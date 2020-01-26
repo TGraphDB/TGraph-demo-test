@@ -97,9 +97,10 @@ function genResult() {
 
 function runBenchmark() {
   export DB_TYPE=tgraph_kernel
-  export DB_TYPE=sql_server
-  export DB_HOST=182.92.214.54
-  export BENCHMARK_FILE_INPUT=E:\tgraph\test-data\benchmark-with-result.gz
+  #export DB_TYPE=sql_server
+  #export DB_HOST=182.92.214.54
+  export DB_HOST=localhost
+  export BENCHMARK_FILE_INPUT="E:\tgraph\test-data\benchmark-with-result.gz"
   export MAX_CONNECTION_CNT=1
   export VERIFY_RESULT=true
   mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.benchmark.BenchmarkRunner"

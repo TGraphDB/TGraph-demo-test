@@ -14,8 +14,8 @@ public class BenchmarkRunner {
 
     public static void main(String[] args) {
         // fast debug use.
-        test();
-        System.exit(0);
+        //test();
+        //System.exit(0);
         String benchmarkFileName = Helper.mustEnv("BENCHMARK_FILE_INPUT");
         String dbType = Helper.mustEnv("DB_TYPE");
         int maxConnCnt = Integer.parseInt(Helper.mustEnv("MAX_CONNECTION_CNT"));

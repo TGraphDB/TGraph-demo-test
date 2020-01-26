@@ -60,21 +60,23 @@ public class KernelTcpServer extends TGraphSocketServer.ReqExecutor {
 
     private Result execute(EarliestArriveTimeAggrTx tx) {
         int minArriveTime = Integer.MAX_VALUE;
-        Relationship r = db.getRelationshipById(tx.getRoadId());
         EarliestArriveTimeAggrTx.Result result = new EarliestArriveTimeAggrTx.Result();
-        if( !r.hasProperty( "travel_time" )){
-            result.setArriveTime(-1);
-            return result;
-        }
-        for(int curT = tx.getDepartureTime(); curT<minArriveTime && curT<=tx.getEndTime(); curT++){
-            Object tObj = r.getTemporalProperty( "travel_time", Helper.time(curT));
-            if(tObj==null) {
+        try(Transaction t = db.beginTx()) {
+            Relationship r = db.getRelationshipById(tx.getRoadId());
+            if (!r.hasProperty("travel_time")) {
                 result.setArriveTime(-1);
                 return result;
             }
-            int period = (Integer) tObj;
-            if (curT + period < minArriveTime) {
-                minArriveTime = curT + period;
+            for (int curT = tx.getDepartureTime(); curT < minArriveTime && curT <= tx.getEndTime(); curT++) {
+                Object tObj = r.getTemporalProperty("travel_time", Helper.time(curT));
+                if (tObj == null) {
+                    result.setArriveTime(-1);
+                    return result;
+                }
+                int period = (Integer) tObj;
+                if (curT + period < minArriveTime) {
+                    minArriveTime = curT + period;
+                }
             }
         }
         result.setArriveTime(minArriveTime);
