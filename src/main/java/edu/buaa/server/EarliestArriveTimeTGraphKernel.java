@@ -3,10 +3,13 @@ package edu.buaa.server;
 import com.google.common.collect.Iterators;
 import edu.buaa.algo.EarliestArriveTime;
 import edu.buaa.utils.Helper;
+import org.act.temporalProperty.impl.InternalEntry;
+import org.act.temporalProperty.impl.InternalKey;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.temporal.TemporalRangeQuery;
 
 public class EarliestArriveTimeTGraphKernel extends EarliestArriveTime {
     private final String travelTimePropertyKey;
@@ -29,19 +32,48 @@ public class EarliestArriveTimeTGraphKernel extends EarliestArriveTime {
      * @return earliest arrive time to r's end node when departure from r's start node at departureTime.
      */
     @Override
+//    protected int getEarliestArriveTime(Long roadId, int departureTime) throws UnsupportedOperationException {
+//        int minArriveTime = Integer.MAX_VALUE;
+//        Relationship r = db.getRelationshipById(roadId);
+//        if( !r.hasProperty( travelTimePropertyKey )) throw new UnsupportedOperationException();
+//        for(int curT = departureTime; curT<minArriveTime && curT<=endTime; curT++){
+//            Object tObj = r.getTemporalProperty( travelTimePropertyKey, Helper.time(curT));
+//            if(tObj==null) throw new UnsupportedOperationException();
+//            int period = (Integer) tObj;
+//            if (curT + period < minArriveTime) {
+//                minArriveTime = curT + period;
+//            }
+//        }
+//        return minArriveTime;
+//    }
+
     protected int getEarliestArriveTime(Long roadId, int departureTime) throws UnsupportedOperationException {
-        int minArriveTime = Integer.MAX_VALUE;
         Relationship r = db.getRelationshipById(roadId);
         if( !r.hasProperty( travelTimePropertyKey )) throw new UnsupportedOperationException();
-        for(int curT = departureTime; curT<minArriveTime && curT<=endTime; curT++){
-            Object tObj = r.getTemporalProperty( travelTimePropertyKey, Helper.time(curT));
-            if(tObj==null) throw new UnsupportedOperationException();
-            int period = (Integer) tObj;
-            if (curT + period < minArriveTime) {
-                minArriveTime = curT + period;
+        Object tObj = r.getTemporalProperty(travelTimePropertyKey, Helper.time(departureTime), Helper.time(this.endTime), new TemporalRangeQuery() {
+            @Override public void setValueType(String valueType) { }
+            private int minArriveT = Integer.MAX_VALUE;
+            @Override
+            public void onNewEntry(InternalEntry entry) {
+                InternalKey k = entry.getKey();
+                int curT = Math.max(k.getStartTime().valInt(), departureTime);
+                int travelT = entry.getValue().getInt(0);
+                if(curT +travelT<minArriveT) minArriveT = curT +travelT;
             }
+            @Override
+            public Object onReturn() {
+                if(minArriveT<Integer.MAX_VALUE){
+                    return minArriveT;
+                }else{
+                    return null;
+                }
+            }
+        });
+        if (tObj == null) {
+            throw new UnsupportedOperationException();
+        }else{
+            return (Integer) tObj;
         }
-        return minArriveTime;
     }
 
     @Override
