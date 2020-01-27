@@ -72,12 +72,12 @@ public class SqlServerExecutorClient implements DBProxy {
             Connection con = connectionPool.take();
             Statement stmt = con.createStatement();
             con.setAutoCommit(true);
-            //stmt.execute("CREATE DATABASE beijing_traffic");
+            stmt.execute("CREATE DATABASE beijing_traffic");
             stmt.execute("USE beijing_traffic");
-            //stmt.execute("CREATE TABLE cross_node ( id int PRIMARY KEY, name char(255) )");
-            //stmt.execute("CREATE TABLE road ( id int PRIMARY KEY, r_name char(16), r_start int, r_end int, r_length int, r_type int)");
-            //stmt.execute("CREATE TABLE temporal_status (t int, rid int, status int, travel_t int, seg_cnt int)");
-            //stmt.execute("create clustered index tt_index on temporal_status(t)");
+            stmt.execute("CREATE TABLE cross_node ( id int PRIMARY KEY, name char(255) )");
+            stmt.execute("CREATE TABLE road ( id int PRIMARY KEY, r_name char(16), r_start int, r_end int, r_length int, r_type int)");
+            stmt.execute("CREATE TABLE temporal_status (t int, rid int, status int, travel_t int, seg_cnt int)");
+            stmt.execute("create clustered index tt_index on temporal_status(t)");
             stmt.close();
             connectionPool.put(con);
         } catch (SQLException | InterruptedException ex) {
