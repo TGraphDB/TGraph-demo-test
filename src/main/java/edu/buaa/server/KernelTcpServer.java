@@ -8,9 +8,12 @@ import edu.buaa.benchmark.transaction.AbstractTransaction.Result;
 import edu.buaa.client.vo.RuntimeEnv;
 import edu.buaa.utils.Helper;
 import edu.buaa.utils.TGraphSocketServer;
+import org.act.temporalProperty.impl.InternalEntry;
+import org.act.temporalProperty.impl.InternalKey;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.temporal.TemporalRangeQuery;
 import org.neo4j.temporal.TimePoint;
 
 import java.io.File;
@@ -59,7 +62,6 @@ public class KernelTcpServer extends TGraphSocketServer.ReqExecutor {
     }
 
     private Result execute(EarliestArriveTimeAggrTx tx) {
-        int minArriveTime = Integer.MAX_VALUE;
         EarliestArriveTimeAggrTx.Result result = new EarliestArriveTimeAggrTx.Result();
         try(Transaction t = db.beginTx()) {
             Relationship r = db.getRelationshipById(tx.getRoadId());
@@ -67,19 +69,31 @@ public class KernelTcpServer extends TGraphSocketServer.ReqExecutor {
                 result.setArriveTime(-1);
                 return result;
             }
-            for (int curT = tx.getDepartureTime(); curT < minArriveTime && curT <= tx.getEndTime(); curT++) {
-                Object tObj = r.getTemporalProperty("travel_time", Helper.time(curT));
-                if (tObj == null) {
-                    result.setArriveTime(-1);
-                    return result;
+            Object tObj = r.getTemporalProperty("travel_time", Helper.time(tx.getDepartureTime()), Helper.time(tx.getEndTime()), new TemporalRangeQuery() {
+                @Override public void setValueType(String valueType) { }
+                private int minArriveT = Integer.MAX_VALUE;
+                @Override
+                public void onNewEntry(InternalEntry entry) {
+                    InternalKey k = entry.getKey();
+                    int curT = Math.max(k.getStartTime().valInt(), tx.getDepartureTime());
+                    int travelT = entry.getValue().getInt(0);
+                    if(curT +travelT<minArriveT) minArriveT = curT +travelT;
                 }
-                int period = (Integer) tObj;
-                if (curT + period < minArriveTime) {
-                    minArriveTime = curT + period;
+                @Override
+                public Object onReturn() {
+                    if(minArriveT<Integer.MAX_VALUE){
+                        return minArriveT;
+                    }else{
+                        return -1;
+                    }
                 }
+            });
+            if (tObj == null) {
+                result.setArriveTime(-1);
+            }else{
+                result.setArriveTime((Integer) tObj);
             }
         }
-        result.setArriveTime(minArriveTime);
         return result;
     }
 
