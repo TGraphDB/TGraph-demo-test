@@ -42,9 +42,13 @@ public class BenchmarkTxResultProcessor {
     private void add2LogItem(LogItem log, JSONObject metrics) {
         for(Map.Entry<String, Object> e : metrics.entrySet()){
             if(e.getValue() instanceof JSONObject){
-                
+                JSONObject v = (JSONObject) e.getValue();
+                for(Map.Entry<String, Object> ee : v.entrySet()){
+                    log.PushBack(e.getKey()+"_"+ee.getKey(), ee.getValue().toString());
+                }
+            }else {
+                log.PushBack(e.getKey(), e.getValue().toString());
             }
-            log.PushBack(e.getKey(), e.getValue().toString());
         }
     }
 
@@ -53,12 +57,12 @@ public class BenchmarkTxResultProcessor {
     }
 
     public void process(ListenableFuture<DBProxy.ServerResponse> result, AbstractTransaction tx) {
-        //Futures.addCallback( result, callback(tx), this.thread);
-        try {
-            callback(tx).onSuccess(result.get());
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
+        Futures.addCallback( result, callback(tx), this.thread);
+//        try {
+//            callback(tx).onSuccess(result.get());
+//        } catch (InterruptedException | ExecutionException e) {
+//            e.printStackTrace();
+//        }
     }
 
     public class PostProcessing implements FutureCallback<DBProxy.ServerResponse>{
