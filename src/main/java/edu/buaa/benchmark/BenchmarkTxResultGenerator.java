@@ -97,7 +97,13 @@ public class BenchmarkTxResultGenerator {
 
             @Override
             protected Iterable<Long> getAllOutRoads(long nodeId) {
-                return ()-> Iterators.transform(tgraph.crosses.get(nodeId).out.iterator(), road -> road.id);
+                List<Long> rids = new ArrayList<>();
+                for(RelRoad road : tgraph.crosses.get(nodeId).out){
+                    rids.add(road.id);
+                }
+                rids.sort(null);
+                resultTxArr.add(new NodeNeighborRoadTx(nodeId, rids));
+                return rids;
             }
 
             @Override

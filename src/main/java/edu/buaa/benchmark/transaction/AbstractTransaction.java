@@ -5,7 +5,7 @@ public abstract class AbstractTransaction {
         tx_import_static_data,
         tx_import_temporal_data,
         tx_query_reachable_area,
-        tx_query_road_earliest_arrive_time_aggr
+        tx_query_node_neighbor_road, tx_query_road_earliest_arrive_time_aggr
     }
 
     private TxType txType;

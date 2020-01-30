@@ -10,6 +10,7 @@ import edu.buaa.utils.Helper;
 import edu.buaa.utils.TGraphSocketServer;
 import org.act.temporalProperty.impl.InternalEntry;
 import org.act.temporalProperty.impl.InternalKey;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
@@ -56,6 +57,7 @@ public class KernelTcpServer extends TGraphSocketServer.ReqExecutor {
             case tx_import_temporal_data: return execute((ImportTemporalDataTx) tx);
             case tx_query_reachable_area: return execute((ReachableAreaQueryTx) tx);
             case tx_query_road_earliest_arrive_time_aggr: return execute((EarliestArriveTimeAggrTx)tx);
+            case tx_query_node_neighbor_road: return execute((NodeNeighborRoadTx) tx);
             default:
                 throw new UnsupportedOperationException();
         }
@@ -137,6 +139,20 @@ public class KernelTcpServer extends TGraphSocketServer.ReqExecutor {
             answers.sort(Comparator.comparingLong(EarliestArriveTime.NodeCross::getId));
             ReachableAreaQueryTx.Result result = new ReachableAreaQueryTx.Result();
             result.setNodeArriveTime(answers);
+//            t.failure();//do not commit;
+            return result;
+        }
+    }
+
+    private Result execute(NodeNeighborRoadTx tx){
+        try(Transaction t = db.beginTx()) {
+            List<Long> answers = new ArrayList<>();
+            for(Relationship r : db.getNodeById(tx.getNodeId()).getRelationships(RoadType.ROAD_TO, Direction.OUTGOING)) {
+                answers.add(r.getId());
+            }
+            answers.sort(Comparator.naturalOrder());
+            NodeNeighborRoadTx.Result result = new NodeNeighborRoadTx.Result();
+            result.setRoadIds(answers);
 //            t.failure();//do not commit;
             return result;
         }

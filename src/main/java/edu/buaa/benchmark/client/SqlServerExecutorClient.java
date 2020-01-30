@@ -61,6 +61,8 @@ public class SqlServerExecutorClient implements DBProxy {
                 return this.service.submit(execute((ReachableAreaQueryTx) tx));
             case tx_query_road_earliest_arrive_time_aggr:
                 return this.service.submit(execute((EarliestArriveTimeAggrTx)tx));
+            case tx_query_node_neighbor_road:
+                return this.service.submit(execute((NodeNeighborRoadTx) tx));
             default:
                 throw new UnsupportedOperationException();
         }
@@ -213,6 +215,21 @@ public class SqlServerExecutorClient implements DBProxy {
         };
     }
 
+    private Callable<DBProxy.ServerResponse> execute(NodeNeighborRoadTx tx){
+        return new Req(){
+            @Override
+            protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception{
+                conn.setAutoCommit(true);
+                NodeNeighborRoadSQL algo = new NodeNeighborRoadSQL(conn);
+                List<Long> answer = algo.getNeighborRoad(tx.getNodeId());
+                NodeNeighborRoadTx.Result result = new NodeNeighborRoadTx.Result();
+                result.setRoadIds(answer);
+                metrics.setReturnSize(answer.size());
+                return result;
+            }
+        };
+    }
+
     private Callable<DBProxy.ServerResponse> execute(EarliestArriveTimeAggrTx tx){
         return new Req(){
             @Override
@@ -259,13 +276,13 @@ public class SqlServerExecutorClient implements DBProxy {
 
     private static class EarliestArriveTimeSQL extends EarliestArriveTime {
         private final PreparedStatement getEndNodeIdStat;
-        private final PreparedStatement getCrossOutRoadStat;
+        private final NodeNeighborRoadSQL nodeNeighborRoadSQL;
         private final RoadEarliestArriveTimeSQL earliestTime;
 
         EarliestArriveTimeSQL(long startId, int startTime, int travelTime, Connection conn) throws SQLException {
             super(startId, startTime, travelTime);
             this.getEndNodeIdStat = conn.prepareStatement("SELECT r_end FROM road WHERE id=?");
-            this.getCrossOutRoadStat = conn.prepareStatement("SELECT id FROM road WHERE r_start=?");
+            this.nodeNeighborRoadSQL = new NodeNeighborRoadSQL(conn);
             this.earliestTime = new RoadEarliestArriveTimeSQL(conn);
         }
 
@@ -277,13 +294,7 @@ public class SqlServerExecutorClient implements DBProxy {
         @Override
         protected Iterable<Long> getAllOutRoads(long nodeId) {
             try {
-                this.getCrossOutRoadStat.setInt(1, Math.toIntExact(nodeId));
-                ResultSet rs = this.getCrossOutRoadStat.executeQuery();
-                List<Long> result = new ArrayList<>();
-                while(rs.next()){
-                    result.add((long) rs.getInt("id"));
-                }
-                return result;
+                return nodeNeighborRoadSQL.getNeighborRoad(nodeId);
             } catch (SQLException e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);
@@ -304,6 +315,23 @@ public class SqlServerExecutorClient implements DBProxy {
                 e.printStackTrace();
                 throw new RuntimeException(e);
             }
+        }
+    }
+
+    private static class NodeNeighborRoadSQL{
+        private final PreparedStatement getCrossOutRoadStat;
+        private NodeNeighborRoadSQL(Connection conn) throws SQLException {
+            this.getCrossOutRoadStat = conn.prepareStatement("SELECT id FROM road WHERE r_start=?");
+        }
+
+        public List<Long> getNeighborRoad(long nodeId) throws SQLException {
+            this.getCrossOutRoadStat.setInt(1, Math.toIntExact(nodeId));
+            ResultSet rs = this.getCrossOutRoadStat.executeQuery();
+            List<Long> result = new ArrayList<>();
+            while(rs.next()){
+                result.add((long) rs.getInt("id"));
+            }
+            return result;
         }
     }
 
