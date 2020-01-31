@@ -1,8 +1,8 @@
 package edu.buaa.benchmark.transaction;
 
-import com.google.common.base.Preconditions;
-
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class NodeNeighborRoadTx extends AbstractTransaction {
 
@@ -30,7 +30,7 @@ public class NodeNeighborRoadTx extends AbstractTransaction {
         List<Long> got = ((Result) result).getRoadIds();
         List<Long> expected = ((Result) this.getResult()).getRoadIds();
         if(got.size()!=expected.size()){
-            System.out.println("size not match, got "+got.size()+" expect "+expected.size());
+            System.out.println("size not match, got "+got.size()+" expect "+expected.size()+" for node "+nodeId);
             return;
         }
         HashSet<Long> intersection = new HashSet<>(got);
