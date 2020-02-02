@@ -10,6 +10,7 @@ public class NodeNeighborRoadTx extends AbstractTransaction {
 
     public NodeNeighborRoadTx(long nodeId, List<Long> roadIds) {
         this.setTxType(TxType.tx_query_node_neighbor_road);
+        this.nodeId = nodeId;
         Result r = new Result();
         r.setRoadIds(roadIds);
         this.setResult(r);

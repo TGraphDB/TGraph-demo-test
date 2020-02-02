@@ -2,10 +2,18 @@ package edu.buaa.benchmark.transaction;
 
 public abstract class AbstractTransaction {
     public enum TxType{
-        tx_import_static_data,
-        tx_import_temporal_data,
-        tx_query_reachable_area,
-        tx_query_node_neighbor_road, tx_query_road_earliest_arrive_time_aggr
+        tx_import_static_data(false),
+        tx_import_temporal_data(false),
+        tx_query_reachable_area(true),
+        tx_query_node_neighbor_road(true),
+        tx_query_road_earliest_arrive_time_aggr(true);
+        private boolean isReadTx;
+        TxType(boolean isReadTx){
+            this.isReadTx = isReadTx;
+        }
+        public boolean isReadTx() {
+            return isReadTx;
+        }
     }
 
     private TxType txType;

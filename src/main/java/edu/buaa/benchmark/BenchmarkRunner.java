@@ -10,6 +10,8 @@ import edu.buaa.utils.Helper;
 import java.io.File;
 import java.util.Calendar;
 
+import static edu.buaa.benchmark.transaction.AbstractTransaction.TxType.*;
+
 public class BenchmarkRunner {
 
     public static void main(String[] args) {
@@ -68,11 +70,9 @@ public class BenchmarkRunner {
             //BenchmarkTxResultProcessor post = new BenchmarkTxResultProcessor(logger, getTestName("tgraph_kernel", serverVersion), Helper.codeGitVersion(), true);
             client.createDB();
             BenchmarkReader reader = new BenchmarkReader(new File("e:/tgraph/test-data/benchmark-with-result.gz"));
-            int i=133680;
             while (reader.hasNext()) {
                 AbstractTransaction tx = reader.next();
-                i--;
-                if(i<0) post.process(client.execute(tx), tx);
+                if(tx.getTxType().isReadTx()) post.process(client.execute(tx), tx);
             }
             reader.close();
             client.close();
@@ -81,4 +81,6 @@ public class BenchmarkRunner {
             e.printStackTrace();
         }
     }
+
+
 }

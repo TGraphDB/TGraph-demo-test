@@ -13,9 +13,28 @@ import java.util.List;
 import java.util.zip.GZIPOutputStream;
 
 /**
- * an instance of benchmark (a list of transactions)
+ *
  */
 public class BenchmarkWriter {
+
+    public static void main(String[] args) {
+        System.out.println("process benchmark and retain read tx only (no write data).");
+        String benchmarkFileName = Helper.mustEnv("BENCHMARK_FILE_INPUT");
+        String benchmarkOutputFileName = Helper.mustEnv("BENCHMARK_FILE_OUTPUT");
+        try {
+            BenchmarkReader reader = new BenchmarkReader(new File(benchmarkFileName));
+            BenchmarkWriter writer = new BenchmarkWriter(new File(benchmarkOutputFileName));
+            while (reader.hasNext()) {
+                AbstractTransaction tx = reader.next();
+                if(tx.getTxType().isReadTx()) writer.write(tx);
+            }
+            reader.close();
+            writer.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private final GZIPOutputStream writer;
 
     public BenchmarkWriter(File file) throws IOException {
