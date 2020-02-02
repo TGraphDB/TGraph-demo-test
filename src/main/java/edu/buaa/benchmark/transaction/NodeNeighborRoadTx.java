@@ -33,6 +33,8 @@ public class NodeNeighborRoadTx extends AbstractTransaction {
         if(got.size()!=expected.size()){
             System.out.println("size not match, got "+got.size()+" expect "+expected.size()+" for node "+nodeId);
             return;
+        }else if(got.isEmpty()){
+            return;
         }
         HashSet<Long> intersection = new HashSet<>(got);
         if(intersection.retainAll(expected) && intersection.size()==expected.size()) {
