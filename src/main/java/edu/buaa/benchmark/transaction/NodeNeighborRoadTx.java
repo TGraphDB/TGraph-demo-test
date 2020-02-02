@@ -31,22 +31,21 @@ public class NodeNeighborRoadTx extends AbstractTransaction {
         List<Long> got = ((Result) result).getRoadIds();
         List<Long> expected = ((Result) this.getResult()).getRoadIds();
         if(got.size()!=expected.size()){
-            System.out.println("size not match, got "+got.size()+" expect "+expected.size()+" for node "+nodeId);
-            return;
-        }else if(got.isEmpty()){
-            return;
-        }
-        HashSet<Long> intersection = new HashSet<>(got);
-        if(intersection.retainAll(expected) && intersection.size()==expected.size()) {
-            // do nothing.
+            System.out.println("size not match, got "+got+" expect "+expected+" for node "+nodeId);
         }else{
-            Set<Long> gotS = new HashSet<>(got);
-            gotS.removeAll(intersection);
-            Set<Long> expS = new HashSet<>(expected);
-            expS.removeAll(intersection);
-            System.out.println("got only: "+ gotS);
-            System.out.println("expected only: "+ expS);
+            if(!got.isEmpty()){
+                HashSet<Long> intersection = new HashSet<>(got);
+                intersection.retainAll(expected);
+                Set<Long> gotS = new HashSet<>(got);
+                gotS.removeAll(intersection);
+                Set<Long> expS = new HashSet<>(expected);
+                expS.removeAll(intersection);
+                if (!gotS.isEmpty() || !expS.isEmpty()) {
+                    System.out.println("result not match, got "+got+" expect "+expected+" for node "+nodeId);
+                }
+            }
         }
+
     }
 
     public static class Result extends AbstractTransaction.Result{
