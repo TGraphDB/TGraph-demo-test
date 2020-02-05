@@ -49,20 +49,21 @@ public class ReachableAreaQueryTx extends AbstractTransaction {
         List<NodeCross> got = ((Result) result).getNodeArriveTime();
         if(got.size()!=expected.size()){
             System.out.println("size not match, got "+got.size()+" expect "+expected.size());
-//            Set<NodeCross> intersection = new HashSet<>(expected);
-//            intersection.retainAll(got);
-//            Set<NodeCross> expDiff = new HashSet<>(expected);
-//            expDiff.removeAll(intersection);
-//            //if(!expDiff.isEmpty()) expDiff.forEach(System.out::println);
-//            System.out.println("exp-common ^^ vv got-common");
-//            Set<NodeCross> gotDiff = new HashSet<>(got);
-//            gotDiff.removeAll(intersection);
+            Set<NodeCross> intersection = new HashSet<>(expected);
+            intersection.retainAll(got);
+            Set<NodeCross> expDiff = new HashSet<>(expected);
+            expDiff.removeAll(intersection);
+            if(!expDiff.isEmpty()) expDiff.forEach(System.out::println);
+            System.out.println("exp-common ^^ vv got-common");
+            Set<NodeCross> gotDiff = new HashSet<>(got);
+            gotDiff.removeAll(intersection);
 //            if(gotDiff.size()>expDiff.size()){
 //                printDiff(gotDiff, expDiff);
 //            }else{
 //                printDiff(expDiff, gotDiff);
 //            }
-//            //if(!gotDiff.isEmpty()) gotDiff.forEach(System.out::println);
+            if(!gotDiff.isEmpty()) gotDiff.forEach(System.out::println);
+            System.out.println("--------------------------------------------");
             return;
         }
         for(int i=0; i<got.size(); i++){
