@@ -10,6 +10,8 @@ import edu.buaa.utils.Helper;
 import edu.buaa.utils.TGraphSocketServer;
 import org.act.temporalProperty.impl.InternalEntry;
 import org.act.temporalProperty.impl.InternalKey;
+import org.act.temporalProperty.query.TimePointL;
+import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -72,13 +74,18 @@ public class KernelTcpServer extends TGraphSocketServer.ReqExecutor {
                 return result;
             }
             Object tObj = r.getTemporalProperty("travel_time", Helper.time(tx.getDepartureTime()), Helper.time(tx.getEndTime()), new TemporalRangeQuery() {
-                @Override public void setValueType(String valueType) { }
                 private int minArriveT = Integer.MAX_VALUE;
+                private int entryIndex = 0;
                 @Override
-                public void onNewEntry(InternalEntry entry) {
-                    InternalKey k = entry.getKey();
-                    int curT = Math.max(k.getStartTime().valInt(), tx.getDepartureTime());
-                    int travelT = entry.getValue().getInt(0);
+                public void onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
+                    Preconditions.checkState(time.valInt() >= tx.getDepartureTime());
+                    Preconditions.checkNotNull(val);
+                    int curT = time.valInt();
+                    if(entryIndex==0 && curT>tx.getDepartureTime()){
+                        throw new UnsupportedOperationException();
+                    }
+                    entryIndex++;
+                    int travelT = (int) val;
                     if(curT +travelT<minArriveT) minArriveT = curT +travelT;
                 }
                 @Override

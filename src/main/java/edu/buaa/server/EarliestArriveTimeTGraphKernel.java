@@ -1,10 +1,10 @@
 package edu.buaa.server;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import edu.buaa.algo.EarliestArriveTime;
 import edu.buaa.utils.Helper;
-import org.act.temporalProperty.impl.InternalEntry;
-import org.act.temporalProperty.impl.InternalKey;
+import org.act.temporalProperty.query.TimePointL;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -53,15 +53,18 @@ public class EarliestArriveTimeTGraphKernel extends EarliestArriveTime {
         Object tObj = r.getTemporalProperty(travelTimePropertyKey, Helper.time(departureTime), Helper.time(this.endTime), new TemporalRangeQuery() {
             @Override public void setValueType(String valueType) { }
             private int minArriveT = Integer.MAX_VALUE;
-            private boolean firstKey = true;
+            private boolean firstEntry = true;
             @Override
-            public void onNewEntry(InternalEntry entry) {
-                InternalKey k = entry.getKey();
-                int curT = Math.max(k.getStartTime().valInt(), departureTime);
-                if(firstKey && curT>departureTime) throw new UnsupportedOperationException();
-                firstKey = false;
-                int travelT = entry.getValue().getInt(0);
-                if(curT<=endTime && curT+travelT<minArriveT) minArriveT = curT +travelT;
+            public void onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
+                Preconditions.checkState(time.valInt() >= departureTime);
+                Preconditions.checkNotNull(val);
+                int curT = time.valInt();
+                if(firstEntry && curT>departureTime){
+                    throw new UnsupportedOperationException();
+                }
+                firstEntry=false;
+                int travelT = (int) val;
+                if(curT +travelT<minArriveT) minArriveT = curT +travelT;
             }
             @Override
             public Object onReturn() {
