@@ -69,10 +69,7 @@ public class KernelTcpServer extends TGraphSocketServer.ReqExecutor {
         EarliestArriveTimeAggrTx.Result result = new EarliestArriveTimeAggrTx.Result();
         try(Transaction t = db.beginTx()) {
             Relationship r = db.getRelationshipById(tx.getRoadId());
-            if (!r.hasProperty("travel_time")) {
-                result.setArriveTime(-1);
-                return result;
-            }
+            if (!r.hasProperty("travel_time")) throw new UnsupportedOperationException();
             Object tObj = r.getTemporalProperty("travel_time", Helper.time(tx.getDepartureTime()), Helper.time(tx.getEndTime()), new TemporalRangeQuery() {
                 private int minArriveT = Integer.MAX_VALUE;
                 private int entryIndex = 0;
@@ -93,15 +90,13 @@ public class KernelTcpServer extends TGraphSocketServer.ReqExecutor {
                     if(minArriveT<Integer.MAX_VALUE){
                         return minArriveT;
                     }else{
-                        return -1;
+                        throw new UnsupportedOperationException();
                     }
                 }
             });
-            if (tObj == null) {
-                result.setArriveTime(-1);
-            }else{
-                result.setArriveTime((Integer) tObj);
-            }
+            result.setArriveTime((Integer) tObj);
+        }catch (UnsupportedOperationException e){
+            result.setArriveTime(-1);
         }
         return result;
     }
