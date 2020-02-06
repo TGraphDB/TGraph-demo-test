@@ -236,7 +236,11 @@ public class SqlServerExecutorClient implements DBProxy {
             protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception{
                 conn.setAutoCommit(true);
                 RoadEarliestArriveTimeSQL algo = new RoadEarliestArriveTimeSQL(conn);
-                return new EarliestArriveTimeAggrTx.Result(algo.getEarliestArriveTime(tx.getRoadId(), tx.getDepartureTime(), tx.getEndTime()));
+                try {
+                    return new EarliestArriveTimeAggrTx.Result(algo.getEarliestArriveTime(tx.getRoadId(), tx.getDepartureTime(), tx.getEndTime()));
+                }catch(UnsupportedOperationException e){
+                    return new EarliestArriveTimeAggrTx.Result(-1);
+                }
             }
         };
     }

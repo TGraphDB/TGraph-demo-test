@@ -53,6 +53,7 @@ public class EarliestArriveTimeAggrTx extends AbstractTransaction {
     }
 
     public static class Result extends AbstractTransaction.Result{
+        // if it unable to calculate the time, then this should be set to -1
         private int arriveTime;
 
         public Result(int minArriveTime) {
