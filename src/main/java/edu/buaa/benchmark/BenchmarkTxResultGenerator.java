@@ -86,7 +86,10 @@ public class BenchmarkTxResultGenerator {
                 RelRoad r = tgraph.roads.get(roadId);
                 for(int curT = departureTime; curT<minArriveTime && curT<=endTime; curT++){
                     Integer period = r.tpTravelTime.get( new TimePointInt(curT));
-                    if(period == null) throw new UnsupportedOperationException();
+                    if(period == null){
+                        if(verifyTxs) resultTxArr.add(new EarliestArriveTimeAggrTx(roadId, departureTime, this.endTime, -1));
+                        throw new UnsupportedOperationException();
+                    }
                     if (curT + period < minArriveTime) {
                         minArriveTime = curT + period;
                     }
@@ -102,7 +105,7 @@ public class BenchmarkTxResultGenerator {
                     rids.add(road.id);
                 }
                 rids.sort(null);
-                resultTxArr.add(new NodeNeighborRoadTx(nodeId, rids));
+                if(verifyTxs) resultTxArr.add(new NodeNeighborRoadTx(nodeId, rids));
                 return rids;
             }
 
