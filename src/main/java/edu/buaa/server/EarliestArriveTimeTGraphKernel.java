@@ -51,7 +51,6 @@ public class EarliestArriveTimeTGraphKernel extends EarliestArriveTime {
         Relationship r = db.getRelationshipById(roadId);
         if( !r.hasProperty( travelTimePropertyKey )) throw new UnsupportedOperationException();
         Object tObj = r.getTemporalProperty(travelTimePropertyKey, Helper.time(departureTime), Helper.time(this.endTime), new TemporalRangeQuery() {
-            @Override public void setValueType(String valueType) { }
             private int minArriveT = Integer.MAX_VALUE;
             private boolean firstEntry = true;
             @Override
