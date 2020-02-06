@@ -376,7 +376,9 @@ public class SqlServerExecutorClient implements DBProxy {
             this.getStartTStat.setInt(2, time);
             ResultSet rs = this.getStartTStat.executeQuery();
             if(rs.next()){
-                return rs.getInt("ts");
+                Object resultObj = rs.getObject("ts");
+                if(resultObj!=null) return (int) resultObj;
+                else throw new UnsupportedOperationException();
             }else{
                 throw new UnsupportedOperationException();
             }
