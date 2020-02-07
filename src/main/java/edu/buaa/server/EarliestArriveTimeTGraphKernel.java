@@ -11,6 +11,11 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.temporal.TemporalRangeQuery;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 public class EarliestArriveTimeTGraphKernel extends EarliestArriveTime {
     private final String travelTimePropertyKey;
     private final GraphDatabaseService db;
@@ -84,7 +89,12 @@ public class EarliestArriveTimeTGraphKernel extends EarliestArriveTime {
     @Override
     protected Iterable<Long> getAllOutRoads(long nodeId) {
         Node node = db.getNodeById(nodeId);
-        return () -> Iterators.transform(node.getRelationships(Direction.OUTGOING).iterator(), Relationship::getId);
+        List<Long> result = new ArrayList<>();
+        for(Relationship r : node.getRelationships(Direction.OUTGOING)){
+            result.add(r.getId());
+        }
+        result.sort(Comparator.naturalOrder());
+        return result;
     }
 
     @Override
