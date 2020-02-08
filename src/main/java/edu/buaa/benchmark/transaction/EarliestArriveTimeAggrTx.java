@@ -7,7 +7,7 @@ public class EarliestArriveTimeAggrTx extends AbstractTransaction {
     private int departureTime;
     private int endTime;
 
-    public EarliestArriveTimeAggrTx(long roadId, int departureTime, int endTime, int arriveTime){
+    public EarliestArriveTimeAggrTx(long roadId, int departureTime, int endTime, int arriveTime, int updateCnt){
         this.roadId = roadId;
         this.departureTime = departureTime;
         this.endTime = endTime;
@@ -15,6 +15,9 @@ public class EarliestArriveTimeAggrTx extends AbstractTransaction {
         r.setArriveTime(arriveTime);
         this.setResult(r);
         this.setTxType(TxType.tx_query_road_earliest_arrive_time_aggr);
+        Metrics m = new Metrics();
+        m.setReqSize(updateCnt);
+        this.setMetrics(m);
     }
     public EarliestArriveTimeAggrTx(){
         this.setTxType(TxType.tx_query_road_earliest_arrive_time_aggr);

@@ -1,6 +1,5 @@
 package edu.buaa.benchmark;
 
-import com.google.common.collect.Iterators;
 import edu.buaa.algo.EarliestArriveTime;
 import edu.buaa.benchmark.transaction.*;
 import edu.buaa.model.TimePointInt;
@@ -17,12 +16,12 @@ import java.util.*;
 public class BenchmarkTxResultGenerator {
 
     public static void main(String[] args){
-        boolean genResult = Boolean.parseBoolean(Helper.mustEnv("GENERATE_RESULT_VERIFY_TX"));
+        boolean replace = Boolean.parseBoolean(Helper.mustEnv("REACHABLE_AREA_REPLACE_TX"));
         String benchmarkInputFileName = Helper.mustEnv("BENCHMARK_FILE_INPUT");
         String benchmarkOutputFileName = Helper.mustEnv("BENCHMARK_FILE_OUTPUT");
 
         try {
-            BenchmarkTxResultGenerator resultGen = new BenchmarkTxResultGenerator(genResult);
+            BenchmarkTxResultGenerator resultGen = new BenchmarkTxResultGenerator(replace);
             BenchmarkReader reader = new BenchmarkReader(new File(benchmarkInputFileName));
             BenchmarkWriter writer = new BenchmarkWriter(new File(benchmarkOutputFileName));
             while (reader.hasNext()) {
@@ -35,11 +34,11 @@ public class BenchmarkTxResultGenerator {
         }
     }
 
-    private final boolean verifyTxs;
+    private final boolean replaceReachableAreaTx;
     private TrafficTGraph tgraph = new TrafficTGraph();
 
-    public BenchmarkTxResultGenerator(boolean generateVerifyTxs) {
-        this.verifyTxs = generateVerifyTxs;
+    public BenchmarkTxResultGenerator(boolean replace) {
+        this.replaceReachableAreaTx = replace;
     }
 
     public List<AbstractTransaction> execute(AbstractTransaction tx) throws IOException {
@@ -63,6 +62,7 @@ public class BenchmarkTxResultGenerator {
                     tgraph.crosses.get(road.getStartCrossId()), tgraph.crosses.get(road.getEndCrossId()));
             if(r.start !=null) r.start.out.add(r);
             if(r.end !=null) r.end.in.add(r);
+            r.updateCount.setToNow(new TimePointInt(0), 0);
             tgraph.roads.put(road.getRoadId(), r);
         }
     }
@@ -74,6 +74,12 @@ public class BenchmarkTxResultGenerator {
             r.tpJamStatus.setToNow(time, JamStatus.valueOf(s.getJamStatus()));
             r.tpTravelTime.setToNow(time, s.getTravelTime());
             r.tpSegCount.setToNow(time, (byte) s.getSegmentCount());
+            Integer cnt = r.updateCount.get(TimePointInt.Now);
+            if(cnt==null){
+                r.updateCount.setToNow(time, 1);
+            }else{
+                r.updateCount.setToNow(time, cnt+1);
+            }
         }
     }
 
@@ -87,14 +93,17 @@ public class BenchmarkTxResultGenerator {
                 for(int curT = departureTime; curT<minArriveTime && curT<=endTime; curT++){
                     Integer period = r.tpTravelTime.get( new TimePointInt(curT));
                     if(period == null){
-                        if(verifyTxs) resultTxArr.add(new EarliestArriveTimeAggrTx(roadId, departureTime, this.endTime, -1));
+                        if(replaceReachableAreaTx) resultTxArr.add(new EarliestArriveTimeAggrTx(roadId, departureTime, this.endTime, -1, 0));
                         throw new UnsupportedOperationException();
                     }
                     if (curT + period < minArriveTime) {
                         minArriveTime = curT + period;
                     }
                 }
-                if(verifyTxs) resultTxArr.add(new EarliestArriveTimeAggrTx(roadId, departureTime, this.endTime, minArriveTime));
+                if(replaceReachableAreaTx){
+                    int updateCnt = r.updateCount.get(new TimePointInt(endTime)) - r.updateCount.get(new TimePointInt(departureTime));
+                    resultTxArr.add(new EarliestArriveTimeAggrTx(roadId, departureTime, this.endTime, minArriveTime, updateCnt));
+                }
                 return minArriveTime;
             }
 
@@ -105,7 +114,7 @@ public class BenchmarkTxResultGenerator {
                     rids.add(road.id);
                 }
                 rids.sort(null);
-                if(verifyTxs) resultTxArr.add(new NodeNeighborRoadTx(nodeId, rids));
+                if(replaceReachableAreaTx) resultTxArr.add(new NodeNeighborRoadTx(nodeId, rids));
                 return rids;
             }
 
@@ -120,7 +129,7 @@ public class BenchmarkTxResultGenerator {
         ReachableAreaQueryTx.Result result = new ReachableAreaQueryTx.Result();
         result.setNodeArriveTime(answer);
         tx.setResult(result);
-        resultTxArr.add(tx);
+        if(!replaceReachableAreaTx) resultTxArr.add(tx);
         return resultTxArr;
     }
 }

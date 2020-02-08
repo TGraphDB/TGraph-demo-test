@@ -91,14 +91,14 @@ function genBenchmark() {
 function genResult() {
   export BENCHMARK_FILE_INPUT="E:\tgraph\test-data\benchmark.gz"
   export BENCHMARK_FILE_OUTPUT="E:\tgraph\test-data\benchmark-with-result.gz"
-  export GENERATE_RESULT_VERIFY_TX=true
+  export REACHABLE_AREA_REPLACE_TX=true
   mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.benchmark.BenchmarkTxResultGenerator"
 }
 
 function runBenchmark() {
   #export DB_TYPE=tgraph_kernel
   export DB_TYPE=sql_server
-  export DB_HOST=182.92.214.54
+  export DB_HOST=39.96.57.88
   #export DB_HOST=localhost
   export BENCHMARK_FILE_INPUT="E:\tgraph\test-data\benchmark-with-result.gz"
   export MAX_CONNECTION_CNT=1

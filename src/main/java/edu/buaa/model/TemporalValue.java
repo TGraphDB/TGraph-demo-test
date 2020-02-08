@@ -3,6 +3,7 @@ package edu.buaa.model;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.parboiled.common.Preconditions;
 
@@ -82,26 +83,21 @@ public class TemporalValue<V>
         }
     }
 
-//    public PeekingIterator<Triple<TimePointInt,Boolean,V>> pointEntries()
-//    {
-//        return Iterators.peekingIterator( Iterators.transform( map.entrySet().iterator(),
-//                                                               input -> Triple.of( input.getKey(), input.getValue().isValid, input.getValue().value ) ) );
-//    }
-//
-//    public PeekingIterator<Triple<TimePointInt,Boolean,V>> pointEntries( TimePointInt startTime )
-//    {
-//        Entry<TimePointInt, V> floor = map.floorEntry( startTime );
-//        if ( floor != null )
-//        {
-//            return Iterators.peekingIterator( Iterators.transform( map.tailMap( floor.getKey(), true ).entrySet().iterator(),
-//                    item -> Triple.of(Objects.requireNonNull(item).getKey(), item.getValue().isValid, item.getValue().value)) );
-//        } else {
-//            return Iterators.peekingIterator(new Iterator<Triple<TimePointInt, Boolean, V>>() {
-//                @Override public boolean hasNext() { return false; }
-//                @Override public Triple<TimePointInt, Boolean, V> next() { return null; }
-//            });
-//        }
-//    }
+    public PeekingIterator<Entry<TimePointInt,V>> pointEntries() {
+        return Iterators.peekingIterator( Iterators.transform( map.entrySet().iterator(), item -> Pair.of( item.getKey(), item.getValue() ) ) );
+    }
+
+    public PeekingIterator<Entry<TimePointInt,V>> pointEntries( TimePointInt startTime ) {
+        Entry<TimePointInt, V> floor = map.floorEntry( startTime );
+        if ( floor != null ) {
+            return Iterators.peekingIterator( map.tailMap( floor.getKey(), true ).entrySet().iterator() );
+        } else {
+            return Iterators.peekingIterator(new Iterator<Entry<TimePointInt, V>>() {
+                @Override public boolean hasNext() { return false; }
+                @Override public Entry<TimePointInt, V> next() { return null; }
+            });
+        }
+    }
 
     public boolean isEmpty() {
         return map.isEmpty();
