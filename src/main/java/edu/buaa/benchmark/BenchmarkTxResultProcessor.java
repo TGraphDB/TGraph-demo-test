@@ -32,11 +32,21 @@ public class BenchmarkTxResultProcessor {
     }
 
     public void logMetrics(AbstractTransaction tx, DBProxy.ServerResponse response) throws ProducerException, InterruptedException {
-        Metrics m = response.getMetrics();
+        JSONObject mObj = mergeMetrics(response.getMetrics(), tx.getMetrics());
         LogItem log = new LogItem();
         log.PushBack("type", tx.getTxType().name());
-        add2LogItem(log, (JSONObject)JSON.toJSON(m));
+        add2LogItem(log, mObj);
         logger.send("tgraph-demo-test", "tgraph-log", testName, clientVersion, log);
+    }
+
+    private JSONObject mergeMetrics(Metrics mFromClient, Metrics mFromTx) {
+        if(mFromTx.getReqSize()>0){
+            mFromClient.setReqSize(mFromTx.getReqSize());
+        }
+        if(mFromTx.getReturnSize()>0){
+            mFromClient.setReqSize(mFromTx.getReturnSize());
+        }
+        return (JSONObject) JSON.toJSON(mFromClient);
     }
 
     private void add2LogItem(LogItem log, JSONObject metrics) {
