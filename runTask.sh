@@ -96,10 +96,10 @@ function genResult() {
 }
 
 function runBenchmark() {
-  #export DB_TYPE=tgraph_kernel
-  export DB_TYPE=sql_server
-  export DB_HOST=39.96.57.88
-  #export DB_HOST=localhost
+  export DB_TYPE=tgraph_kernel
+  #export DB_TYPE=sql_server
+  #export DB_HOST=39.96.57.88
+  export DB_HOST=localhost
   export BENCHMARK_FILE_INPUT="E:\tgraph\test-data\benchmark-with-result.gz"
   export MAX_CONNECTION_CNT=1
   export VERIFY_RESULT=true
