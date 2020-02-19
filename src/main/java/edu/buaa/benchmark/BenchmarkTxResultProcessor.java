@@ -40,11 +40,13 @@ public class BenchmarkTxResultProcessor {
     }
 
     private JSONObject mergeMetrics(Metrics mFromClient, Metrics mFromTx) {
-        if(mFromTx.getReqSize()>0){
-            mFromClient.setReqSize(mFromTx.getReqSize());
-        }
-        if(mFromTx.getReturnSize()>0){
-            mFromClient.setReqSize(mFromTx.getReturnSize());
+        if(mFromTx!=null){
+            if(mFromTx.getReqSize()>0){
+                mFromClient.setReqSize(mFromTx.getReqSize());
+            }
+            if(mFromTx.getReturnSize()>0){
+                mFromClient.setReqSize(mFromTx.getReturnSize());
+            }
         }
         return (JSONObject) JSON.toJSON(mFromClient);
     }
