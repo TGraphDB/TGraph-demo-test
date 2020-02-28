@@ -108,10 +108,17 @@ function runBenchmark() {
 
 function runTGraphKernelServer(){
   export DB_PATH="E:\tgraph\test-db"
-  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.server.KernelTcpServer"
+  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.server.TGraphKernelTcpServer"
 }
 
 function runSQLServer(){
   export DB_PATH=/tmp/testdb
-  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.server.KernelTcpServer"
+  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.server.TGraphKernelTcpServer"
+}
+
+function runNeo4jKernelServer(){
+  export DB_PATH="E:\tgraph\test-db"
+  export DB_TYPE=array
+  export DB_TYPE=treemap
+  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.server.Neo4jKernelTcpServer"
 }

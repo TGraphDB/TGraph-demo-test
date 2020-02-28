@@ -1,7 +1,7 @@
 //package org.act.temporal.test.singleThread;
 //
 //import edu.buaa.benchmark.client.DBProxy;
-//import edu.buaa.benchmark.client.neo4j.Aggregator;
+//import edu.buaa.server.neo4j.Aggregator;
 //import edu.buaa.client.Config;
 //import org.act.temporal.test.utils.Helper;
 //import org.act.temporal.test.utils.Monitor;

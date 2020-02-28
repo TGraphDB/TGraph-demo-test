@@ -5,7 +5,7 @@
 //import edu.buaa.client.vo.RoadChain;
 //import edu.buaa.client.vo.TemporalStatus;
 //import edu.buaa.client.Config;
-//import edu.buaa.benchmark.client.neo4j.ArraySimulationProxy;
+//import edu.buaa.server.neo4j.ArraySimulationProxy;
 //import org.act.temporal.test.vo.TemporalStatusWithTime;
 //import org.junit.After;
 //import org.junit.Test;
