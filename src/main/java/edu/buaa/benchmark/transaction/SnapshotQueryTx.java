@@ -1,12 +1,14 @@
 package edu.buaa.benchmark.transaction;
 
-import edu.buaa.algo.EarliestArriveTime;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
 
 public class SnapshotQueryTx extends AbstractTransaction {
 
     private int timestamp;
+
+    private String propertyName;
 
     public int getTimestamp() {
         return timestamp;
@@ -16,15 +18,23 @@ public class SnapshotQueryTx extends AbstractTransaction {
         this.timestamp = timestamp;
     }
 
-    public static class Result extends AbstractTransaction.Result{
-        List<EarliestArriveTime.NodeCross> nodeArriveTime;
+    public String getPropertyName() {
+        return propertyName;
+    }
 
-        public List<EarliestArriveTime.NodeCross> getNodeArriveTime() {
-            return nodeArriveTime;
+    public void setPropertyName(String propertyName) {
+        this.propertyName = propertyName;
+    }
+
+    public static class Result extends AbstractTransaction.Result{
+        List<Pair<Long, Integer>> roadStatus;
+
+        public List<Pair<Long, Integer>> getRoadStatus() {
+            return roadStatus;
         }
 
-        public void setNodeArriveTime(List<EarliestArriveTime.NodeCross> nodeArriveTime) {
-            this.nodeArriveTime = nodeArriveTime;
+        public void setRoadStatus(List<Pair<Long, Integer>> roadStatus) {
+            this.roadStatus = roadStatus;
         }
     }
 }

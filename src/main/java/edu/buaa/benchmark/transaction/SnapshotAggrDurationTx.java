@@ -1,5 +1,9 @@
 package edu.buaa.benchmark.transaction;
 
+import org.apache.commons.lang3.tuple.Triple;
+
+import java.util.List;
+
 public class SnapshotAggrDurationTx extends AbstractTransaction {
     private int t0;
     private int t1;
@@ -27,5 +31,17 @@ public class SnapshotAggrDurationTx extends AbstractTransaction {
 
     public void setP(String p) {
         this.p = p;
+    }
+
+    public static class Result extends AbstractTransaction.Result{
+        List<Triple<Long, Integer, Integer>> roadStatDuration;
+
+        public List<Triple<Long, Integer, Integer>> getRoadStatDuration() {
+            return roadStatDuration;
+        }
+
+        public void setRoadStatDuration(List<Triple<Long, Integer, Integer>> roadStatDuration) {
+            this.roadStatDuration = roadStatDuration;
+        }
     }
 }

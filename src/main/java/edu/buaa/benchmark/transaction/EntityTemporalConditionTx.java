@@ -1,5 +1,7 @@
 package edu.buaa.benchmark.transaction;
 
+import java.util.List;
+
 public class EntityTemporalConditionTx extends AbstractTransaction {
 
     private int t0;
@@ -46,5 +48,17 @@ public class EntityTemporalConditionTx extends AbstractTransaction {
 
     public void setVmax(int vmax) {
         this.vmax = vmax;
+    }
+
+    public static class Result extends AbstractTransaction.Result{
+        List<Long> roads;
+
+        public List<Long> getRoads() {
+            return roads;
+        }
+
+        public void setRoads(List<Long> roads) {
+            this.roads = roads;
+        }
     }
 }

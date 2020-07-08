@@ -6,6 +6,8 @@ import com.google.common.util.concurrent.MoreExecutors;
 import edu.buaa.algo.EarliestArriveTime;
 import edu.buaa.benchmark.transaction.*;
 import edu.buaa.utils.TimeMonitor;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -199,33 +201,45 @@ public class SqlServerExecutorClient implements DBProxy {
         };
     }
 
+    private int maxTimeLE(Connection con, int rid, int t) throws SQLException {
+        PreparedStatement s = con.prepareStatement("SELECT MAX(t) AS t FROM temporal_status WHERE rid=? AND t<=? GROUP BY rid");
+        s.setInt(1, rid);
+        s.setInt(2, t);
+        ResultSet r = s.executeQuery();
+        if(r.next()){
+            return r.getInt("t");
+        }else{
+            return -1;
+        }
+    }
+
     private Callable<DBProxy.ServerResponse> execute(UpdateTemporalDataTx tx){
         return new Req(){
             @Override
             protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception{
                 conn.setAutoCommit(false);
-                String sql = "INSERT INTO students VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE t=?, rid=?";
-                PreparedStatement stat = conn.prepareStatement(sql);
-                stat.setInt(1, tx.getStartTime());
-                stat.setInt(2, Math.toIntExact(tx.getRoadId()));
-                stat.setInt(3, tx.getJamStatus());
-                stat.setInt(4, tx.getTravelTime());
-                stat.setInt(5, tx.getSegmentCount());
-                stat.addBatch();
-                stat.setInt(1, tx.getEndTime());
-                stat.setInt(2, Math.toIntExact(tx.getRoadId()));
-                stat.setInt(3, tx.getJamStatus());
-                stat.setInt(4, tx.getTravelTime());
-                stat.setInt(5, tx.getSegmentCount());
-                stat.addBatch();
-                stat.executeBatch();
-                stat.close();
-                Statement st = conn.createStatement();
-                sql = "UPDATE status,travel_t,seg_cnt SET status=" + tx.getJamStatus() +", travel_t=" + tx.getTravelTime() +
-                        ", seg_cnt=" + tx.getSegmentCount() + " WHERE rid=" + Math.toIntExact(tx.getRoadId()) + " AND t BETWEEN " +
-                         tx.getStartTime() + " AND " + tx.getEndTime();
-                //UPDATE status,travel_t,seg_cnt SET status = JamStatus, travel_t = TravelTime, seg_cnt = SegmentCount WHERE rid = RoadId AND t BETWEEN tartTime AND EndTime
-                ResultSet res =  st.executeQuery(sql);
+                String sql = String.format("SELECT t, travel_t, status, seg_cnt FROM temporal_status X INNER JOIN " +
+                        "(SELECT rid, MAX(t) mt FROM temporal_status WHERE t<=%d AND rid=%d GROUP BY rid) Y " +
+                        "ON X.rid=Y.rid AND X.t=Y.mt", tx.getEndTime()+1, Math.toIntExact(tx.getRoadId()));
+                Statement s = conn.createStatement();
+                ResultSet r = s.executeQuery(sql);
+                if(r.next()){
+                    if(tx.getEndTime()+1>r.getInt("t")){
+                        s.execute(String.format("INSERT temporal_status(rid, t, travel_t, status, seg_cnt) VALUES(%d, %d, %d, %d, %d)",
+                                tx.getRoadId(), tx.getEndTime()+1, r.getInt("travel_t"), r.getInt("status"), r.getInt("seg_cnt")));
+                    }//else: do nothing
+                }else{
+                    s.execute(String.format("INSERT temporal_status(rid, t) VALUES(%d, %d)", tx.getRoadId(), tx.getEndTime()+1));
+                }
+                int maxT = maxTimeLE(conn, (int) tx.getRoadId(), tx.getStartTime());
+                if(maxT==tx.getStartTime()){
+                    s.execute(String.format("UPDATE temporal_status SET travel_t= %d, status=%d, seg_cnt=%d", tx.getTravelTime(), tx.getJamStatus(), tx.getSegmentCount()));
+                }else{
+                    s.execute(String.format("INSERT temporal_status(rid, t, travel_t, status, seg_cnt) VALUES(%d, %d, %d, %d, %d)",
+                            tx.getRoadId(), tx.getStartTime(), tx.getTravelTime(), tx.getJamStatus(), tx.getSegmentCount()));
+                }
+                s.execute(String.format("DELETE FROM temporal_status WHERE rid=%d AND t>%d AND t<=%d", tx.getRoadId(), maxT, tx.getEndTime()));
+                s.close();
                 conn.commit();
                 conn.setAutoCommit(true);
                 return new AbstractTransaction.Result();
@@ -237,12 +251,21 @@ public class SqlServerExecutorClient implements DBProxy {
         return new Req(){
             @Override
             protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception{
-                AggrMaxSQL aggr = new AggrMaxSQL(conn, tx.getP());
-                aggr.getAggrMaxSQL(tx.getT0(), tx.getT1());
-                return new AbstractTransaction.Result();
+                PreparedStatement stat = conn.prepareStatement("SELECT rid, MAX(" + tx.getP() + ") AS mv FROM " +
+                        "temporal_status AS X INNER JOIN (SELECT rid, MAX(t) as ts FROM temporal_status WHERE t<=? GROUP BY rid) AS Y" +
+                        "ON X.rid=Y.rid AND Y.ts<=X.t AND X.t<=" + tx.getT1());
+                ResultSet rs = stat.executeQuery();
+                List<Pair<Long, Integer>> r = new ArrayList<>();
+                while(rs.next()){
+                    int rid = rs.getInt("rid");
+                    int maxVal = rs.getInt("mv");
+                    Pair.of(rid, maxVal);
+                }
+                SnapshotAggrMaxTx.Result result = new SnapshotAggrMaxTx.Result();
+                result.setRoadTravelTime(r);
+                return result;
             }
         };
-
     }
 
     private Callable<DBProxy.ServerResponse> execute(ReachableAreaQueryTx tx){
@@ -268,15 +291,20 @@ public class SqlServerExecutorClient implements DBProxy {
                 conn.setAutoCommit(true);
                 int snapshotTime = tx.getTimestamp();
                 Statement st = conn.createStatement();
-                String sql = "SELECT rid, MIN(t - " + snapshotTime + "), status, travel_t, seg_cnt FROM temporal_status WHERE rowId IN (" +
-                        "SELECT rowId FROM temporal_status WHERE t < " + snapshotTime + ") GROUP BY rid";
-                //SELECT rid, MIN(t-snapshotTime), status, travel_t, seg_cnt FROM temporal_status WHERE rowId IN SELECT rowId FROM temporal_status WHERE t < snapshotTime) GROUP BY rid";
-
+                String sql = "SELECT rid, t, status, travel_t, seg_cnt FROM temporal_status AS Y INNER JOIN (" +
+                        "SELECT rid, MAX(t) AS t FROM temporal_status WHERE t <= " + snapshotTime + " GROUP BY rid) AS X ON X.rid=Y.rid AND X.t=Y.t";
+                //SELECT rid, MIN(t-snapshotTime), status, travel_t, seg_cnt FROM temporal_status WHERE rowId IN
+                // (SELECT rowId FROM temporal_status WHERE t < snapshotTime) GROUP BY rid";
                 ResultSet res =  st.executeQuery(sql);
+                List<Pair<Long, Integer>> r = new ArrayList<>();
                 while (res.next()){
-                    continue;
+                    long rid = res.getInt("rid");
+                    int val = res.getInt(tx.getPropertyName());
+                    r.add(Pair.of(rid, val));
                 }
-                return new AbstractTransaction.Result();
+                SnapshotQueryTx.Result result = new SnapshotQueryTx.Result();
+                result.setRoadStatus(r);
+                return result;
             }
         };
     }
@@ -285,9 +313,26 @@ public class SqlServerExecutorClient implements DBProxy {
         return new Req(){
             @Override
             protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception{
-                EntityTemporlSQL aggr = new EntityTemporlSQL(conn, tx.getP());
-                aggr.getEntityTemporlSQL(tx.getT0(), tx.getT1(), tx.getVmin(), tx.getVmax());
-                return new AbstractTransaction.Result();
+                PreparedStatement stat = conn.prepareStatement("SELECT rid, MAX(t) as ts FROM temporal_status WHERE t<="+tx.getT0()+" GROUP BY rid");
+                PreparedStatement stat0 = conn.prepareStatement("SELECT rid FROM temporal_status WHERE rid=? AND t>=? AND t<=? AND travel_t>=? AND travel_t<=? LIMIT 1");
+                ResultSet rs = stat.executeQuery();
+                List<Long> r = new ArrayList<>();
+                while(rs.next()){
+                    int rid = rs.getInt("rid");
+                    int ts = rs.getInt("ts");
+                    stat0.setInt(1, rid);
+                    stat0.setInt(2, ts);
+                    stat0.setInt(3, tx.getT1());
+                    stat0.setInt(4, tx.getVmin());
+                    stat0.setInt(5, tx.getVmax());
+                    ResultSet dup = stat0.executeQuery();
+                    if(dup.next()){
+                        r.add((long) rid);
+                    }
+                }
+                EntityTemporalConditionTx.Result result = new EntityTemporalConditionTx.Result();
+                result.setRoads(r);
+                return result;
             }
         };
     }
@@ -296,9 +341,37 @@ public class SqlServerExecutorClient implements DBProxy {
         return new Req(){
             @Override
             protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception{
-                AggrMaxDurationSQL aggr = new AggrMaxDurationSQL(conn, tx.getP());
-                aggr.getAggrMaxDurationSQL(tx.getT0(), tx.getT1());
-                return new AbstractTransaction.Result();
+                PreparedStatement stat = conn.prepareStatement("SELECT rid, MAX(t) as ts FROM temporal_status WHERE t<="+tx.getT0()+" GROUP BY rid");
+                PreparedStatement stat0 = conn.prepareStatement("SELECT rid, t, status FROM temporal_status WHERE rid=? AND t>? AND t<? ORDER BY t");
+                ResultSet rs = stat.executeQuery();
+                List<Triple<Long, Integer, Integer>> r = new ArrayList<>();
+                while(rs.next()){
+                    int rid = rs.getInt("rid");
+                    int ts = rs.getInt("ts");
+                    stat0.setInt(1, rid);
+                    stat0.setInt(2, ts);
+                    stat0.setInt(3, tx.getT1());
+                    ResultSet dup = stat0.executeQuery();
+                    int lastTime = -1;
+                    int lastStatus = -1;
+                    Map<Integer, Integer> duration = new HashMap<>();
+                    while(dup.next()){
+                        int t = rs.getInt("t");
+                        int status = rs.getInt("status");
+                        if(lastTime!=-1){
+                            int dur = t - lastTime;
+                            duration.merge(lastStatus, dur, Integer::sum);
+                        }
+                        lastTime = t;
+                        lastStatus = status;
+                    }
+                    for(Map.Entry<Integer, Integer> e : duration.entrySet()){
+                        r.add(Triple.of((long)rid, e.getKey(), e.getValue()));
+                    }
+                }
+                SnapshotAggrDurationTx.Result result = new SnapshotAggrDurationTx.Result();
+                result.setRoadStatDuration(r);
+                return result;
             }
         };
     }
@@ -426,127 +499,6 @@ public class SqlServerExecutorClient implements DBProxy {
             return result;
         }
     }
-
-    private static class AggrMaxSQL{
-        private final PreparedStatement getStartTStat;
-        private final PreparedStatement getMaxTemporalStat;
-
-        AggrMaxSQL(Connection con, String p) throws SQLException {
-            this.getStartTStat = con.prepareStatement("SELECT rid, MAX(t) as ts FROM temporal_status WHERE t<=? GROUP BY rid");// top 1. limit is not support in sql server
-            String sql = "SELECT MAX(" + p + ") FROM temporal_status WHERE rid=? AND t>=? AND t<=?";
-            this.getMaxTemporalStat = con.prepareStatement(sql);
-        }
-
-        protected void getAggrMaxSQL(int start, int endTime) throws UnsupportedOperationException {
-            try {
-                this.getStartTStat.setInt(1, start);
-                ResultSet rs = this.getStartTStat.executeQuery();
-                while(rs.next()){
-                    Object ts = rs.getObject("ts");
-                    Object rid = rs.getObject("rid");
-                    if(ts == null || rid == null)continue;
-                    this.getMaxTemporalStat.setInt(1, (int)rid);
-                    this.getMaxTemporalStat.setInt(2, (int)ts);
-                    this.getMaxTemporalStat.setInt(3, endTime);
-                    ResultSet maxp = this.getMaxTemporalStat.executeQuery();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                throw new UnsupportedOperationException(e);
-            }
-        }
-    }
-
-    private static class EntityTemporlSQL{
-        private final PreparedStatement getStartTStat;
-        private final PreparedStatement getTemporalStat;
-        private final String p;
-
-        EntityTemporlSQL(Connection con, String p) throws SQLException {
-            this.getStartTStat = con.prepareStatement("SELECT rid, MAX(t) as ts FROM temporal_status WHERE t<=? GROUP BY rid");// top 1. limit is not support in sql server
-            String sql = "SELECT " + p + " FROM temporal_status WHERE rid=? AND t>=? AND t<=?";
-            this.getTemporalStat = con.prepareStatement(sql);
-            this.p = p;
-        }
-
-        protected void getEntityTemporlSQL(int start, int endTime, int vmin, int vmax) throws UnsupportedOperationException {
-            try {
-                this.getStartTStat.setInt(1, start);
-                ResultSet rs = this.getStartTStat.executeQuery();
-                while(rs.next()){
-                    Object ts = rs.getObject("ts");
-                    Object rid = rs.getObject("rid");
-                    if(ts == null || rid == null)continue;
-                    this.getTemporalStat.setInt(1, (int)rid);
-                    this.getTemporalStat.setInt(2, (int)ts);
-                    this.getTemporalStat.setInt(3, endTime);
-                    ResultSet dup = this.getTemporalStat.executeQuery();
-                    boolean isSat = true;
-                    while(dup.next()){
-                        Object status = rs.getObject(p);
-                        if(status == null)continue;
-                        if((int)status > vmax || (int)status < vmin){
-                            //don't save rid
-                            isSat = false;
-                            break;
-                        }
-                    }
-                    if (isSat){
-                        //save rid
-                    }
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                throw new UnsupportedOperationException(e);
-            }
-        }
-    }
-
-
-    private static class AggrMaxDurationSQL{
-        private final PreparedStatement getStartTStat;
-        private final PreparedStatement getTemporalStat;
-        private final String p;
-
-        AggrMaxDurationSQL(Connection con, String p) throws SQLException {
-            this.getStartTStat = con.prepareStatement("SELECT rid, MAX(t) as ts FROM temporal_status WHERE t<=? GROUP BY rid");// top 1. limit is not support in sql server
-            String sql = "SELECT t," + p + " FROM temporal_status WHERE rid=? AND t>=? AND t<=?";
-            this.getTemporalStat = con.prepareStatement(sql);
-            this.p = p;
-        }
-
-        protected void getAggrMaxDurationSQL(int start, int endTime) throws UnsupportedOperationException {
-            try {
-                this.getStartTStat.setInt(1, start);
-                ResultSet rs = this.getStartTStat.executeQuery();
-                while(rs.next()){
-                    Object ts = rs.getObject("ts");
-                    Object rid = rs.getObject("rid");
-                    if(ts == null || rid == null)continue;
-                    this.getTemporalStat.setInt(1, (int)rid);
-                    this.getTemporalStat.setInt(2, (int)ts);
-                    this.getTemporalStat.setInt(3, endTime);
-                    ResultSet dup = this.getTemporalStat.executeQuery();
-                    int duration_start = 0;
-                    int duStatus = -999;
-                    while(dup.next()){
-                        Object t = rs.getObject("t");
-                        Object status = rs.getObject(p);
-                        if(t == null || status == null)continue;
-                        if(duStatus != (int)status){
-                            int durationTime = (int)t - duration_start;
-                            duration_start = (int)t;
-                        }
-                        int lastD = endTime - duration_start;
-                    }
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                throw new UnsupportedOperationException(e);
-            }
-        }
-    }
-
 
     private static class RoadEarliestArriveTimeSQL{
         private final PreparedStatement getStartTStat;

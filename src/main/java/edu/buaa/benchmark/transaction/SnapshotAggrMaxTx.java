@@ -1,5 +1,9 @@
 package edu.buaa.benchmark.transaction;
 
+import org.apache.commons.lang3.tuple.Pair;
+
+import java.util.List;
+
 public class SnapshotAggrMaxTx extends AbstractTransaction {
     private int t0;
     private int t1;
@@ -27,5 +31,17 @@ public class SnapshotAggrMaxTx extends AbstractTransaction {
 
     public void setP(String p) {
         this.p = p;
+    }
+
+    public static class Result extends AbstractTransaction.Result{
+        List<Pair<Long, Integer>> roadTravelTime;
+
+        public List<Pair<Long, Integer>> getRoadTravelTime() {
+            return roadTravelTime;
+        }
+
+        public void setRoadTravelTime(List<Pair<Long, Integer>> roadTravelTime) {
+            this.roadTravelTime = roadTravelTime;
+        }
     }
 }
