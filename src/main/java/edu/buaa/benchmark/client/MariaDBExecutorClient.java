@@ -6,6 +6,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import edu.buaa.algo.EarliestArriveTime;
 import edu.buaa.benchmark.transaction.*;
 import edu.buaa.utils.TimeMonitor;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
+import scala.Tuple4;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -66,8 +69,8 @@ public class MariaDBExecutorClient implements DBProxy {
                 return this.service.submit(execute((ImportTemporalDataTx) tx));
             case tx_query_reachable_area:
                 return this.service.submit(execute((ReachableAreaQueryTx) tx));
-            case tx_query_road_earliest_arrive_time_aggr:
-                return this.service.submit(execute((EarliestArriveTimeAggrTx)tx));
+//            case tx_query_road_earliest_arrive_time_aggr:
+//                return this.service.submit(execute((EarliestArriveTimeAggrTx)tx));
             case tx_query_node_neighbor_road:
                 return this.service.submit(execute((NodeNeighborRoadTx) tx));
             default:
@@ -176,14 +179,14 @@ public class MariaDBExecutorClient implements DBProxy {
                 for(ImportTemporalDataTx.StatusUpdate s : tx.data) {
                     stat.setInt(1, index++);
                     int rId = Math.toIntExact(s.getRoadId());
-                    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    String st = format.format(new Date(Long.parseLong(String.valueOf(s.getTime()))));
+                    String st = timestamp2Datetime(s.getTime());
                     stat.setString(2, st);
                     stat.setString(3, "2037-12-31 00:00:00");
                     stat.setInt(4, rId);
                     // update endTime of last same r_id
                     preparedStatement.setInt(1, rId);
                     rs = preparedStatement.executeQuery();
+                    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                     if (rs.next()) { // delete the item and reinsert.
                         tsId = rs.getInt(1);
                         stTime = rs.getString(2);
@@ -220,39 +223,12 @@ public class MariaDBExecutorClient implements DBProxy {
             protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception {
                 conn.setAutoCommit(false);
                 //UPDATE temporal_status FOR PORTION OF time_period FROM tx.getStartTime() TO tx.getEndTime() SET status = tx.getJamStatus(), travel_t = tx.getTravelTime(), seg_cnt = tx.getSegmentCount();
-                String sql = "UPDATE temporal_status FOR PORTION OF time_period FROM " + tx.getStartTime() + " TO " + tx.getEndTime() +
-                        "SET status = " + tx.getJamStatus() + ", travel_t = " + tx.getTravelTime() + ", seg_cnt = " + tx.getSegmentCount();
+                String sql = "UPDATE temporal_status FOR PORTION OF time_period FROM " + timestamp2Datetime(tx.getStartTime()) + " TO " + timestamp2Datetime(tx.getEndTime()) +
+                        " SET status = " + tx.getJamStatus() + ", travel_t = " + tx.getTravelTime() + ", seg_cnt = " + tx.getSegmentCount();
                 conn.createStatement().execute(sql);
                 conn.commit();
                 conn.setAutoCommit(true);
                 return new AbstractTransaction.Result();
-            }
-        };
-    }
-
-    private Callable<DBProxy.ServerResponse> execute(SnapshotAggrMaxTx tx) {
-        return new MariaDBExecutorClient.Req() {
-            @Override
-            protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception {
-                MariaDBExecutorClient.AggrMaxSQL aggr = new MariaDBExecutorClient.AggrMaxSQL(conn, tx.getP());
-                aggr.getAggrMaxSQL(tx.getT0(), tx.getT1());
-                return new AbstractTransaction.Result();
-            }
-        };
-    }
-
-    private Callable<DBProxy.ServerResponse> execute(ReachableAreaQueryTx tx) {
-        return new MariaDBExecutorClient.Req() {
-            @Override
-            protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception {
-                conn.setAutoCommit(true);
-                EarliestArriveTime algo = new MariaDBExecutorClient.EarliestArriveTimeSQL(tx.getStartCrossId(), tx.getDepartureTime(), tx.getTravelTime(), conn);
-                List<EarliestArriveTime.NodeCross> answer = new ArrayList<>(algo.run());
-                answer.sort(Comparator.comparingLong(EarliestArriveTime.NodeCross::getId));
-                ReachableAreaQueryTx.Result result = new ReachableAreaQueryTx.Result();
-                result.setNodeArriveTime(answer);
-                metrics.setReturnSize(answer.size());
-                return result;
             }
         };
     }
@@ -266,21 +242,31 @@ public class MariaDBExecutorClient implements DBProxy {
                 String snapshotTime = format.format(new Date((Long.parseLong((String.valueOf(tx.getTimestamp()))))));
                 String sql = "SELECT MAX(en_time), status, travel_t, seg_cnt FROM temporal_status WHERE " + snapshotTime + " >= st_time GROUP BY r_id";
                 ResultSet rs = conn.createStatement().executeQuery(sql);
-                while(rs.next()) {
-                    // nop
-                }
                 return new AbstractTransaction.Result();
             }
         };
     }
 
-    private Callable<DBProxy.ServerResponse> execute(EntityTemporalConditionTx tx) {
+    private Callable<DBProxy.ServerResponse> execute(SnapshotAggrMaxTx tx) {
         return new MariaDBExecutorClient.Req() {
             @Override
-            protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception{
-                MariaDBExecutorClient.EntityTemporlSQL aggr = new MariaDBExecutorClient.EntityTemporlSQL(conn, tx.getP());
-                aggr.getEntityTemporlSQL(tx.getT0(), tx.getT1(), tx.getVmin(), tx.getVmax());
-                return new AbstractTransaction.Result();
+            protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception {
+                conn.setAutoCommit(false);
+                // SELECT MAX(p) FROM temporal_status WHERE en_time >= tx.getT0() AND st_time <= tx.getT1() GROUP BY r_id;
+                String sql = "SELECT MAX(?) as max_v, r_id FROM temporal_status WHERE en_time >= ? AND st_time <= ? GROUP BY r_id";
+                PreparedStatement preparedStatement = conn.prepareStatement(sql);
+                preparedStatement.setString(1, tx.getP());
+                preparedStatement.setString(2, timestamp2Datetime(tx.getT0()));
+                preparedStatement.setString(3, timestamp2Datetime(tx.getT1()));
+                ResultSet rs = preparedStatement.executeQuery();
+                List<Pair<Long, Integer>> res = new ArrayList<>();
+                while (rs.next()) {
+                    res.add(Pair.of((long)rs.getInt("r_id"), rs.getInt("max_v")));
+
+                }
+                SnapshotAggrMaxTx.Result result = new SnapshotAggrMaxTx.Result();
+                result.setRoadTravelTime(res);
+                return result;
             }
         };
     }
@@ -288,10 +274,64 @@ public class MariaDBExecutorClient implements DBProxy {
     private Callable<DBProxy.ServerResponse> execute(SnapshotAggrDurationTx tx) {
         return new MariaDBExecutorClient.Req() {
             @Override
-            protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception{
-                MariaDBExecutorClient.AggrMaxDurationSQL aggr = new MariaDBExecutorClient.AggrMaxDurationSQL(conn, tx.getP());
-                aggr.getAggrMaxDurationSQL(tx.getT0(), tx.getT1());
-                return new AbstractTransaction.Result();
+            protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception {
+                // SELECT r_id, st_time, en_time, status FROM temporal_status WHERE en_time >= tx.getT0() AND st_time <= tx.getT1();
+                String sql = "SELECT r_id, st_time, en_time FROM temporal_status WHERE en_time >= ? AND st_time <= ?";
+                PreparedStatement preparedStatement = conn.prepareStatement(sql);
+                preparedStatement.setString(1, timestamp2Datetime(tx.getT0()));
+                preparedStatement.setString(2, timestamp2Datetime(tx.getT1()));
+                ResultSet rs = preparedStatement.executeQuery();
+                List<Triple<Long, Integer, Integer>> res = new ArrayList<>();
+                int rId, status, duration, stTime, enTime;
+                int t0 = tx.getT0(), t1 = tx.getT1();
+                while(rs.next()) {
+                    rId = rs.getInt("r_id");
+                    status = rs.getInt("status");
+                    stTime = datetime2Int(rs.getString("st_time"));
+                    enTime = datetime2Int((rs.getString("en_time")));
+                    if (t0 > stTime) {
+                        if (t1 <= enTime) {
+                            duration = t1 - t0;
+                        } else {
+                            duration = enTime - t0;
+                        }
+                    } else {
+                        if (t1 <= enTime) {
+                            duration = t1 - stTime;
+                        } else {
+                            duration = enTime - stTime;
+                        }
+                    }
+                    res.add(Triple.of((long)rId, status, duration));
+                }
+                SnapshotAggrDurationTx.Result result = new SnapshotAggrDurationTx.Result();
+                result.setRoadStatDuration(res);
+
+                return result;
+            }
+        };
+    }
+
+
+    private Callable<DBProxy.ServerResponse> execute(EntityTemporalConditionTx tx) {
+        return new MariaDBExecutorClient.Req() {
+            @Override
+            protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception {
+                // SELECT r_id FROM temporal_status WHERE en_time >= tx.getT0() AND st_time <= tx.getT1() AND travel_t >= tx.getVmin() AND travel_t <= tx.getVmax();
+                String sql = "SELECT r_id FROM temporal_status WHERE en_time >= ? AND st_time <= ? AND travel_t >= ? AND travel_t <= ?";
+                PreparedStatement preparedStatement = conn.prepareStatement(sql);
+                preparedStatement.setString(1, timestamp2Datetime(tx.getT0()));
+                preparedStatement.setString(2, timestamp2Datetime(tx.getT1()));
+                preparedStatement.setInt(3, tx.getVmin());
+                preparedStatement.setInt(4, tx.getVmax());
+                ResultSet rs = preparedStatement.executeQuery();
+                List<Long> res = new ArrayList<>();
+                while (rs.next()) {
+                    res.add((long)rs.getInt("r_id"));
+                }
+                EntityTemporalConditionTx.Result result = new EntityTemporalConditionTx.Result();
+                result.setRoads(res);
+                return result;
             }
         };
     }
@@ -301,257 +341,83 @@ public class MariaDBExecutorClient implements DBProxy {
             @Override
             protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception {
                 conn.setAutoCommit(true);
-                MariaDBExecutorClient.NodeNeighborRoadSQL algo = new MariaDBExecutorClient.NodeNeighborRoadSQL(conn);
-                List<Long> answer = algo.getNeighborRoad(tx.getNodeId());
+                // SELECT r_id FROM road WHERE r_start = tx.getNodeId() OR r_end = tx.getNodeId();
+                String sql = "SELECT r_id FROM road WHERE r_start = " + tx.getNodeId() + " OR r_end = " + tx.getNodeId();
+                Statement statement = conn.createStatement();
+                ResultSet rs = statement.executeQuery(sql);
+                List<Long> res = new ArrayList<>();
+                while(rs.next()) {
+                    res.add((long)rs.getInt("r_id"));
+                }
                 NodeNeighborRoadTx.Result result = new NodeNeighborRoadTx.Result();
-                result.setRoadIds(answer);
-                metrics.setReturnSize(answer.size());
+                result.setRoadIds(res);
+                metrics.setReturnSize(res.size());
                 return result;
             }
         };
     }
 
-    private Callable<DBProxy.ServerResponse> execute(EarliestArriveTimeAggrTx tx) {
+
+    private Callable<DBProxy.ServerResponse> execute(ReachableAreaQueryTx tx) {
         return new MariaDBExecutorClient.Req() {
             @Override
             protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception {
                 conn.setAutoCommit(true);
-                MariaDBExecutorClient.RoadEarliestArriveTimeSQL algo = new MariaDBExecutorClient.RoadEarliestArriveTimeSQL(conn);
-                try {
-                    return new EarliestArriveTimeAggrTx.Result(algo.getEarliestArriveTime(tx.getRoadId(), tx.getDepartureTime(), tx.getEndTime()));
-                } catch(UnsupportedOperationException e){
-                    return new EarliestArriveTimeAggrTx.Result(-1);
+                //r_id, cost_time, remain_time
+                PriorityQueue<Triple<Integer, Integer, Integer>> que = new PriorityQueue<>((o1, o2) -> {
+                    return o1.getMiddle() - o2.getMiddle();
+                });
+                //r_id, is_visited
+                HashMap<Integer, Boolean> visited = new HashMap<>();
+                //r_id, cost_time
+                HashMap<Integer, Integer> dis = new HashMap<>();
+                int curCrossId = (int)tx.getStartCrossId(), cost;
+                int departureTime = tx.getDepartureTime(), remainTime = tx.getTravelTime();
+                int rId, endId, travelTime;
+                que.add(Triple.of(curCrossId, 0, remainTime));
+                Triple<Integer, Integer, Integer> top;
+                ResultSet rs;
+                List<Pair<Integer, Integer>> res = new ArrayList<>();
+                // r_id, r_start, r_end, travel_t
+                List<Tuple4<Integer, Integer, Integer, Integer>> currentPath = new ArrayList<>();
+                while (!que.isEmpty()) {
+                    currentPath.clear();
+                    top = que.poll();
+                    curCrossId = top.getLeft();
+                    if (visited.get(curCrossId)) continue;
+                    visited.put(curCrossId, true);
+                    cost = top.getMiddle();
+                    remainTime = top.getRight();
+                    res.add(Pair.of(curCrossId, departureTime + cost));
+                    rs = conn.createStatement().executeQuery("SELECT r_id, r_end, travel_t FROM road WHERE r_start = " + curCrossId);
+                    while (rs.next()) {
+                        rId = rs.getInt("r_id");
+                        endId = rs.getInt("r_end");
+                        travelTime = rs.getInt("travel_t");
+                        if (remainTime >= travelTime) {
+                            currentPath.add(Tuple4.apply(rId, curCrossId, endId, travelTime));
+                        }
+                    }
+                    for (Tuple4<Integer, Integer, Integer, Integer> item : currentPath) {
+                        if (!visited.get(item._3()) && (dis.get(item._3()) != null || dis.get(item._3()) > cost + item._4())) {
+                            dis.put(item._3(), cost + item._4());
+                            que.add(Triple.of(item._1(), cost + item._4(), remainTime - item._4()));
+                        }
+
+                    }
+
                 }
+                ReachableAreaQueryTx.Result result = new ReachableAreaQueryTx.Result();
+                List<EarliestArriveTime.NodeCross> ans = new ArrayList<>();
+                for (Pair<Integer, Integer> item : res) {
+                    ans.add(new EarliestArriveTime.NodeCross((long)item.getLeft(), item.getRight()));
+                }
+                result.setNodeArriveTime(ans);
+                metrics.setReturnSize(res.size());
+                return result;
             }
         };
     }
-
-    private static class EarliestArriveTimeSQL extends EarliestArriveTime {
-        private final PreparedStatement getEndNodeIdStat;
-        private final MariaDBExecutorClient.NodeNeighborRoadSQL nodeNeighborRoadSQL;
-        private final MariaDBExecutorClient.RoadEarliestArriveTimeSQL earliestTime;
-
-        EarliestArriveTimeSQL(long startId, int startTime, int travelTime, Connection conn) throws SQLException {
-            super(startId, startTime, travelTime);
-            this.getEndNodeIdStat = conn.prepareStatement("SELECT r_end FROM road WHERE r_id = ?");
-            this.nodeNeighborRoadSQL = new MariaDBExecutorClient.NodeNeighborRoadSQL(conn);
-            this.earliestTime = new MariaDBExecutorClient.RoadEarliestArriveTimeSQL(conn);
-        }
-
-        @Override
-        protected int getEarliestArriveTime(Long roadId, int departureTime) throws UnsupportedOperationException {
-            return earliestTime.getEarliestArriveTime(roadId, departureTime, endTime);
-        }
-
-        @Override
-        protected Iterable<Long> getAllOutRoads(long nodeId) {
-            try {
-                return nodeNeighborRoadSQL.getNeighborRoad(nodeId);
-            } catch (SQLException e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
-        }
-
-        @Override
-        protected long getEndNodeId(long roadId) {
-            try {
-                this.getEndNodeIdStat.setInt(1, Math.toIntExact(roadId));
-                ResultSet rs = this.getEndNodeIdStat.executeQuery();
-                if(rs.next()) {
-                    return rs.getInt("r_end");
-                } else {
-                    throw new RuntimeException("road not found, should not happen!");
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
-    private static class NodeNeighborRoadSQL{
-        private final PreparedStatement getCrossOutRoadStat;
-        private NodeNeighborRoadSQL(Connection conn) throws SQLException {
-            this.getCrossOutRoadStat = conn.prepareStatement("SELECT r_id FROM road WHERE r_start = ?");
-        }
-
-        public List<Long> getNeighborRoad(long nodeId) throws SQLException {
-            this.getCrossOutRoadStat.setInt(1, Math.toIntExact(nodeId));
-            ResultSet rs = this.getCrossOutRoadStat.executeQuery();
-            List<Long> result = new ArrayList<>();
-            while(rs.next()) {
-                result.add((long) rs.getInt("r_ id"));
-            }
-            return result;
-        }
-    }
-
-    private static class AggrMaxSQL {
-        private final PreparedStatement getStartTStat;
-        private final Statement getMaxTemporalStat;
-        private final String p;
-
-        AggrMaxSQL(Connection con, String p) throws SQLException {
-            this.getStartTStat = con.prepareStatement("SELECT MAX(en_time) as max_en_time, st_time, r_id, status, travel_t, seg_cnt FROM temporal_status WHERE ? >= st_time GROUP BY r_id;");
-            this.p = p;
-            this.getMaxTemporalStat = con.createStatement();
-        }
-
-        protected void getAggrMaxSQL(int start, int endTime) throws UnsupportedOperationException {
-            try {
-                this.getStartTStat.setInt(1, start);
-                ResultSet rs = this.getStartTStat.executeQuery();
-                while(rs.next()) {
-                    Object ts = rs.getObject("max_en_time");
-                    Object rId = rs.getObject("r_id");
-                    if(ts == null || rId == null) continue;
-                    //SELECT MAX(p) FROM temporal_status WHERE r_id = ? AND ((en_time <= endTime AND st_time >= start) OR (start >= st_time AND endTime <= en_time) OR (endTime >= st_time AND start <= st_time) OR (endTime >= en_time AND start <= en_time))
-                    String sql = "SELECT MAX(" + this.p + ") FROM temporal_status WHERE r_id = " + rId + " AND ((en_time <= " + endTime + " AND st_time >= " + start + ") OR (" + start + " >= st_time AND " + endTime + " <= en_time) OR (" + endTime + " >= st_time AND " + start + " <= st_time) OR (" + endTime + " >= en_time AND " + start + " <= en_time))";
-                    ResultSet maxP = this.getMaxTemporalStat.executeQuery(sql);
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                throw new UnsupportedOperationException(e);
-            }
-        }
-    }
-
-    private static class EntityTemporlSQL {
-        private final PreparedStatement getStartTStat;
-        private final Statement getTemporalStat;
-        private final String p;
-
-        EntityTemporlSQL(Connection con, String p) throws SQLException {
-            this.getStartTStat = con.prepareStatement("SELECT MAX(en_time) as max_en_time, r_id FROM temporal_status WHERE ? >= st_time GROUP BY r_id");
-            this.getTemporalStat = con.createStatement();
-            this.p = p;
-        }
-
-        protected void getEntityTemporlSQL(int start, int endTime, int vmin, int vmax) throws UnsupportedOperationException {
-            try {
-                this.getStartTStat.setInt(1, start);
-                ResultSet rs = this.getStartTStat.executeQuery();
-                while(rs.next()) {
-                    Object ts = rs.getObject("max_en_time");
-                    Object rId = rs.getObject("r_id");
-                    String sql = "SELECT p FROM temporal_status WHERE r_id = " + rId + " AND ((en_time <= endTime AND st_time >= start) OR (start >= st_time AND endTime <= en_time) OR (endTime >= st_time AND start <= st_time) OR (endTime >= en_time AND start <= en_time))";
-                    if(ts == null || rId == null) continue;
-                    ResultSet dup = this.getTemporalStat.executeQuery(sql);
-                    boolean isSat = true;
-                    while(dup.next()){
-                        Object status = rs.getObject(p);
-                        if(status == null) continue;
-                        if((int)status > vmax || (int)status < vmin){
-                            //don't save rid
-                            isSat = false;
-                            break;
-                        }
-                    }
-                    if (isSat) {
-                        //save rid
-                    }
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                throw new UnsupportedOperationException(e);
-            }
-        }
-    }
-
-    private static class AggrMaxDurationSQL {
-        private final PreparedStatement getStartTStat;
-        private final Statement getTemporalStat;
-        private final String p;
-
-        AggrMaxDurationSQL(Connection con, String p) throws SQLException {
-            this.getStartTStat = con.prepareStatement("SELECT MAX(en_time) as max_en_time, r_id FROM temporal_status WHERE ? >= st_time GROUP BY r_id");
-            this.getTemporalStat = con.createStatement();
-            this.p = p;
-        }
-
-        protected void getAggrMaxDurationSQL(int start, int endTime) throws UnsupportedOperationException {
-            try {
-                this.getStartTStat.setInt(1, start);
-                ResultSet rs = this.getStartTStat.executeQuery();
-                while(rs.next()){
-                    Object ts = rs.getObject("max_en_time");
-                    Object rId = rs.getObject("r_id");
-                    if(ts == null || rId == null) continue;
-                    String sql = "SELECT p, st_time, en_time FROM temporal_status WHERE r_id = " + rId + " AND ((en_time <= endTime AND st_time >= start) OR (start >= st_time AND endTime <= en_time) OR (endTime >= st_time AND start <= st_time) OR (endTime >= en_time AND start <= en_time))";
-                    ResultSet dup = this.getTemporalStat.executeQuery(sql);
-                    while(dup.next()) {
-                        Object t = rs.getObject("t");
-                        Object status = rs.getObject(p);
-                        String stTime = rs.getString("st_time");
-                        String enTime = rs.getString("en_time");
-                        if(t == null || status == null) continue;
-                        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                        long lastTime = format.parse(enTime).getTime() - format.parse(stTime).getTime();
-                    }
-                }
-            } catch (SQLException | ParseException e) {
-                e.printStackTrace();
-                throw new UnsupportedOperationException(e);
-            }
-        }
-    }
-
-    private static class RoadEarliestArriveTimeSQL {
-        private final PreparedStatement getStartTStat;
-        private final Statement getTemporalStat;
-
-        RoadEarliestArriveTimeSQL(Connection con) throws SQLException {
-            this.getStartTStat = con.prepareStatement("SELECT st_time, MAX(en_time) as max_en_time FROM temporal_status WHERE ? >= st_time and r_id = ?");
-            this.getTemporalStat = con.createStatement();
-        }
-
-        protected int getEarliestArriveTime(long roadId, int departureTime, int endTime) throws UnsupportedOperationException {
-            try {
-                int startT = maxTimeLessOrEq(roadId, departureTime);
-                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
-                ResultSet rs = getTT(roadId, startT, endTime);
-                int minArriveTime = Integer.MAX_VALUE;
-                int curT = departureTime;
-                while(rs.next() && curT < minArriveTime) {
-                    curT = (int)format.parse(rs.getString("st_time")).getTime();
-                    int travelT = rs.getInt("travel_t");
-                    if(curT < departureTime) {
-                        minArriveTime = departureTime + travelT;
-                    } else if(curT + travelT < minArriveTime) {
-                        minArriveTime = curT + travelT;
-                    }
-                }
-                if(minArriveTime != Integer.MAX_VALUE) return minArriveTime;
-                else throw new UnsupportedOperationException();
-            } catch (SQLException | ParseException e) {
-                e.printStackTrace();
-                throw new UnsupportedOperationException(e);
-            }
-        }
-
-        private int maxTimeLessOrEq(long roadId, int time) throws SQLException, ParseException {
-            this.getStartTStat.setInt(1, Math.toIntExact(roadId));
-            this.getStartTStat.setInt(2, time);
-            ResultSet rs = this.getStartTStat.executeQuery();
-            if(rs.next()) {
-                String result = rs.getString("st_time");
-                if(result != null) {
-                    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
-                    return (int)format.parse(result).getTime();
-                }
-                else throw new UnsupportedOperationException();
-            } else {
-                throw new UnsupportedOperationException();
-            }
-        }
-
-        private ResultSet getTT(long roadId, int start, int end) throws SQLException {
-            return this.getTemporalStat.executeQuery("SELECT st_time, en_time, travel_t FROM temporal_status WHERE r_id = " + roadId + " AND ((en_time <= end AND st_time >= start) OR (start >= st_time AND end <= en_time) OR (end >= st_time AND start <= st_time) OR (end >= en_time AND start <= en_time))");
-        }
-
-    }
-
 
     private abstract class Req implements Callable<DBProxy.ServerResponse> {
         private final TimeMonitor timeMonitor = new TimeMonitor();
@@ -584,6 +450,16 @@ public class MariaDBExecutorClient implements DBProxy {
             }
         }
         protected abstract AbstractTransaction.Result executeQuery(Connection conn) throws Exception;
+    }
+
+    private static String timestamp2Datetime(int timestamp) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        return format.format(new Date(Long.parseLong(String.valueOf(timestamp))));
+    }
+
+    private static int datetime2Int(String date) throws ParseException {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        return (int)format.parse(date).getTime();
     }
 
 
