@@ -8,6 +8,7 @@ import edu.buaa.benchmark.transaction.*;
 import edu.buaa.utils.TimeMonitor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.neo4j.register.Register;
 import scala.Tuple4;
 
 import java.io.IOException;
@@ -238,11 +239,18 @@ public class MariaDBExecutorClient implements DBProxy {
             @Override
             protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception {
                 conn.setAutoCommit(true);
-                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH-mm:ss");
-                String snapshotTime = format.format(new Date((Long.parseLong((String.valueOf(tx.getTimestamp()))))));
-                String sql = "SELECT MAX(en_time), status, travel_t, seg_cnt FROM temporal_status WHERE " + snapshotTime + " >= st_time GROUP BY r_id";
+                String snapshotTime = timestamp2Datetime(tx.getTimestamp());
+                String sql = "SELECT r_id, MAX(en_time), status, travel_t, seg_cnt FROM temporal_status WHERE " + snapshotTime + " >= st_time GROUP BY r_id";
                 ResultSet rs = conn.createStatement().executeQuery(sql);
-                return new AbstractTransaction.Result();
+                List<Pair<Long, Integer>> res = new ArrayList<>();
+                while (rs.next()){
+                    long rId = rs.getInt("r_id");
+                    int val = rs.getInt(tx.getPropertyName());
+                    res.add(Pair.of(rId, val));
+                }
+                SnapshotQueryTx.Result result = new SnapshotQueryTx.Result();
+                result.setRoadStatus(res);
+                return result;
             }
         };
     }
@@ -363,45 +371,41 @@ public class MariaDBExecutorClient implements DBProxy {
             @Override
             protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception {
                 conn.setAutoCommit(true);
-                //r_id, cost_time, remain_time
-                PriorityQueue<Triple<Integer, Integer, Integer>> que = new PriorityQueue<>((o1, o2) -> {
-                    return o1.getMiddle() - o2.getMiddle();
+                //cross_id, cost_time, remain_time, cur_time
+                PriorityQueue<Tuple4<Integer, Integer, Integer, Integer>> que = new PriorityQueue<>((o1, o2) -> {
+                    return o1._2() - o2._2();
                 });
-                //r_id, is_visited
-                HashMap<Integer, Boolean> visited = new HashMap<>();
-                //r_id, cost_time
+                //cross_id, arrive_time
                 HashMap<Integer, Integer> dis = new HashMap<>();
                 int curCrossId = (int)tx.getStartCrossId(), cost;
-                int departureTime = tx.getDepartureTime(), remainTime = tx.getTravelTime();
+                int currentTime = tx.getDepartureTime(), remainTime = tx.getTravelTime();
                 int rId, endId, travelTime;
-                que.add(Triple.of(curCrossId, 0, remainTime));
-                Triple<Integer, Integer, Integer> top;
+                que.add(Tuple4.apply(curCrossId, 0, remainTime, currentTime));
+                Tuple4<Integer, Integer, Integer, Integer> top;
                 ResultSet rs;
                 List<Pair<Integer, Integer>> res = new ArrayList<>();
-                // r_id, r_start, r_end, travel_t
+                // r_id, r_start, r_end, travel_t_at_the_current_time
                 List<Tuple4<Integer, Integer, Integer, Integer>> currentPath = new ArrayList<>();
                 while (!que.isEmpty()) {
                     currentPath.clear();
                     top = que.poll();
-                    curCrossId = top.getLeft();
-                    if (visited.get(curCrossId)) continue;
-                    visited.put(curCrossId, true);
-                    cost = top.getMiddle();
-                    remainTime = top.getRight();
-                    res.add(Pair.of(curCrossId, departureTime + cost));
-                    rs = conn.createStatement().executeQuery("SELECT r_id, r_end, travel_t FROM road WHERE r_start = " + curCrossId);
+                    curCrossId = top._1();
+                    cost = top._2();
+                    remainTime = top._3();
+                    currentTime = top._4();
+                    rs = conn.createStatement().executeQuery("SELECT r_id, r_end FROM road WHERE r_start = " + curCrossId);
                     while (rs.next()) {
                         rId = rs.getInt("r_id");
                         endId = rs.getInt("r_end");
-                        travelTime = rs.getInt("travel_t");
+                        travelTime = leastTimeFromStartToEnd(rId, currentTime, currentTime + remainTime, conn);
                         if (remainTime >= travelTime) {
                             currentPath.add(Tuple4.apply(rId, curCrossId, endId, travelTime));
                         }
                     }
                     for (Tuple4<Integer, Integer, Integer, Integer> item : currentPath) {
-                        if (!visited.get(item._3()) && (dis.get(item._3()) != null || dis.get(item._3()) > cost + item._4())) {
+                        if ((dis.get(item._3()) == null) || dis.get(item._3()) > cost + item._4()) {
                             dis.put(item._3(), cost + item._4());
-                            que.add(Triple.of(item._1(), cost + item._4(), remainTime - item._4()));
+                            que.add(Tuple4.apply(item._3(), cost + item._4(), remainTime - item._4(), currentTime + item._4()));
                         }
 
                     }
@@ -417,6 +421,37 @@ public class MariaDBExecutorClient implements DBProxy {
                 return result;
             }
         };
+    }
+
+    private static int leastTimeFromStartToEnd(int rId, int dePartureTime, int endTime, Connection conn) throws SQLException, ParseException {
+        conn.setAutoCommit(true);
+        String sql = "SELECT st_time, en_time, travel_t FROM temporal_status WHERE r_id = ? AND en_time >= ? AND st_time <= ?";
+        PreparedStatement preparedStatement = conn.prepareStatement(sql);
+        preparedStatement.setInt(1, rId);
+        preparedStatement.setString(2, timestamp2Datetime(dePartureTime));
+        preparedStatement.setString(3, timestamp2Datetime(endTime));
+        int stTime, enTime, travelTime;
+        ResultSet rs = preparedStatement.executeQuery();
+        int ret = Integer.MAX_VALUE, tmp;
+        while (rs.next()) {
+            stTime = datetime2Int(rs.getString("st_time"));
+            enTime = datetime2Int(rs.getString("en_time"));
+            tmp = rs.getInt("travel_t");
+            travelTime = Integer.MAX_VALUE;
+            if (stTime + tmp > enTime) continue;
+            if (dePartureTime > stTime && enTime < endTime) {
+                // no need to wait
+                travelTime = tmp;
+            } else if (stTime >= dePartureTime && enTime <= endTime) {
+                travelTime = tmp + stTime - dePartureTime;
+            } else if (stTime > dePartureTime && endTime < enTime) {
+                if (stTime + tmp <= endTime)
+                    travelTime = tmp + stTime - dePartureTime;
+            }
+            if (ret > travelTime) ret = travelTime;
+
+        }
+        return ret;
     }
 
     private abstract class Req implements Callable<DBProxy.ServerResponse> {
@@ -454,12 +489,12 @@ public class MariaDBExecutorClient implements DBProxy {
 
     private static String timestamp2Datetime(int timestamp) {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        return format.format(new Date(Long.parseLong(String.valueOf(timestamp))));
+        return format.format(new Date(Long.parseLong(String.valueOf(timestamp * 1000))));
     }
 
     private static int datetime2Int(String date) throws ParseException {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        return (int)format.parse(date).getTime();
+        return (int)(format.parse(date).getTime() / 1000);
     }
 
 
