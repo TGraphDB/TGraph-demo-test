@@ -139,6 +139,10 @@ public abstract class EarliestArriveTime {
         NodeCross(long id) {
             this.id = id;
         }
+        public NodeCross(long id, int arriveTime) {
+            this.id = id;
+            this.arriveTime = arriveTime;
+        }
 
         public long getId() {
             return id;

@@ -259,7 +259,7 @@ public class SqlServerExecutorClient implements DBProxy {
                 while(rs.next()){
                     int rid = rs.getInt("rid");
                     int maxVal = rs.getInt("mv");
-                    Pair.of(rid, maxVal);
+                    r.add(Pair.of((long)rid, maxVal));
                 }
                 SnapshotAggrMaxTx.Result result = new SnapshotAggrMaxTx.Result();
                 result.setRoadTravelTime(r);
