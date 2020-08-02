@@ -36,7 +36,7 @@ function systemInfo() {
 # Explain: path-to-db-dir is a TGraph DB folder which contains traffic demo road network topology
 function tcypherServerStart() {
     mvn -B clean compile exec:java \
-        -Dexec.mainClass="run.TCypherSocketServer" \
+        -Dexec.mainClass="simple.TCypherSocketServer" \
         -Dexec.classpathScope="test" \
         -Dexec.args="$1"
 }
@@ -72,7 +72,7 @@ function tcypherClientWriteTpropTest() {
         IS_COMPILED=''
     fi
     mvn -B ${IS_COMPILED} exec:java \
-        -Dexec.mainClass="run.TCypherWriteTemporalPropertyTest" \
+        -Dexec.mainClass="simple.tgraph.tcypher.WriteTemporalPropertyTest" \
         -Dexec.classpathScope="test" \
         -Dexec.args="$1 $2 $3 $4 $5 $6"
 }
@@ -85,7 +85,7 @@ function genBenchmark() {
   export TEMPORAL_DATA_START=0503
   export TEMPORAL_DATA_END=0504
   export REACHABLE_AREA_TX_CNT=20
-  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.benchmark.BenchmarkTxArgsGenerator"
+  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.benchmark.BenchmarkTxGenerator"
 }
 
 function genResult() {

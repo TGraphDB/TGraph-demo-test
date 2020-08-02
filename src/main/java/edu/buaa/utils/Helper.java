@@ -283,6 +283,10 @@ public class Helper {
         Preconditions.checkNotNull(val);
         return val;
     }
+
+    public static int getFileTime(File file){
+        return Integer.parseInt(file.getName().substring(10, 21));
+    }
 }
 
 

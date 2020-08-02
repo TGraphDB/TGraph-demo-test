@@ -16,14 +16,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
- *
+ * 自动下载交通数据，
  */
-public class MultiFileReader extends AbstractIterator<StatusUpdate> implements Closeable {
+public class TrafficMultiFileReader extends AbstractIterator<StatusUpdate> implements Closeable {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final LinkedList<Future<File>> files = new LinkedList<>();
     private BufferedReader curReader;
 
-    public MultiFileReader(List<File> fileList) {
+    public TrafficMultiFileReader(List<File> fileList) {
         for(File file : fileList){
             TrafficFileProcessingTask task = new TrafficFileProcessingTask(file);
             Future<File> future = executor.submit(task);
@@ -44,6 +44,7 @@ public class MultiFileReader extends AbstractIterator<StatusUpdate> implements C
             }else{
                 String line = curReader.readLine();
                 if(line==null) {
+                    curReader.close();
                     Future<File> f = files.poll();
                     if(f==null) return endOfData();
                     File file = f.get();
@@ -56,8 +57,8 @@ public class MultiFileReader extends AbstractIterator<StatusUpdate> implements C
             }
         } catch (InterruptedException | ExecutionException | IOException e) {
             e.printStackTrace();
+            throw new RuntimeException("fail to read traffic file.");
         }
-        throw new RuntimeException("fail to read traffic file.");
     }
 
     public void close(){

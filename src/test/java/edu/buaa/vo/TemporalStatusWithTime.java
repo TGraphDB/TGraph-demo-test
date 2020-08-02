@@ -1,4 +1,4 @@
-package org.act.temporal.test.vo;
+package edu.buaa.vo;
 
 /**
  * Created by song on 16-2-27.

@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import edu.buaa.algo.EarliestArriveTime;
 import edu.buaa.benchmark.transaction.*;
+import edu.buaa.model.StatusUpdate;
 import edu.buaa.utils.TimeMonitor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
@@ -184,7 +185,7 @@ public class SqlServerExecutorClient implements DBProxy {
             protected AbstractTransaction.Result executeQuery(Connection conn) throws Exception{
                 conn.setAutoCommit(false);
                 PreparedStatement stat = conn.prepareStatement("INSERT INTO temporal_status VALUES (?,?,?,?,?)");
-                for(ImportTemporalDataTx.StatusUpdate s : tx.data){
+                for(StatusUpdate s : tx.data){
                     stat.setInt(1, s.getTime());
                     stat.setInt(2, Math.toIntExact(s.getRoadId()));
                     stat.setInt(3, s.getJamStatus());

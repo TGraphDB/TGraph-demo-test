@@ -1,4 +1,4 @@
-package org.act.temporal.test.utils;
+package edu.buaa.utils;
 
 import edu.buaa.client.vo.RoadChain;
 import edu.buaa.client.vo.TemporalStatus;
@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 
 /**
+ * 将原始交通数据转换压缩格式。
  * Created by song on 16-2-26.
  */
 public class FileMerger {

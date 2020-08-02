@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import edu.buaa.algo.EarliestArriveTime;
 import edu.buaa.benchmark.transaction.*;
+import edu.buaa.model.StatusUpdate;
 import edu.buaa.utils.TimeMonitor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
@@ -177,7 +178,7 @@ public class MariaDBExecutorClient implements DBProxy {
                 ResultSet rs = null;
                 int tsId = 0, status = 0, travelT = 0, segCnt = 0;
                 String stTime = null;
-                for(ImportTemporalDataTx.StatusUpdate s : tx.data) {
+                for(StatusUpdate s : tx.data) {
                     stat.setInt(1, index++);
                     int rId = Math.toIntExact(s.getRoadId());
                     String st = timestamp2Datetime(s.getTime());

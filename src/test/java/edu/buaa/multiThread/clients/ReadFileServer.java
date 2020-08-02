@@ -1,9 +1,8 @@
-package org.act.temporal.test.multiThread.clients;
+package edu.buaa.multiThread.clients;
 
 import edu.buaa.client.vo.RoadChain;
 import edu.buaa.client.vo.TemporalStatus;
-import org.act.temporal.test.utils.Helper;
-import org.act.temporal.test.vo.Line;
+import edu.buaa.vo.Line;
 
 import java.io.*;
 import java.util.List;

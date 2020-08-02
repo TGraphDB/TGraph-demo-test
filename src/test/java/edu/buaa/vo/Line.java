@@ -1,4 +1,4 @@
-package org.act.temporal.test.vo;
+package edu.buaa.vo;
 
 import edu.buaa.client.vo.RoadChain;
 

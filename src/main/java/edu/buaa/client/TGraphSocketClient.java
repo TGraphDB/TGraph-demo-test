@@ -40,7 +40,7 @@ public abstract class TGraphSocketClient {
      * @param parallelCnt number of threads to send queries.
      * @param queueLength queue to cache data/request read from disk.
      */
-    public TGraphSocketClient(String serverHost, int parallelCnt, int queueLength) throws IOException, ExecutionException, InterruptedException {
+    public TGraphSocketClient(String serverHost, int parallelCnt, int queueLength) throws IOException{
         this.exe = new ThreadPoolExecutor(parallelCnt, parallelCnt, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(queueLength), (r, executor) -> {
             if (!executor.isShutdown()) try {
                 executor.getQueue().put(r);

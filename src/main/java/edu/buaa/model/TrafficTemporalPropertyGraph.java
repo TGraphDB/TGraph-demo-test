@@ -1,7 +1,7 @@
 package edu.buaa.model;
 
 import edu.buaa.utils.Helper;
-import edu.buaa.utils.MultiFileReader;
+import edu.buaa.utils.TrafficMultiFileReader;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -40,7 +40,7 @@ public class TrafficTemporalPropertyGraph {
     }
 
     public void importTraffic(List<File> trafficData) {
-        try(MultiFileReader iterator = new MultiFileReader(trafficData)) {
+        try(TrafficMultiFileReader iterator = new TrafficMultiFileReader(trafficData)) {
             while (iterator.hasNext()) {
                 StatusUpdate s = iterator.next();
                 TimePointInt tStart = new TimePointInt(s.time);

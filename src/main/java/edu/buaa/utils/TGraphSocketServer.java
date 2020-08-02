@@ -77,7 +77,7 @@ public class TGraphSocketServer {
 
     public static abstract class ReqExecutor {
         protected GraphDatabaseService db;
-        private void setDB(GraphDatabaseService db){
+        protected void setDB(GraphDatabaseService db){
             this.db = db;
         }
         protected abstract Result execute(String line) throws RuntimeException;

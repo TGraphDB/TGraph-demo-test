@@ -2,6 +2,7 @@ package edu.buaa.server.neo4j;
 
 import edu.buaa.benchmark.transaction.AbstractTransaction;
 import edu.buaa.benchmark.transaction.ImportTemporalDataTx;
+import edu.buaa.model.StatusUpdate;
 import edu.buaa.server.Neo4jKernelTcpServer;
 import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
@@ -71,7 +72,7 @@ public class ArraySimulation extends Neo4jKernelTcpServer.Neo4jBackEnd
     @Override
     protected AbstractTransaction.Result execute(ImportTemporalDataTx tx) {
         try(Transaction t = db.beginTx()){
-            for(ImportTemporalDataTx.StatusUpdate s : tx.getData()){
+            for(StatusUpdate s : tx.getData()){
                 Relationship r = db.getRelationshipById(s.getRoadId());
                 set(r, "travel_time", s.getTime(), s.getTravelTime());
                 set(r, "jam_status", s.getTime(), s.getJamStatus());

@@ -1,21 +1,16 @@
 package edu.buaa.model;
 
-import edu.buaa.utils.MultiFileReader;
-
-import java.io.File;
 import java.util.Calendar;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * Created by song on 2019-12-26.
  */
 public class StatusUpdate {
-    public final int travelTime;
-    public final byte jamStatus;
-    public final byte segmentCount;
-    public final String roadId;
-    public final int time;
+    private int travelTime;
+    private int jamStatus;
+    private int segmentCount;
+    private String roadId;
+    private int time;
 
     /**
      * data line likes:
@@ -27,8 +22,8 @@ public class StatusUpdate {
         String[] fields = line.split(" ");
         time = timeStr2timestamp(fields[0]);
         roadId = fields[1];
-        jamStatus = Byte.parseByte(fields[2]);
-        segmentCount = Byte.parseByte(fields[3]);
+        jamStatus = Integer.parseInt(fields[2]);
+        segmentCount = Integer.parseInt(fields[3]);
         travelTime = Integer.parseInt(fields[4]);
     }
 
@@ -54,6 +49,34 @@ public class StatusUpdate {
         }else {
             throw new RuntimeException("timestamp larger than Integer.MAX_VALUE, this should not happen");
         }
+    }
+
+    public StatusUpdate(String roadId, int time, int travelTime, int jamStatus, int segmentCount) {
+        this.roadId = roadId;
+        this.time = time;
+        this.travelTime = travelTime;
+        this.jamStatus = jamStatus;
+        this.segmentCount = segmentCount;
+    }
+
+    public String getRoadId() {
+        return roadId;
+    }
+
+    public int getTime() {
+        return time;
+    }
+
+    public int getTravelTime() {
+        return travelTime;
+    }
+
+    public int getJamStatus() {
+        return jamStatus;
+    }
+
+    public int getSegmentCount() {
+        return segmentCount;
     }
 
 }

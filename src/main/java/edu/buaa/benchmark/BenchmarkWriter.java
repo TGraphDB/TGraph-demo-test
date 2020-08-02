@@ -53,7 +53,7 @@ public class BenchmarkWriter {
     }
 
     public void write(Iterator<AbstractTransaction> txIter) throws IOException {
-        while(txIter.hasNext()) write(txIter.next());
+
     }
 
     public void close() throws IOException {

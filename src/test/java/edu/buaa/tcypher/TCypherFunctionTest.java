@@ -1,4 +1,4 @@
-package org.act.temporal.test.tcypher;
+package edu.buaa.tcypher;
 
 import com.aliyun.openservices.aliyun.log.producer.LogProducer;
 import com.aliyun.openservices.aliyun.log.producer.Producer;

@@ -64,12 +64,9 @@ public class BenchmarkTxResultProcessor {
         }
     }
 
-    public PostProcessing callback(AbstractTransaction tx){
-        return new PostProcessing(tx);
-    }
 
     public void process(ListenableFuture<DBProxy.ServerResponse> result, AbstractTransaction tx) {
-        Futures.addCallback( result, callback(tx), this.thread);
+        Futures.addCallback( result, new PostProcessing(tx), this.thread);
 //        try {
 //            callback(tx).onSuccess(result.get());
 //        } catch (InterruptedException | ExecutionException e) {

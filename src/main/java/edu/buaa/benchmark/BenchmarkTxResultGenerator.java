@@ -2,6 +2,7 @@ package edu.buaa.benchmark;
 
 import edu.buaa.algo.EarliestArriveTime;
 import edu.buaa.benchmark.transaction.*;
+import edu.buaa.model.StatusUpdate;
 import edu.buaa.model.TimePointInt;
 import edu.buaa.model.TrafficTGraph;
 import edu.buaa.model.TrafficTGraph.JamStatus;
@@ -68,7 +69,7 @@ public class BenchmarkTxResultGenerator {
     }
 
     public void execute(ImportTemporalDataTx tx){
-        for(ImportTemporalDataTx.StatusUpdate s : tx.data){
+        for(StatusUpdate s : tx.data){
             RelRoad r = tgraph.roads.get(s.getRoadId());
             TimePointInt time = new TimePointInt(s.getTime());
             r.tpJamStatus.setToNow(time, JamStatus.valueOf(s.getJamStatus()));
