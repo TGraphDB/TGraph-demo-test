@@ -43,16 +43,17 @@ public class TrafficTemporalPropertyGraph {
         try(TrafficMultiFileReader iterator = new TrafficMultiFileReader(trafficData)) {
             while (iterator.hasNext()) {
                 StatusUpdate s = iterator.next();
-                TimePointInt tStart = new TimePointInt(s.time);
-                RoadRel road = roadRelMap.get(s.roadId);
-                road.tpJamStatus.setToNow(tStart, s.jamStatus);
-                road.tpSegCount.setToNow(tStart, s.segmentCount);
-                road.tpTravelTime.setToNow(tStart, s.travelTime);
+                int t = s.getTime();
+                TimePointInt tStart = new TimePointInt(t);
+                RoadRel road = roadRelMap.get(s.getRoadId());
+                road.tpJamStatus.setToNow(tStart, (byte) s.getJamStatus());
+                road.tpSegCount.setToNow(tStart, (byte) s.getSegmentCount());
+                road.tpTravelTime.setToNow(tStart, s.getTravelTime());
                 Integer cnt = road.updateCount.get(TimePointInt.Now);
                 if(cnt==null) road.updateCount.setToNow(tStart, 1);
                 else road.updateCount.setToNow(tStart, cnt+1);
-                if (timeMax < s.time) timeMax = s.time;
-                if (timeMin > s.time) timeMin = s.time;
+                if (timeMax < t) timeMax = t;
+                if (timeMin > t) timeMin = t;
             }
         }
     }

@@ -81,7 +81,7 @@ public class SqlServerExecutorClient implements DBProxy {
             stmt.execute("USE beijing_traffic");
             stmt.execute("CREATE TABLE cross_node ( id int PRIMARY KEY, name char(255) )");
             stmt.execute("CREATE TABLE road ( id int PRIMARY KEY, r_name char(16), r_start int, r_end int, r_length int, r_type int)");
-            stmt.execute("CREATE TABLE temporal_status (int rowId, t int, rid int, status int, travel_t int, seg_cnt int)");
+            stmt.execute("CREATE TABLE temporal_status (t int, r_name char(16), rid int, status int, travel_t int, seg_cnt int)");
             stmt.execute("create clustered index tr_index on temporal_status(t, rid)");
             stmt.execute("create index rs_index on road(r_start)");
             stmt.close();
@@ -187,7 +187,7 @@ public class SqlServerExecutorClient implements DBProxy {
                 PreparedStatement stat = conn.prepareStatement("INSERT INTO temporal_status VALUES (?,?,?,?,?)");
                 for(StatusUpdate s : tx.data){
                     stat.setInt(1, s.getTime());
-                    stat.setInt(2, Math.toIntExact(s.getRoadId()));
+                    stat.setString(2, s.getRoadId());
                     stat.setInt(3, s.getJamStatus());
                     stat.setInt(4, s.getTravelTime());
                     stat.setInt(5, s.getSegmentCount());
