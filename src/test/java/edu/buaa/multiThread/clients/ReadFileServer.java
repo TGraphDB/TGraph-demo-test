@@ -2,6 +2,7 @@ package edu.buaa.multiThread.clients;
 
 import edu.buaa.client.vo.RoadChain;
 import edu.buaa.client.vo.TemporalStatus;
+import edu.buaa.utils.Helper;
 import edu.buaa.vo.Line;
 
 import java.io.*;

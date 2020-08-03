@@ -7,6 +7,7 @@ import edu.buaa.benchmark.BenchmarkTxResultProcessor;
 import edu.buaa.benchmark.client.DBProxy;
 import edu.buaa.benchmark.client.TCypherExecutorClient;
 import edu.buaa.benchmark.transaction.AbstractTransaction;
+import edu.buaa.utils.Helper;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
