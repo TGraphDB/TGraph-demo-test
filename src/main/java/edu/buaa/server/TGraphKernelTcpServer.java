@@ -6,18 +6,19 @@ import edu.buaa.algo.EarliestArriveTime;
 import edu.buaa.benchmark.transaction.*;
 import edu.buaa.benchmark.transaction.AbstractTransaction.Result;
 import edu.buaa.client.vo.RuntimeEnv;
+import edu.buaa.model.StatusUpdate;
 import edu.buaa.utils.Helper;
 import edu.buaa.utils.TGraphSocketServer;
 import org.act.temporalProperty.query.TimePointL;
+import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.*;
 import org.neo4j.temporal.TemporalRangeQuery;
 import org.neo4j.temporal.TimePoint;
+import org.neo4j.tooling.GlobalGraphOperations;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
     public static void main(String[] args){
@@ -43,6 +44,16 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
             throw new IllegalArgumentException("invalid dbDir");
         }
         return dbDir;
+    }
+
+    private Map<String, Long> roadMap = new HashMap<>();
+
+    @Override
+    protected void setDB(GraphDatabaseService db){
+        this.db = db;
+        for(Relationship r: GlobalGraphOperations.at(db).getAllRelationships()){
+            roadMap.put((String) r.getProperty("name"), r.getId());
+        }
     }
 
     @Override
@@ -106,7 +117,9 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
                 Node start = db.getNodeById(sr.getStartCrossId());
                 Node end = db.getNodeById(sr.getEndCrossId());
                 Relationship r = start.createRelationshipTo(end, RoadType.ROAD_TO);
+                r.setProperty("name", sr.getId());
                 Preconditions.checkArgument(r.getId()==sr.getRoadId(), "id not match");
+                roadMap.put(sr.getId(), r.getId());
             }
             t.success();
         }
@@ -116,8 +129,8 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
 
     private Result execute(ImportTemporalDataTx tx) {
         try(Transaction t = db.beginTx()) {
-            for(ImportTemporalDataTx.StatusUpdate s : tx.data){
-                Relationship r = db.getRelationshipById(s.getRoadId());
+            for(StatusUpdate s : tx.data){
+                Relationship r = db.getRelationshipById(roadMap.get(s.getRoadId()));
                 TimePoint time = Helper.time(s.getTime());
                 r.setTemporalProperty("travel_time", time, s.getTravelTime());
                 r.setTemporalProperty("full_status", time, s.getJamStatus());
@@ -150,6 +163,20 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
             NodeNeighborRoadTx.Result result = new NodeNeighborRoadTx.Result();
             result.setRoadIds(answers);
 //            t.failure();//do not commit;
+            return result;
+        }
+    }
+
+    private Result execute(SnapshotQueryTx tx){
+        try(Transaction t = db.beginTx()) {
+            List<Pair<Long, Integer>> answers = new ArrayList<>();
+            for(Relationship r: GlobalGraphOperations.at(db).getAllRelationships()){
+                 answers.add(Pair.of(r.getId(), (Integer) r.getTemporalProperty(tx.getPropertyName(), Helper.time(tx.getTimestamp()))));
+            }
+            SnapshotQueryTx.Result result = new SnapshotQueryTx.Result();
+//            answers.sort((pair)->{});
+//            t.failure();//do not commit;
+            result.setRoadStatus(answers);
             return result;
         }
     }
