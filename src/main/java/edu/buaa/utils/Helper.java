@@ -8,7 +8,7 @@ import com.aliyun.openservices.aliyun.log.producer.ProjectConfig;
 import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.PeekingIterator;
-import edu.buaa.client.vo.RuntimeEnv;
+import edu.buaa.client.RuntimeEnv;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.neo4j.temporal.TimePoint;

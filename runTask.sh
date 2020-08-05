@@ -27,7 +27,7 @@ function systemInfo() {
         IS_COMPILED=''
     fi
     mvn -B ${IS_COMPILED} exec:java \
-        -Dexec.mainClass="edu.buaa.vo.RuntimeEnv"
+        -Dexec.mainClass="edu.buaa.client.RuntimeEnv"
 }
 
 ## Function: Start TGraph TCP Server which accept TCypher queries.

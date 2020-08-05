@@ -1,4 +1,4 @@
-package edu.buaa.client.vo;
+package edu.buaa.client;
 
 import java.time.Instant;
 import java.util.Arrays;

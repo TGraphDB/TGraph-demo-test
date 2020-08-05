@@ -5,7 +5,7 @@ import com.google.common.base.Preconditions;
 import edu.buaa.algo.EarliestArriveTime;
 import edu.buaa.benchmark.transaction.*;
 import edu.buaa.benchmark.transaction.AbstractTransaction.Result;
-import edu.buaa.client.vo.RuntimeEnv;
+import edu.buaa.client.RuntimeEnv;
 import edu.buaa.model.StatusUpdate;
 import edu.buaa.utils.Helper;
 import edu.buaa.utils.TGraphSocketServer;
@@ -51,8 +51,11 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
     @Override
     protected void setDB(GraphDatabaseService db){
         this.db = db;
-        for(Relationship r: GlobalGraphOperations.at(db).getAllRelationships()){
-            roadMap.put((String) r.getProperty("name"), r.getId());
+        try(Transaction tx = db.beginTx()){
+            for(Relationship r: GlobalGraphOperations.at(db).getAllRelationships()){
+                roadMap.put((String) r.getProperty("name"), r.getId());
+            }
+            tx.success();
         }
     }
 

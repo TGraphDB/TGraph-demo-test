@@ -1,7 +1,7 @@
 //package run;
 //
 //import edu.buaa.client.Config;
-//import edu.buaa.client.vo.RuntimeEnv;
+//import edu.buaa.client.RuntimeEnv;
 //import org.junit.runner.RunWith;
 //import org.junit.runners.Parameterized;
 //
