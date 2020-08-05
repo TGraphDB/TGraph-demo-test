@@ -1,8 +1,10 @@
 package edu.buaa.benchmark.transaction;
 
+import edu.buaa.utils.Helper;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 
-import java.util.List;
+import java.util.*;
 
 public class SnapshotQueryTx extends AbstractTransaction {
 
@@ -27,18 +29,19 @@ public class SnapshotQueryTx extends AbstractTransaction {
     }
 
     public static class Result extends AbstractTransaction.Result{
-        List<Pair<Long, Integer>> roadStatus;
+        List<Pair<String, Integer>> roadStatus;
 
-        public List<Pair<Long, Integer>> getRoadStatus() {
+        public List<Pair<String, Integer>> getRoadStatus() {
             return roadStatus;
         }
 
-        public void setRoadStatus(List<Pair<Long, Integer>> roadStatus) {
+        public void setRoadStatus(List<Pair<String, Integer>> roadStatus) {
             this.roadStatus = roadStatus;
         }
     }
 
-    public void validateResult(Result result){
-
+    @Override
+    public void validateResult(AbstractTransaction.Result result){
+        Helper.validateResult(((Result) this.getResult()).getRoadStatus(), ((Result) result).getRoadStatus());
     }
 }

@@ -53,7 +53,9 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
         this.db = db;
         try(Transaction tx = db.beginTx()){
             for(Relationship r: GlobalGraphOperations.at(db).getAllRelationships()){
-                roadMap.put((String) r.getProperty("name"), r.getId());
+                String roadName = (String) r.getProperty("name");
+                Preconditions.checkNotNull(roadName,"should not happen: r name==null");
+                roadMap.put(roadName, r.getId());
             }
             tx.success();
         }
@@ -72,42 +74,6 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
             default:
                 throw new UnsupportedOperationException();
         }
-    }
-
-    private Result execute(EarliestArriveTimeAggrTx tx) {
-        EarliestArriveTimeAggrTx.Result result = new EarliestArriveTimeAggrTx.Result();
-        try(Transaction t = db.beginTx()) {
-            Relationship r = db.getRelationshipById(tx.getRoadId());
-            if (!r.hasProperty("travel_time")) throw new UnsupportedOperationException();
-            Object tObj = r.getTemporalProperty("travel_time", Helper.time(tx.getDepartureTime()), Helper.time(tx.getEndTime()), new TemporalRangeQuery() {
-                private int minArriveT = Integer.MAX_VALUE;
-                private int entryIndex = 0;
-                @Override
-                public void onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
-                    Preconditions.checkState(time.valInt() >= tx.getDepartureTime());
-                    Preconditions.checkNotNull(val);
-                    int curT = time.valInt();
-                    if(entryIndex==0 && curT>tx.getDepartureTime()){
-                        throw new UnsupportedOperationException();
-                    }
-                    entryIndex++;
-                    int travelT = (int) val;
-                    if(curT +travelT<minArriveT) minArriveT = curT +travelT;
-                }
-                @Override
-                public Object onReturn() {
-                    if(minArriveT<Integer.MAX_VALUE){
-                        return minArriveT;
-                    }else{
-                        throw new UnsupportedOperationException();
-                    }
-                }
-            });
-            result.setArriveTime((Integer) tObj);
-        }catch (UnsupportedOperationException e){
-            result.setArriveTime(-1);
-        }
-        return result;
     }
 
     private Result execute(ImportStaticDataTx tx){
@@ -145,6 +111,26 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
         return new Result();
     }
 
+    private Result execute(SnapshotQueryTx tx){
+        try(Transaction t = db.beginTx()) {
+            List<Pair<String, Integer>> answers = new ArrayList<>();
+            for(Relationship r: GlobalGraphOperations.at(db).getAllRelationships()){
+                String roadName = (String) r.getProperty("name");
+                Object v = r.getTemporalProperty(tx.getPropertyName(), Helper.time(tx.getTimestamp()));
+                if(v==null){
+                    answers.add(Pair.of(roadName, -1));
+                }else{
+                    answers.add(Pair.of(roadName, (Integer) v));
+                }
+            }
+            SnapshotQueryTx.Result result = new SnapshotQueryTx.Result();
+//            answers.sort((pair)->{});
+//            t.failure();//do not commit;
+            result.setRoadStatus(answers);
+            return result;
+        }
+    }
+
     private Result execute(ReachableAreaQueryTx tx){
         try(Transaction t = db.beginTx()) {
             EarliestArriveTime algo = new EarliestArriveTimeTGraphKernel(db, "travel_time", tx.getStartCrossId(), tx.getDepartureTime(), tx.getTravelTime());
@@ -171,23 +157,41 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
         }
     }
 
-    private Result execute(SnapshotQueryTx tx){
+
+    private Result execute(EarliestArriveTimeAggrTx tx) {
+        EarliestArriveTimeAggrTx.Result result = new EarliestArriveTimeAggrTx.Result();
         try(Transaction t = db.beginTx()) {
-            List<Pair<Long, Integer>> answers = new ArrayList<>();
-            for(Relationship r: GlobalGraphOperations.at(db).getAllRelationships()){
-                Object v = r.getTemporalProperty(tx.getPropertyName(), Helper.time(tx.getTimestamp()));
-                if(v==null){
-                    answers.add(Pair.of(r.getId(), -1));
-                }else{
-                    answers.add(Pair.of(r.getId(), (Integer) v));
+            Relationship r = db.getRelationshipById(tx.getRoadId());
+            if (!r.hasProperty("travel_time")) throw new UnsupportedOperationException();
+            Object tObj = r.getTemporalProperty("travel_time", Helper.time(tx.getDepartureTime()), Helper.time(tx.getEndTime()), new TemporalRangeQuery() {
+                private int minArriveT = Integer.MAX_VALUE;
+                private int entryIndex = 0;
+                @Override
+                public void onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
+                    Preconditions.checkState(time.valInt() >= tx.getDepartureTime());
+                    Preconditions.checkNotNull(val);
+                    int curT = time.valInt();
+                    if(entryIndex==0 && curT>tx.getDepartureTime()){
+                        throw new UnsupportedOperationException();
+                    }
+                    entryIndex++;
+                    int travelT = (int) val;
+                    if(curT +travelT<minArriveT) minArriveT = curT +travelT;
                 }
-            }
-            SnapshotQueryTx.Result result = new SnapshotQueryTx.Result();
-//            answers.sort((pair)->{});
-//            t.failure();//do not commit;
-            result.setRoadStatus(answers);
-            return result;
+                @Override
+                public Object onReturn() {
+                    if(minArriveT<Integer.MAX_VALUE){
+                        return minArriveT;
+                    }else{
+                        throw new UnsupportedOperationException();
+                    }
+                }
+            });
+            result.setArriveTime((Integer) tObj);
+        }catch (UnsupportedOperationException e){
+            result.setArriveTime(-1);
         }
+        return result;
     }
 
     public static class EarliestArriveTimeTGraphKernel extends EarliestArriveTime {

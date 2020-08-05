@@ -11,17 +11,14 @@ import com.google.common.collect.PeekingIterator;
 import edu.buaa.client.RuntimeEnv;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.lang3.tuple.Triple;
 import org.neo4j.temporal.TimePoint;
 
 import java.io.*;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
@@ -282,6 +279,41 @@ public class Helper {
         String val = System.getenv(name);
         Preconditions.checkNotNull(val);
         return val;
+    }
+
+    public static <T> Triple<Set<T>, Integer, Set<T>> compareSets(Collection<T>correct_c, Collection<T> input_c){
+        Set<T> correct = new HashSet<>(correct_c);
+        Set<T> input = new HashSet<>(input_c);
+        Set<T> common = new HashSet<>(input);
+        common.retainAll(correct);
+        correct.removeAll(common);
+        input.removeAll(common);
+        return Triple.of(correct, common.size(), input);
+    }
+
+    public static <T> boolean validateResult(Collection<T> correct_c, Collection<T> input_c){
+        Triple<Set<T>, Integer, Set<T>> r = compareSets(correct_c, input_c);
+        Set<T> correctDiff = r.getLeft();
+        Set<T> inputDiff = r.getRight();
+        if(!correctDiff.isEmpty() || !inputDiff.isEmpty()){
+            StringBuilder sb = new StringBuilder();
+            sb.append("-").append(correctDiff.size()).append(", ").append(r.getMiddle()).append(", +").append(inputDiff.size()).append(" [");
+            int i=0;
+            for(T p : correctDiff){
+                sb.append(p).append(", ");
+                if(++i>2) break;
+            }
+            sb.append(" | ");
+            i=0;
+            for(T p : inputDiff){
+                sb.append(p).append(", ");
+                if(++i>2) break;
+            }
+            System.out.println(sb);
+            return false;
+        }else {
+            return true;
+        }
     }
 
     public static int getFileTime(File file){
