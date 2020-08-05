@@ -6,7 +6,10 @@ public abstract class AbstractTransaction {
         tx_import_temporal_data(false),
         tx_query_reachable_area(true),
         tx_query_node_neighbor_road(true),
-        tx_query_road_earliest_arrive_time_aggr(true);
+        tx_query_road_earliest_arrive_time_aggr(true),
+        tx_query_snapshot(true),
+        tx_query_snapshot_aggr_max(true),
+        tx_query_snapshot_aggr_duration(true);
         private boolean isReadTx;
         TxType(boolean isReadTx){
             this.isReadTx = isReadTx;

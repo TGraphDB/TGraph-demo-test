@@ -12,14 +12,16 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
 public class SnapshotTest {
 
-    private static int threadCnt = 10; // number of threads to send queries.
-    private static String serverHost = "tgraph.server"; // hostname of TGraph (TCypher) server.
-    private static boolean verifyResult = true;
+    private static int threadCnt = Integer.parseInt(Helper.mustEnv("MAX_CONNECTION_CNT")); // number of threads to send queries.
+    private static String serverHost = Helper.mustEnv("DB_HOST"); // hostname of TGraph (TCypher) server.
+    private static boolean verifyResult = Boolean.parseBoolean(Helper.mustEnv("VERIFY_RESULT"));
+    private static String resultFile = Helper.mustEnv("SERVER_RESULT_FILE");
 
     private static Producer logger;
     private static DBProxy client;
@@ -27,10 +29,14 @@ public class SnapshotTest {
 
     @BeforeClass
     public static void init() throws IOException, ExecutionException, InterruptedException {
-        logger = Helper.getLogger();
         client = new TGraphExecutorClient(serverHost, threadCnt, 800);
         client.testServerClientCompatibility();
-        post = new BenchmarkTxResultProcessor(logger, "TGraph(Snapshot)", Helper.codeGitVersion(), verifyResult);
+
+        post = new BenchmarkTxResultProcessor("TGraph(Snapshot)", Helper.codeGitVersion());
+        logger = Helper.getLogger();
+        post.setLogger(logger);
+        post.setVerifyResult(verifyResult);
+        post.setResult(new File(resultFile));
     }
 
     @Test
@@ -54,6 +60,7 @@ public class SnapshotTest {
 
     @AfterClass
     public static void close() throws IOException, InterruptedException, ProducerException {
+        post.close();
         client.close();
         logger.close();
     }

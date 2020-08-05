@@ -12,26 +12,48 @@ import edu.buaa.benchmark.client.DBProxy;
 import edu.buaa.benchmark.transaction.AbstractTransaction;
 import edu.buaa.benchmark.transaction.AbstractTransaction.Metrics;
 
+import java.io.*;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class BenchmarkTxResultProcessor {
     public final Executor thread = Executors.newSingleThreadExecutor();
-    private final Producer logger;
     private final String testName;
     private final String clientVersion;
-    private final boolean verifyResult;
 
-    public BenchmarkTxResultProcessor(Producer logger, String testName, String clientVersion, boolean verifyResult){
-        this.logger = logger;
+    private Producer logger;
+    private boolean verifyResult;
+    private BenchmarkWriter writer;
+
+    public BenchmarkTxResultProcessor(String testName, String clientVersion){
         this.testName = testName;
         this.clientVersion = clientVersion;
+    }
+
+    public void setLogger(Producer logger) {
+        this.logger = logger;
+    }
+
+    public void setVerifyResult(boolean verifyResult) {
         this.verifyResult = verifyResult;
     }
 
-    public void logMetrics(AbstractTransaction tx, DBProxy.ServerResponse response) throws ProducerException, InterruptedException {
+    public void setResult(File resultFile) throws IOException {
+        this.writer = new BenchmarkWriter(resultFile);
+    }
+
+    public void process(ListenableFuture<DBProxy.ServerResponse> result, AbstractTransaction tx) {
+        Futures.addCallback( result, new PostProcessing(tx), this.thread);
+//sync mode:
+//        try {
+//            callback(tx).onSuccess(result.get());
+//        } catch (InterruptedException | ExecutionException e) {
+//            e.printStackTrace();
+//        }
+    }
+
+    private void logMetrics(AbstractTransaction tx, DBProxy.ServerResponse response) throws ProducerException, InterruptedException {
         JSONObject mObj = mergeMetrics(response.getMetrics(), tx.getMetrics());
         LogItem log = new LogItem();
         log.PushBack("type", tx.getTxType().name());
@@ -64,17 +86,12 @@ public class BenchmarkTxResultProcessor {
         }
     }
 
-
-    public void process(ListenableFuture<DBProxy.ServerResponse> result, AbstractTransaction tx) {
-        Futures.addCallback( result, new PostProcessing(tx), this.thread);
-//        try {
-//            callback(tx).onSuccess(result.get());
-//        } catch (InterruptedException | ExecutionException e) {
-//            e.printStackTrace();
-//        }
+    public void close() throws IOException {
+        if(writer!=null) writer.close();
     }
 
-    public class PostProcessing implements FutureCallback<DBProxy.ServerResponse>{
+
+    private class PostProcessing implements FutureCallback<DBProxy.ServerResponse>{
         AbstractTransaction tx;
         PostProcessing(AbstractTransaction tx){
             this.tx = tx;
@@ -84,9 +101,13 @@ public class BenchmarkTxResultProcessor {
         public void onSuccess(DBProxy.ServerResponse result) {
             if(result==null) return;
             try {
-                logMetrics(tx, result);
+                if(logger!=null) logMetrics(tx, result);
                 if(verifyResult) tx.validateResult(result.getResult());
-            } catch (ProducerException | InterruptedException e) {
+                if(writer!=null) {
+                    tx.setResult(result.getResult());
+                    writer.write(tx);
+                }
+            } catch (ProducerException | InterruptedException | IOException e) {
                 e.printStackTrace();
             }
         }

@@ -37,4 +37,8 @@ public class SnapshotQueryTx extends AbstractTransaction {
             this.roadStatus = roadStatus;
         }
     }
+
+    public void validateResult(Result result){
+
+    }
 }

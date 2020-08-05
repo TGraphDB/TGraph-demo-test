@@ -24,12 +24,12 @@ import java.util.List;
 
 public class WriteTemporalPropertyTest {
 
-    private static int threadCnt = 10; // number of threads to send queries.
-    private static int opPerTx = 1000; // number of TCypher queries executed in one transaction.
-    private static String startDay = "0501";
-    private static String endDay = "0503";
-    private static String serverHost = "tcypher.server"; // hostname of TGraph (TCypher) server.
-    private static String dataFilePath = "/tmp/traffic"; // should be like '/media/song/test/data-set/beijing-traffic/TGraph/byday/'
+    private static int threadCnt = Integer.parseInt(Helper.mustEnv("threadCnt")); // number of threads to send queries.
+    private static int opPerTx = Integer.parseInt(Helper.mustEnv("opPerTx")); // number of TCypher queries executed in one transaction.
+    private static String startDay = Helper.mustEnv("beginDay"); //0501
+    private static String endDay = Helper.mustEnv("endDay"); //0503
+    private static String serverHost = Helper.mustEnv("server"); // hostname of TGraph (TCypher) server.
+    private static String dataFilePath = Helper.mustEnv("dataDir"); // should be like '/media/song/test/data-set/beijing-traffic/TGraph/byday/'
 
     private static Producer logger;
     private static DBProxy client;
@@ -40,7 +40,8 @@ public class WriteTemporalPropertyTest {
         logger = Helper.getLogger();
         client = new TCypherExecutorClient(serverHost, threadCnt, 800);
         client.testServerClientCompatibility();
-        post = new BenchmarkTxResultProcessor(logger, "TCypher(TpWrt)", Helper.codeGitVersion(), false);
+        post = new BenchmarkTxResultProcessor("TCypher(TpWrt)", Helper.codeGitVersion());
+        post.setLogger(logger);
     }
 
     @Test

@@ -43,12 +43,15 @@ public class BenchmarkTxResultGenerator {
     }
 
     public List<AbstractTransaction> execute(AbstractTransaction tx) throws IOException {
-        if(tx instanceof ImportTemporalDataTx){
-            execute((ImportTemporalDataTx) tx);
-        }else if(tx instanceof ReachableAreaQueryTx){
-            return execute((ReachableAreaQueryTx) tx);
-        }else if(tx instanceof ImportStaticDataTx){
-            execute((ImportStaticDataTx) tx);
+        switch (tx.getTxType()){
+            case tx_import_static_data: execute((ImportStaticDataTx) tx);
+                break;
+            case tx_import_temporal_data: execute((ImportTemporalDataTx) tx);
+                break;
+            case tx_query_reachable_area: execute((ReachableAreaQueryTx) tx);
+                break;
+            case tx_query_snapshot: execute((SnapshotQueryTx) tx);
+                break;
         }
         return Collections.singletonList(tx);
     }

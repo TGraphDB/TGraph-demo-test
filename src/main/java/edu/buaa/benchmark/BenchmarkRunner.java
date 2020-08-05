@@ -38,7 +38,9 @@ public class BenchmarkRunner {
             }
             String serverVersion = client.testServerClientCompatibility();
             Producer logger = Helper.getLogger();
-            BenchmarkTxResultProcessor post = new BenchmarkTxResultProcessor(logger, getTestName(dbType, serverVersion), Helper.codeGitVersion(), verifyResult);
+            BenchmarkTxResultProcessor post = new BenchmarkTxResultProcessor(getTestName(dbType, serverVersion), Helper.codeGitVersion());
+            post.setLogger(logger);
+            post.setVerifyResult(verifyResult);
             client.createDB();
             BenchmarkReader reader = new BenchmarkReader(new File(benchmarkFileName));
             while (reader.hasNext()) {
@@ -58,28 +60,6 @@ public class BenchmarkRunner {
         return "B_"+dbType.toLowerCase()+"("+dbVersion+")_"+
                 c.get(Calendar.YEAR)+"."+(c.get(Calendar.MONTH)+1)+"."+c.get(Calendar.DAY_OF_MONTH)+"_"+
                 c.get(Calendar.HOUR_OF_DAY)+":"+c.get(Calendar.MINUTE);
-    }
-
-    private static void test(){
-        try {
-            //DBProxy client = new TGraphExecutorClient("localhost", 1, 800);
-            DBProxy client = new SqlServerExecutorClient("39.96.57.88", 1, 800);
-            String serverVersion = client.testServerClientCompatibility();
-            Producer logger = Helper.getLogger();
-            BenchmarkTxResultProcessor post = new BenchmarkTxResultProcessor(logger, getTestName("sql_server", serverVersion), Helper.codeGitVersion(), true);
-            //BenchmarkTxResultProcessor post = new BenchmarkTxResultProcessor(logger, getTestName("tgraph_kernel", serverVersion), Helper.codeGitVersion(), true);
-            client.createDB();
-            BenchmarkReader reader = new BenchmarkReader(new File("e:/tgraph/test-data/benchmark-with-result.gz"));
-            while (reader.hasNext()) {
-                AbstractTransaction tx = reader.next();
-                if(tx.getTxType()==tx_query_road_earliest_arrive_time_aggr) post.process(client.execute(tx), tx);
-            }
-            reader.close();
-            client.close();
-            logger.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
 

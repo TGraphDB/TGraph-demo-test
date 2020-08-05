@@ -30,95 +30,93 @@ function systemInfo() {
         -Dexec.mainClass="edu.buaa.vo.RuntimeEnv"
 }
 
-
-# Function: Start TGraph TCP Server which accept TCypher queries.
-# Example: tcypherServerStart path-to-db-dir
-# Explain: path-to-db-dir is a TGraph DB folder which contains traffic demo road network topology
-function tcypherServerStart() {
-    mvn -B clean compile exec:java \
-        -Dexec.mainClass="simple.TCypherSocketServer" \
-        -Dexec.classpathScope="test" \
-        -Dexec.args="$1"
-}
-
-# Function: Test TGraph TCypher Server write performance.
-# Example: tcypherClientWriteTest /media/song/test/db-network-only-ro 192.168.1.141 8 10 200000 /media/song/test/data-set/beijing-traffic/TGraph/byday/100501
-# Explain:
-#  /media/song/test/db-network-only-ro is a TGraph DB folder which contains traffic demo road network topology
-#  192.168.1.141  is the TCypher Server hostname
-#  8 is the number of connections to the server(both server and client use one thread to process one connection
-#  10 is the number of Cypher queries per transaction
-#  200000 is the total number of data lines to send.(from the data file)
-#  /media/song/test/data-set/beijing-traffic/TGraph/byday/100501 is the path of the data file
-function tcypherClientWriteSpropTest() {
-    if [ -z ${IS_COMPILED+x} ]
-    then
-        IS_COMPILED=' clean test-compile '
-    else
-        IS_COMPILED=''
-    fi
-    mvn -B ${IS_COMPILED} exec:java \
-        -Dexec.mainClass="org.act.temporal.test.tcypher.WriteStaticPropertyTest" \
-        -Dexec.classpathScope="test" \
-        -Dexec.args="$1 $2 $3 $4 $5 $6"
-}
-
-# Function: Test TGraph TCypher Server write performance. almost same as above but set temporal property.
-function tcypherClientWriteTpropTest() {
-    if [ -z ${IS_COMPILED+x} ]
-    then
-        IS_COMPILED=' clean test-compile '
-    else
-        IS_COMPILED=''
-    fi
-    mvn -B ${IS_COMPILED} exec:java \
-        -Dexec.mainClass="simple.tgraph.tcypher.WriteTemporalPropertyTest" \
-        -Dexec.classpathScope="test" \
-        -Dexec.args="$1 $2 $3 $4 $5 $6"
-}
-
-
-function genBenchmark() {
-  export WORK_DIR="E:\tgraph\test-data"
-  export BENCHMARK_FILE_OUTPUT=benchmark
-  export TEMPORAL_DATA_PER_TX=100
-  export TEMPORAL_DATA_START=0503
-  export TEMPORAL_DATA_END=0504
-  export REACHABLE_AREA_TX_CNT=20
-  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.benchmark.BenchmarkTxGenerator"
-}
-
-function genResult() {
-  export BENCHMARK_FILE_INPUT="E:\tgraph\test-data\benchmark.gz"
-  export BENCHMARK_FILE_OUTPUT="E:\tgraph\test-data\benchmark-with-result.gz"
-  export REACHABLE_AREA_REPLACE_TX=true
-  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.benchmark.BenchmarkTxResultGenerator"
-}
-
-function runBenchmark() {
-  export DB_TYPE=tgraph_kernel
-  #export DB_TYPE=sql_server
-  #export DB_HOST=39.96.57.88
-  export DB_HOST=localhost
-  export BENCHMARK_FILE_INPUT="E:\tgraph\test-data\benchmark-with-result.gz"
-  export MAX_CONNECTION_CNT=1
-  export VERIFY_RESULT=true
-  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.benchmark.BenchmarkRunner"
-}
+## Function: Start TGraph TCP Server which accept TCypher queries.
+## Example: tcypherServerStart path-to-db-dir
+## Explain: path-to-db-dir is a TGraph DB folder which contains traffic demo road network topology
+#function runTCypherServer() {
+#    mvn -B clean compile exec:java \
+#        -Dexec.mainClass="simple.TCypherSocketServer" \
+#        -Dexec.classpathScope="test" \
+#        -Dexec.args="$1"
+#}
 
 function runTGraphKernelServer(){
   export DB_PATH="E:\tgraph\test-db"
   mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.server.TGraphKernelTcpServer"
 }
 
-function runSQLServer(){
-  export DB_PATH=/tmp/testdb
-  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.server.TGraphKernelTcpServer"
+#function runSQLServer(){
+#  export DB_PATH=/tmp/testdb
+#  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.server.TGraphKernelTcpServer"
+#}
+#
+#function runNeo4jKernelServer(){
+#  export DB_PATH="E:\tgraph\test-db"
+#  export DB_TYPE=array
+#  export DB_TYPE=treemap
+#  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.server.Neo4jKernelTcpServer"
+#}
+
+
+function runWriteTest() {
+  export TEMPORAL_DATA_PER_TX=100
+  export TEMPORAL_DATA_START=0501
+  export TEMPORAL_DATA_END=0504
+  export DB_HOST=localhost
+  export RAW_DATA_PATH=E:\tgraph\test-data
+  export MAX_CONNECTION_CNT=16
+  export VERIFY_RESULT=false
+  mvn -B --offline test simple.tgraph.kernel.WriteTemporalPropertyTest
 }
 
-function runNeo4jKernelServer(){
-  export DB_PATH="E:\tgraph\test-db"
-  export DB_TYPE=array
-  export DB_TYPE=treemap
-  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.server.Neo4jKernelTcpServer"
-}
+## Function: Test TGraph TCypher Server write performance.
+## Example: tcypherClientWriteTest /media/song/test/db-network-only-ro 192.168.1.141 8 10 200000 /media/song/test/data-set/beijing-traffic/TGraph/byday/100501
+## Explain:
+##  /media/song/test/db-network-only-ro is a TGraph DB folder which contains traffic demo road network topology
+##  192.168.1.141  is the TCypher Server hostname
+##  8 is the number of connections to the server(both server and client use one thread to process one connection
+##  10 is the number of Cypher queries per transaction
+##  200000 is the total number of data lines to send.(from the data file)
+##  /media/song/test/data-set/beijing-traffic/TGraph/byday/100501 is the path of the data file
+#function tcypherClientWriteSpropTest() {
+#    if [ -z ${IS_COMPILED+x} ]
+#    then
+#        IS_COMPILED=' clean test-compile '
+#    else
+#        IS_COMPILED=''
+#    fi
+#    mvn -B ${IS_COMPILED} exec:java \
+#        -Dexec.mainClass="org.act.temporal.test.tcypher.WriteStaticPropertyTest" \
+#        -Dexec.classpathScope="test" \
+#        -Dexec.args="$1 $2 $3 $4 $5 $6"
+#}
+#
+#
+#
+#function genBenchmark() {
+#  export WORK_DIR="E:"
+#  export BENCHMARK_FILE_OUTPUT=benchmark
+#  export TEMPORAL_DATA_PER_TX=100
+#  export TEMPORAL_DATA_START=0503
+#  export TEMPORAL_DATA_END=0504
+#  export REACHABLE_AREA_TX_CNT=20
+#  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.benchmark.BenchmarkTxGenerator"
+#}
+#
+#function genResult() {
+#  export BENCHMARK_FILE_INPUT="E:\tgraph\test-data\benchmark.gz"
+#  export BENCHMARK_FILE_OUTPUT="E:\tgraph\test-data\benchmark-with-result.gz"
+#  export REACHABLE_AREA_REPLACE_TX=true
+#  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.benchmark.BenchmarkTxResultGenerator"
+#}
+#
+#function runBenchmark() {
+#  export DB_TYPE=tgraph_kernel
+#  #export DB_TYPE=sql_server
+#  #export DB_HOST=39.96.57.88
+#  export DB_HOST=localhost
+#  export BENCHMARK_FILE_INPUT="E:\tgraph\test-data\benchmark-with-result.gz"
+#  export MAX_CONNECTION_CNT=1
+#  export VERIFY_RESULT=true
+#  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.benchmark.BenchmarkRunner"
+#}

@@ -15,7 +15,7 @@ public interface DBProxy {
     // return server version.
     String testServerClientCompatibility() throws UnsupportedOperationException;
 
-    ListenableFuture<ServerResponse> execute(AbstractTransaction tx ) throws Exception;
+    ListenableFuture<ServerResponse> execute(AbstractTransaction tx) throws Exception;
 
     void createDB() throws IOException;
 

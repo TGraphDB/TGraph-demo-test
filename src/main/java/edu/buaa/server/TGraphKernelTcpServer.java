@@ -65,6 +65,7 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
             case tx_query_reachable_area: return execute((ReachableAreaQueryTx) tx);
             case tx_query_road_earliest_arrive_time_aggr: return execute((EarliestArriveTimeAggrTx)tx);
             case tx_query_node_neighbor_road: return execute((NodeNeighborRoadTx) tx);
+            case tx_query_snapshot: return execute((SnapshotQueryTx) tx);
             default:
                 throw new UnsupportedOperationException();
         }
@@ -171,7 +172,12 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
         try(Transaction t = db.beginTx()) {
             List<Pair<Long, Integer>> answers = new ArrayList<>();
             for(Relationship r: GlobalGraphOperations.at(db).getAllRelationships()){
-                 answers.add(Pair.of(r.getId(), (Integer) r.getTemporalProperty(tx.getPropertyName(), Helper.time(tx.getTimestamp()))));
+                Object v = r.getTemporalProperty(tx.getPropertyName(), Helper.time(tx.getTimestamp()));
+                if(v==null){
+                    answers.add(Pair.of(r.getId(), -1));
+                }else{
+                    answers.add(Pair.of(r.getId(), (Integer) v));
+                }
             }
             SnapshotQueryTx.Result result = new SnapshotQueryTx.Result();
 //            answers.sort((pair)->{});
