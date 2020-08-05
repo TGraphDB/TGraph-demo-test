@@ -66,7 +66,7 @@ function runWriteTest() {
   export RAW_DATA_PATH=E:\tgraph\test-data
   export MAX_CONNECTION_CNT=16
   export VERIFY_RESULT=false
-  mvn -B --offline test simple.tgraph.kernel.WriteTemporalPropertyTest
+  mvn -B --offline test -Dtest=simple.tgraph.kernel.WriteTemporalPropertyTest
 }
 
 ## Function: Test TGraph TCypher Server write performance.

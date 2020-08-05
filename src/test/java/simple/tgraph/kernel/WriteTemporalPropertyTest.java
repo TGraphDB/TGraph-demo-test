@@ -8,6 +8,7 @@ import edu.buaa.benchmark.BenchmarkTxResultProcessor;
 import edu.buaa.benchmark.client.DBProxy;
 import edu.buaa.benchmark.client.TGraphExecutorClient;
 import edu.buaa.benchmark.transaction.AbstractTransaction;
+import edu.buaa.model.TrafficTemporalPropertyGraph;
 import edu.buaa.utils.Helper;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -42,6 +43,12 @@ public class WriteTemporalPropertyTest {
 
     @Test
     public void run() throws Exception {
+        // import static topology.
+        TrafficTemporalPropertyGraph tgraph = new TrafficTemporalPropertyGraph();
+        tgraph.importTopology(new File(dataFilePath, "road_topology.csv.gz"));
+        AbstractTransaction txStaticImport = BenchmarkTxGenerator.txImportStatic(tgraph);
+        post.process(client.execute(txStaticImport), txStaticImport);
+        // import temporal data.
         List<File> fileList = Helper.trafficFileList(dataFilePath, startDay, endDay);
         try(BenchmarkTxGenerator.TemporalPropertyAppendTxGenerator g = new BenchmarkTxGenerator.TemporalPropertyAppendTxGenerator(opPerTx, fileList)) {
             while (g.hasNext()) {
