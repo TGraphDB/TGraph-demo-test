@@ -3,6 +3,7 @@ package edu.buaa.benchmark.transaction;
 import java.util.List;
 
 public class UpdateTemporalDataTx extends AbstractTransaction {
+    // todo
     private long roadId;
     private int startTime;
     private int endTime;

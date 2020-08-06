@@ -34,7 +34,7 @@ public class ImportStaticDataTx extends AbstractTransaction {
         this.roads = roads;
     }
 
-    public static class StaticCrossNode{
+    public static class StaticCrossNode {
         private long id;
         private String name;
 
@@ -55,7 +55,7 @@ public class ImportStaticDataTx extends AbstractTransaction {
         }
     }
 
-    public static class StaticRoadRel{
+    public static class StaticRoadRel {
         private long roadId, startCrossId, endCrossId;
         private String id;
         private int length, angle, type;
