@@ -297,11 +297,11 @@ public class SqlServerExecutorClient implements DBProxy {
                 //SELECT rid, MIN(t-snapshotTime), status, travel_t, seg_cnt FROM temporal_status WHERE rowId IN
                 // (SELECT rowId FROM temporal_status WHERE t < snapshotTime) GROUP BY rid";
                 ResultSet res =  st.executeQuery(sql);
-                List<Pair<Long, Integer>> r = new ArrayList<>();
+                List<Pair<String, Integer>> r = new ArrayList<>();
                 while (res.next()){
                     long rid = res.getInt("rid");
                     int val = res.getInt(tx.getPropertyName());
-                    r.add(Pair.of(rid, val));
+//                    r.add(Pair.of(rid, val)); TODO:需要修改name
                 }
                 SnapshotQueryTx.Result result = new SnapshotQueryTx.Result();
                 result.setRoadStatus(r);
