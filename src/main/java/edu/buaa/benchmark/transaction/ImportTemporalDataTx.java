@@ -6,7 +6,6 @@ import java.util.List;
 
 public class ImportTemporalDataTx extends AbstractTransaction {
     public List<StatusUpdate> data;
-    public ImportTemporalDataTx(){}
     public ImportTemporalDataTx(List<StatusUpdate> lines) {
         this.setTxType(TxType.tx_import_temporal_data);
         this.data = lines;

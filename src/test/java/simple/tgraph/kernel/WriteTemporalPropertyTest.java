@@ -5,6 +5,7 @@ import com.aliyun.openservices.aliyun.log.producer.Producer;
 import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
 import edu.buaa.benchmark.BenchmarkTxGenerator;
 import edu.buaa.benchmark.BenchmarkTxResultProcessor;
+import edu.buaa.benchmark.BenchmarkWriter;
 import edu.buaa.benchmark.client.DBProxy;
 import edu.buaa.benchmark.client.TGraphExecutorClient;
 import edu.buaa.benchmark.transaction.AbstractTransaction;
@@ -39,6 +40,7 @@ public class WriteTemporalPropertyTest {
         client.testServerClientCompatibility();
         post = new BenchmarkTxResultProcessor("TGraph(TpWrt)", Helper.codeGitVersion());
         post.setLogger(logger);
+        post.setResult(new File(dataFilePath, "benchmark.gz"));
     }
 
     @Test
@@ -62,6 +64,7 @@ public class WriteTemporalPropertyTest {
     public static void close() throws IOException, InterruptedException, ProducerException {
         client.close();
         logger.close();
+        post.close();
     }
 
 }
