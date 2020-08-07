@@ -2,6 +2,8 @@ package edu.buaa.benchmark;
 
 import edu.buaa.algo.EarliestArriveTime;
 import edu.buaa.benchmark.transaction.*;
+import edu.buaa.benchmark.transaction.internal.EarliestArriveTimeAggrTx;
+import edu.buaa.benchmark.transaction.internal.NodeNeighborRoadTx;
 import edu.buaa.model.StatusUpdate;
 import edu.buaa.model.TimePointInt;
 import edu.buaa.model.TrafficTGraph;

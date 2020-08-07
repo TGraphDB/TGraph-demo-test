@@ -2,9 +2,8 @@ package edu.buaa.benchmark.transaction;
 
 import edu.buaa.utils.Helper;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 
-import java.util.*;
+import java.util.List;
 
 public class SnapshotQueryTx extends AbstractTransaction {
 

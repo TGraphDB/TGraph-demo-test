@@ -1,4 +1,6 @@
-package edu.buaa.benchmark.transaction;
+package edu.buaa.benchmark.transaction.internal;
+
+import edu.buaa.benchmark.transaction.AbstractTransaction;
 
 import java.util.HashSet;
 import java.util.List;

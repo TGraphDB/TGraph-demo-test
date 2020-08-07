@@ -5,6 +5,8 @@ import com.google.common.base.Preconditions;
 import edu.buaa.algo.EarliestArriveTime;
 import edu.buaa.benchmark.transaction.*;
 import edu.buaa.benchmark.transaction.AbstractTransaction.Result;
+import edu.buaa.benchmark.transaction.internal.EarliestArriveTimeAggrTx;
+import edu.buaa.benchmark.transaction.internal.NodeNeighborRoadTx;
 import edu.buaa.client.RuntimeEnv;
 import edu.buaa.model.StatusUpdate;
 import edu.buaa.utils.Helper;

@@ -1,10 +1,9 @@
 package edu.buaa.benchmark.transaction;
 
-import com.google.common.base.Preconditions;
-import edu.buaa.algo.EarliestArriveTime;
 import edu.buaa.algo.EarliestArriveTime.NodeCross;
+import edu.buaa.utils.Helper;
 
-import java.util.*;
+import java.util.List;
 
 public class ReachableAreaQueryTx extends AbstractTransaction {
     private long startCrossId;
@@ -44,44 +43,8 @@ public class ReachableAreaQueryTx extends AbstractTransaction {
     }
 
     @Override
-    public void validateResult(AbstractTransaction.Result result) {
-        List<NodeCross> expected = ((Result) this.getResult()).getNodeArriveTime();
-        List<NodeCross> got = ((Result) result).getNodeArriveTime();
-        if(got.size()!=expected.size()){
-            System.out.println("size not match, got "+got.size()+" expect "+expected.size());
-            Set<NodeCross> intersection = new HashSet<>(expected);
-            intersection.retainAll(got);
-            Set<NodeCross> expDiff = new HashSet<>(expected);
-            expDiff.removeAll(intersection);
-            if(!expDiff.isEmpty()) expDiff.forEach(System.out::println);
-            System.out.println("exp-common ^^ vv got-common");
-            Set<NodeCross> gotDiff = new HashSet<>(got);
-            gotDiff.removeAll(intersection);
-//            if(gotDiff.size()>expDiff.size()){
-//                printDiff(gotDiff, expDiff);
-//            }else{
-//                printDiff(expDiff, gotDiff);
-//            }
-            if(!gotDiff.isEmpty()) gotDiff.forEach(System.out::println);
-            System.out.println("--------------------------------------------");
-            return;
-        }
-        for(int i=0; i<got.size(); i++){
-            Preconditions.checkState(got.get(i).equals(expected.get(i)));
-        }
-    }
-
-    private void printDiff(Set<NodeCross> bigger, Set<NodeCross> smaller){
-        Map<Long, NodeCross> b = new HashMap<>();
-        for(NodeCross n : bigger ){
-            b.put(n.getId(), n);
-        }
-        for(NodeCross n : smaller){
-            NodeCross nn = b.get(n.getId());
-            if(nn!=null){
-                //System.out.println("");
-            }
-        }
+    public void validateResult(AbstractTransaction.Result result){
+        Helper.validateResult(((Result) this.getResult()).getNodeArriveTime(), ((Result) result).getNodeArriveTime());
     }
 
     public static class Result extends AbstractTransaction.Result{

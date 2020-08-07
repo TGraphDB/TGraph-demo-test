@@ -1,5 +1,6 @@
 package edu.buaa.benchmark.transaction;
 
+import edu.buaa.utils.Helper;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
@@ -34,14 +35,19 @@ public class SnapshotAggrMaxTx extends AbstractTransaction {
     }
 
     public static class Result extends AbstractTransaction.Result{
-        List<Pair<Long, Integer>> roadTravelTime;
+        List<Pair<String, Integer>> roadTravelTime;
 
-        public List<Pair<Long, Integer>> getRoadTravelTime() {
+        public List<Pair<String, Integer>> getRoadTravelTime() {
             return roadTravelTime;
         }
 
-        public void setRoadTravelTime(List<Pair<Long, Integer>> roadTravelTime) {
+        public void setRoadTravelTime(List<Pair<String, Integer>> roadTravelTime) {
             this.roadTravelTime = roadTravelTime;
         }
+    }
+
+    @Override
+    public void validateResult(AbstractTransaction.Result result){
+        Helper.validateResult(((Result) this.getResult()).getRoadTravelTime(), ((Result) result).getRoadTravelTime());
     }
 }

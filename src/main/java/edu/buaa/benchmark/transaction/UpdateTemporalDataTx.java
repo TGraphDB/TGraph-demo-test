@@ -1,9 +1,7 @@
 package edu.buaa.benchmark.transaction;
 
-import java.util.List;
-
 public class UpdateTemporalDataTx extends AbstractTransaction {
-    private long roadId;
+    private String roadId;
     private int startTime;
     private int endTime;
     private int travelTime;
@@ -12,7 +10,7 @@ public class UpdateTemporalDataTx extends AbstractTransaction {
 
     public UpdateTemporalDataTx(){}
 
-    public UpdateTemporalDataTx(long roadId, int startTime, int endTime, int travelTime, int jamStatus, int segmentCount) {
+    public UpdateTemporalDataTx(String roadId, int startTime, int endTime, int travelTime, int jamStatus, int segmentCount) {
         this.roadId = roadId;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -21,7 +19,7 @@ public class UpdateTemporalDataTx extends AbstractTransaction {
         this.segmentCount = segmentCount;
     }
 
-    public long getRoadId() {
+    public String getRoadId() {
         return roadId;
     }
 
@@ -45,7 +43,7 @@ public class UpdateTemporalDataTx extends AbstractTransaction {
         return segmentCount;
     }
 
-    public void setRoadId(long roadId) {
+    public void setRoadId(String roadId) {
         this.roadId = roadId;
     }
 
