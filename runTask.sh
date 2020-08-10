@@ -63,7 +63,7 @@ function runWriteTest() {
   export TEMPORAL_DATA_START=0501
   export TEMPORAL_DATA_END=0504
   export DB_HOST=localhost
-  export RAW_DATA_PATH=E:\tgraph\test-data
+  export RAW_DATA_PATH="E:\tgraph\test-data"
   export MAX_CONNECTION_CNT=16
   export VERIFY_RESULT=false
   mvn -B --offline test -Dtest=simple.tgraph.kernel.WriteTemporalPropertyTest

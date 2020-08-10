@@ -5,6 +5,8 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import edu.buaa.algo.EarliestArriveTime;
 import edu.buaa.benchmark.transaction.*;
+import edu.buaa.benchmark.transaction.internal.EarliestArriveTimeAggrTx;
+import edu.buaa.benchmark.transaction.internal.NodeNeighborRoadTx;
 import edu.buaa.model.StatusUpdate;
 import edu.buaa.utils.TimeMonitor;
 import org.apache.commons.lang3.tuple.Pair;

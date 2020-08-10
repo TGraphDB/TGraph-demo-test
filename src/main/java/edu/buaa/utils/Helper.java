@@ -33,6 +33,7 @@ public class Helper {
 
     public static String codeGitVersion() {
         try (InputStream input = Helper.class.getResourceAsStream("/git.properties")) {
+            if(input==null) return "NoGit";
             Properties prop = new Properties();
             prop.load(input);
             String gitCommitId = prop.getProperty("git.commit.id.describe-short");

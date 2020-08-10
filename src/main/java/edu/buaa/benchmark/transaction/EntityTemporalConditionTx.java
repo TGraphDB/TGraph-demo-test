@@ -51,13 +51,13 @@ public class EntityTemporalConditionTx extends AbstractTransaction {
     }
 
     public static class Result extends AbstractTransaction.Result{
-        List<Long> roads;
+        List<String> roads;
 
-        public List<Long> getRoads() {
+        public List<String> getRoads() {
             return roads;
         }
 
-        public void setRoads(List<Long> roads) {
+        public void setRoads(List<String> roads) {
             this.roads = roads;
         }
     }

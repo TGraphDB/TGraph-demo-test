@@ -1,6 +1,7 @@
-package edu.buaa.benchmark.transaction;
+package edu.buaa.benchmark.transaction.internal;
 
 import com.google.common.base.Preconditions;
+import edu.buaa.benchmark.transaction.AbstractTransaction;
 
 public class EarliestArriveTimeAggrTx extends AbstractTransaction {
     private long roadId;

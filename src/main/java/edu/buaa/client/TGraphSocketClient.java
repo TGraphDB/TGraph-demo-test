@@ -62,7 +62,7 @@ public abstract class TGraphSocketClient {
         TGraphSocketServer.ServerVersionResult result = (TGraphSocketServer.ServerVersionResult) response.get().getResult();
         String clientVersion = Helper.codeGitVersion();
         if (!clientVersion.equals(result.getVersion())) {
-            throw new UnsupportedOperationException(String.format("server(%s) client(%s) version not match!", result.getVersion(), clientVersion));
+            System.out.println(String.format("server(%s) client(%s) version not match!", result.getVersion(), clientVersion));
         }
         return result.getVersion();
     }
