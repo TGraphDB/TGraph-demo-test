@@ -10,7 +10,7 @@ public class NodeNeighborRoadTx extends AbstractTransaction {
 
     private long nodeId;
 
-    public NodeNeighborRoadTx(long nodeId, List<Long> roadIds) {
+    public NodeNeighborRoadTx(long nodeId, List<String> roadIds) {
         this.setTxType(TxType.tx_query_node_neighbor_road);
         this.nodeId = nodeId;
         Result r = new Result();
@@ -30,17 +30,17 @@ public class NodeNeighborRoadTx extends AbstractTransaction {
 
     @Override
     public void validateResult(AbstractTransaction.Result result) {
-        List<Long> got = ((Result) result).getRoadIds();
-        List<Long> expected = ((Result) this.getResult()).getRoadIds();
+        List<String> got = ((Result) result).getRoadIds();
+        List<String> expected = ((Result) this.getResult()).getRoadIds();
         if(got.size()!=expected.size()){
             System.out.println("size not match, got "+got+" expect "+expected+" for node "+nodeId);
         }else{
             if(!got.isEmpty()){
-                HashSet<Long> intersection = new HashSet<>(got);
+                HashSet<String> intersection = new HashSet<>(got);
                 intersection.retainAll(expected);
-                Set<Long> gotS = new HashSet<>(got);
+                Set<String> gotS = new HashSet<>(got);
                 gotS.removeAll(intersection);
-                Set<Long> expS = new HashSet<>(expected);
+                Set<String> expS = new HashSet<>(expected);
                 expS.removeAll(intersection);
                 if (!gotS.isEmpty() || !expS.isEmpty()) {
                     System.out.println("result not match, got "+got+" expect "+expected+" for node "+nodeId);
@@ -51,13 +51,13 @@ public class NodeNeighborRoadTx extends AbstractTransaction {
     }
 
     public static class Result extends AbstractTransaction.Result{
-        List<Long> roadIds;
+        List<String> roadIds;
 
-        public List<Long> getRoadIds() {
+        public List<String> getRoadIds() {
             return roadIds;
         }
 
-        public void setRoadIds(List<Long> roadIds) {
+        public void setRoadIds(List<String> roadIds) {
             this.roadIds = roadIds;
         }
     }
