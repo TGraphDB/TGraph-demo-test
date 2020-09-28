@@ -11,15 +11,27 @@ import edu.buaa.client.RuntimeEnv;
 import edu.buaa.model.StatusUpdate;
 import edu.buaa.utils.Helper;
 import edu.buaa.utils.TGraphSocketServer;
+import javafx.scene.shape.HLineTo;
 import org.act.temporalProperty.query.TimePointL;
+import org.act.temporalProperty.query.range.TimeRangeQuery;
+import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.*;
+import org.neo4j.kernel.configuration.Internal;
+import org.neo4j.kernel.impl.store.TransactionId;
+import org.neo4j.kernel.impl.store.record.SchemaRule;
+import org.neo4j.kernel.impl.util.Listener;
+import org.neo4j.kernel.impl.util.register.NeoRegister;
 import org.neo4j.temporal.TemporalRangeQuery;
 import org.neo4j.temporal.TimePoint;
 import org.neo4j.tooling.GlobalGraphOperations;
+import org.neo4j.unsafe.impl.batchimport.input.csv.Data;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
@@ -71,7 +83,7 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
             case tx_import_temporal_data: return execute((ImportTemporalDataTx) tx);
             case tx_query_reachable_area: return execute((ReachableAreaQueryTx) tx);
             case tx_query_road_earliest_arrive_time_aggr: return execute((EarliestArriveTimeAggrTx)tx);
-            case tx_query_node_neighbor_road: return execute((NodeNeighborRoadTx) tx);
+//            case tx_query_node_neighbor_road: return execute((NodeNeighborRoadTx) tx);
             case tx_query_snapshot: return execute((SnapshotQueryTx) tx);
             default:
                 throw new UnsupportedOperationException();
@@ -133,6 +145,84 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
         }
     }
 
+    //================================我是分割线=================================================================
+
+    private Result execute(SnapshotAggrMaxTx tx){
+        try(Transaction t = db.beginTx()){
+            List<Pair<String, Integer>> answers = new ArrayList<>();
+            for (Relationship r:GlobalGraphOperations.at(db).getAllRelationships()){
+                String roadName = (String) r.getProperty("travel_time");
+                List<Integer> travelTime = new ArrayList<>();   //定义了一个存储最大值的列表
+                Object v = r.getTemporalProperty(tx.getP(), Helper.time(tx.getT0()), Helper.time(tx.getT1()), new TemporalRangeQuery() {
+                    @Override
+                    public void onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
+                        travelTime.add((Integer) val);
+                    }
+                    @Override
+                    public Object onReturn() {
+                            return null;
+                        }
+                });
+                Integer maxValue = Collections.max(travelTime);     //遍历所有时间结束，获取最大值
+                if (maxValue == null){
+                    answers.add(Pair.of(roadName,-1));
+                    travelTime.clear();
+                }else {
+                    answers.add(Pair.of(roadName, maxValue)); //放入answers中
+                    travelTime.clear();//清空travel列表
+                }
+            }
+                SnapshotAggrMaxTx.Result result = new SnapshotAggrMaxTx.Result();
+                result.setRoadTravelTime(answers);
+                return result;
+        }
+    }
+
+
+//    private Result execute(SnapshotAggrDurationTx tx){
+//        try(Transaction t = db.beginTx()){
+//            List<String> answers = new ArrayList<>();
+//            for (Relationship r:GlobalGraphOperations.at(db).getAllRelationships()){
+//                if (r.hasProperty("jam_status")){
+//                    answers.add((String)r.getProperty("jam_status"));
+//                }
+//            }
+//        }
+//        SnapshotAggrDurationTx.Result result = new SnapshotAggrDurationTx.Result();
+//        result.setRoadStatDuration(answers);
+//        return result;
+//
+//    }
+
+
+
+    private Result execute(EntityTemporalConditionTx tx){
+        try(Transaction t = db.beginTx()){
+            List<String> answers = new ArrayList<>();
+            for (Relationship r:GlobalGraphOperations.at(db).getAllRelationships()){
+                String roadName = (String) r.getProperty("travel_time");
+                Object v = r.getTemporalProperty(tx.getP(), Helper.time(tx.getT0()), Helper.time(tx.getT1()), new TemporalRangeQuery() {
+                    @Override
+                    public void onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
+                        if ((Integer)val > tx.getVmin()){
+                            answers.add(tx.getP());
+                        }
+                    }
+                    @Override
+                    public Object onReturn() {
+                        return null;
+                    }
+                });
+            }
+            EntityTemporalConditionTx.Result result = new EntityTemporalConditionTx.Result();
+            result.setRoads(answers);
+            return result;
+        }
+    }
+
+
+    //===============================我真的没有底线===============================================================
+
     private Result execute(ReachableAreaQueryTx tx){
         try(Transaction t = db.beginTx()) {
             EarliestArriveTime algo = new EarliestArriveTimeTGraphKernel(db, "travel_time", tx.getStartCrossId(), tx.getDepartureTime(), tx.getTravelTime());
@@ -145,19 +235,19 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
         }
     }
 
-    private Result execute(NodeNeighborRoadTx tx){
-        try(Transaction t = db.beginTx()) {
-            List<Long> answers = new ArrayList<>();
-            for(Relationship r : db.getNodeById(tx.getNodeId()).getRelationships(RoadType.ROAD_TO, Direction.OUTGOING)) {
-                answers.add(r.getId());
-            }
-            answers.sort(Comparator.naturalOrder());
-            NodeNeighborRoadTx.Result result = new NodeNeighborRoadTx.Result();
-            result.setRoadIds(answers);
-//            t.failure();//do not commit;
-            return result;
-        }
-    }
+//    private Result execute(NodeNeighborRoadTx tx){
+//        try(Transaction t = db.beginTx()) {
+//            List<Long> answers = new ArrayList<>();
+//            for(Relationship r : db.getNodeById(tx.getNodeId()).getRelationships(RoadType.ROAD_TO, Direction.OUTGOING)) {
+//                answers.add(r.getId());
+//            }
+//            answers.sort(Comparator.naturalOrder());
+//            NodeNeighborRoadTx.Result result = new NodeNeighborRoadTx.Result();
+//            result.setRoadIds(answers);
+////            t.failure();//do not commit;
+//            return result;
+//        }
+//    }
 
 
     private Result execute(EarliestArriveTimeAggrTx tx) {
@@ -282,4 +372,5 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
             return db.getRelationshipById(roadId).getEndNode().getId();
         }
     }
+
 }
