@@ -2,15 +2,12 @@ package edu.buaa.benchmark;
 
 import com.aliyun.openservices.aliyun.log.producer.Producer;
 import edu.buaa.benchmark.client.DBProxy;
-import edu.buaa.benchmark.client.SqlServerExecutorClient;
 import edu.buaa.benchmark.client.TGraphExecutorClient;
 import edu.buaa.benchmark.transaction.AbstractTransaction;
 import edu.buaa.utils.Helper;
 
 import java.io.File;
 import java.util.Calendar;
-
-import static edu.buaa.benchmark.transaction.AbstractTransaction.TxType.*;
 
 public class BenchmarkRunner {
 
@@ -30,9 +27,9 @@ public class BenchmarkRunner {
                 case "tgraph_kernel":
                     client = new TGraphExecutorClient(dbHost, maxConnCnt, 800);
                     break;
-                case "sql_server":
-                    client = new SqlServerExecutorClient(dbHost, maxConnCnt, 800);
-                    break;
+//                case "sql_server":
+//                    client = new SqlServerExecutorClient(dbHost, maxConnCnt, 800);
+//                    break;
                 default:
                     throw new UnsupportedOperationException();
             }

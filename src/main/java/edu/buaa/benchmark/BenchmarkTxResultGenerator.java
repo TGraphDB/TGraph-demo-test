@@ -120,7 +120,7 @@ public class BenchmarkTxResultGenerator {
                     rids.add(road.id);
                 }
                 rids.sort(null);
-                if(replaceReachableAreaTx) resultTxArr.add(new NodeNeighborRoadTx(nodeId, rids));
+//                if(replaceReachableAreaTx) resultTxArr.add(new NodeNeighborRoadTx(nodeId, rids));
                 return rids;
             }
 

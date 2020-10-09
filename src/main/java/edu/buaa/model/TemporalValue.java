@@ -1,11 +1,11 @@
 package edu.buaa.model;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
-import org.parboiled.common.Preconditions;
 
 import java.util.*;
 import java.util.Map.Entry;
