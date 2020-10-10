@@ -50,6 +50,7 @@ public class WriteTemporalPropertyTest {
         tgraph.importTopology(new File(dataFilePath, "road_topology.csv.gz"));
         AbstractTransaction txStaticImport = BenchmarkTxGenerator.txImportStatic(tgraph);
         post.process(client.execute(txStaticImport), txStaticImport);
+        Thread.sleep(20_000);// wait static import complete.
         // import temporal data.
         List<File> fileList = Helper.trafficFileList(dataFilePath, startDay, endDay);
         try(BenchmarkTxGenerator.TemporalPropertyAppendTxGenerator g = new BenchmarkTxGenerator.TemporalPropertyAppendTxGenerator(opPerTx, fileList)) {
