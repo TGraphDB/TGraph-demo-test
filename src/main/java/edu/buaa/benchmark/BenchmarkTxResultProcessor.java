@@ -15,10 +15,12 @@ import edu.buaa.benchmark.transaction.AbstractTransaction.Metrics;
 import java.io.*;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class BenchmarkTxResultProcessor {
-    public final Executor thread = Executors.newSingleThreadExecutor();
+    public final ExecutorService thread = Executors.newSingleThreadExecutor();
     private final String testName;
     private final String clientVersion;
 
@@ -86,7 +88,12 @@ public class BenchmarkTxResultProcessor {
         }
     }
 
-    public void close() throws IOException {
+    public void close() {
+        thread.shutdown();
+    }
+
+    public void awaitDone(int timeout, TimeUnit timeUnit) throws IOException, InterruptedException{
+        thread.awaitTermination(timeout, timeUnit);
         if(writer!=null) writer.close();
     }
 
