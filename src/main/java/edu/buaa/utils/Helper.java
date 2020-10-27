@@ -1,5 +1,6 @@
 package edu.buaa.utils;
 
+import com.alibaba.fastjson.parser.ParserConfig;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.aliyun.openservices.aliyun.log.producer.LogProducer;
 import com.aliyun.openservices.aliyun.log.producer.Producer;
@@ -26,6 +27,9 @@ import java.util.zip.GZIPInputStream;
  * Created by song on 16-2-23.
  */
 public class Helper {
+    {
+        ParserConfig.getGlobalInstance().setAutoTypeSupport(true);
+    }
     public static SerializerFeature[] serializerFeatures = new SerializerFeature[] {
             SerializerFeature.WriteClassName,
             SerializerFeature.DisableCircularReferenceDetect
