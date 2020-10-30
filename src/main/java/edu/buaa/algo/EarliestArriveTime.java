@@ -3,12 +3,9 @@ package edu.buaa.algo;
 
 import com.alibaba.fastjson.annotation.JSONType;
 
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
-import java.util.PriorityQueue;
 import java.util.Set;
 
 public abstract class EarliestArriveTime {
@@ -31,7 +28,7 @@ public abstract class EarliestArriveTime {
 
         Set<NodeCross> result = new HashSet<>();
         NodeCross node;
-        while ((node = findSmallestClosedNode())!=null) {
+        while ((node = smallestCalculatingNode())!=null) {
             loopAllNeighborsUpdateArriveTime(node, result);
         }
         return result;
@@ -85,24 +82,27 @@ public abstract class EarliestArriveTime {
     protected abstract Iterable<Long> getAllOutRoads( long nodeId );
     protected abstract long getEndNodeId( long roadId );
 
-    /**
-     * use this queue as a 'set' which contains all nodes labeled 'CLOSED'.
-     * use priority queue(min heap) data structure, this guarantee:
-     * 1. O(1) for "peek(get node with earliest arrive time among queue)" operation
-     * 2. O(log(n)) for "add" and "remove" operation(since it will adjust the heap)
-     */
-    private PriorityQueue<NodeCross> minHeap = new PriorityQueue<>(Comparator.comparingInt(node -> node.arriveTime));
-    /**
-     * this is an O(1) implementation, because:
-     * 1. node status only transfer from NotCalculate to Calculating, never back.
-     * 2. we use an [minimum heap(PriorityQueue in Java)] data structure.
-     * BE CAREFUL! this implementation is only valid based on the assumption [1]!
-     * therefore it may only work for Dijkstra Shortest Path algorithm.
-     * DO VERIFY this when using algorithm other than Dijkstra.
-     * @return node in set( status == Calculating ) and has earliest arrive time among the set.
-     */
-    private NodeCross findSmallestClosedNode() {
-        return minHeap.peek();
+    private HashSet<NodeCross> calculatingNodes = new HashSet<>();
+
+    private NodeCross smallestCalculatingNode() {
+        NodeCross min = null;
+        int minTime = Integer.MAX_VALUE;
+        for(NodeCross n : calculatingNodes){
+            if(n.arriveTime < minTime) {
+                minTime = n.arriveTime;
+                min = n;
+            }
+        }
+        return min;
+    }
+
+    private void setStatus(NodeCross node, Status status){
+        node.status = status;
+        if (status == Status.Calculating) {
+            calculatingNodes.add(node);
+        }else if( status == Status.Calculated){
+            calculatingNodes.remove(node);
+        }
     }
 
     private NodeCross getNodeCross(long id) {
@@ -112,19 +112,6 @@ public abstract class EarliestArriveTime {
             nodeCrossMap.put(id, node);
         }
         return node;
-    }
-
-    /**
-     * when status transfer from OPEN to CLOSE,
-     * will add the node to heap.
-     */
-    private void setStatus(NodeCross node, Status status){
-        node.status = status;
-        if (status == Status.Calculating) {
-            minHeap.add(node);
-        }else if( status == Status.Calculated){
-            minHeap.remove(node);
-        }
     }
 
     protected enum Status{ NotCalculate, Calculating, Calculated }
@@ -166,21 +153,6 @@ public abstract class EarliestArriveTime {
 
         public void setParent(long parent) {
             this.parent = parent;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            NodeCross nodeCross = (NodeCross) o;
-            return id == nodeCross.id &&
-                    arriveTime == nodeCross.arriveTime &&
-                    parent == nodeCross.parent;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(id, arriveTime, parent);
         }
 
         @Override
