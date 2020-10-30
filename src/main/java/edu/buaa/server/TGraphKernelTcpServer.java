@@ -10,12 +10,14 @@ import edu.buaa.benchmark.transaction.internal.NodeNeighborRoadTx;
 import edu.buaa.client.RuntimeEnv;
 import edu.buaa.model.StatusUpdate;
 import edu.buaa.utils.Helper;
+import edu.buaa.utils.Pair;
 import edu.buaa.utils.TGraphSocketServer;
+import edu.buaa.utils.Triple;
 import javafx.scene.shape.HLineTo;
 import org.act.temporalProperty.query.TimePointL;
 import org.act.temporalProperty.query.range.TimeRangeQuery;
 import org.apache.commons.lang.time.DateUtils;
-import org.apache.commons.lang3.tuple.Pair;
+
 import org.neo4j.graphdb.*;
 import org.neo4j.kernel.configuration.Internal;
 import org.neo4j.kernel.impl.store.TransactionId;
@@ -29,10 +31,12 @@ import org.neo4j.unsafe.impl.batchimport.input.csv.Data;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Array;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
     public static void main(String[] args){
@@ -83,6 +87,8 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
             case tx_import_temporal_data: return execute((ImportTemporalDataTx) tx);
             case tx_query_reachable_area: return execute((ReachableAreaQueryTx) tx);
             case tx_query_road_earliest_arrive_time_aggr: return execute((EarliestArriveTimeAggrTx)tx);
+            case tx_query_snapshot_aggr_max: return execute((SnapshotAggrMaxTx) tx);
+            case tx_query_snapshot_aggr_duration: return execute((SnapshotAggrDurationTx) tx);
 //            case tx_query_node_neighbor_road: return execute((NodeNeighborRoadTx) tx);
             case tx_query_snapshot: return execute((SnapshotQueryTx) tx);
             default:
@@ -150,9 +156,9 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
     private Result execute(SnapshotAggrMaxTx tx){
         try(Transaction t = db.beginTx()){
             List<Pair<String, Integer>> answers = new ArrayList<>();
+            List<Integer> travelTime = new ArrayList<>();   //定义了一个存储最大值的列表
             for (Relationship r:GlobalGraphOperations.at(db).getAllRelationships()){
-                String roadName = (String) r.getProperty("travel_time");
-                List<Integer> travelTime = new ArrayList<>();   //定义了一个存储最大值的列表
+                String roadName = (String) r.getProperty("name");
                 Object v = r.getTemporalProperty(tx.getP(), Helper.time(tx.getT0()), Helper.time(tx.getT1()), new TemporalRangeQuery() {
                     @Override
                     public void onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
@@ -160,38 +166,117 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
                     }
                     @Override
                     public Object onReturn() {
-                            return null;
-                        }
+                        return travelTime;
+                    }
                 });
-                Integer maxValue = Collections.max(travelTime);     //遍历所有时间结束，获取最大值
-                if (maxValue == null){
+                if (travelTime.size() == 0){
                     answers.add(Pair.of(roadName,-1));
-                    travelTime.clear();
-                }else {
-                    answers.add(Pair.of(roadName, maxValue)); //放入answers中
-                    travelTime.clear();//清空travel列表
+                }else   {
+                    answers.add(Pair.of(roadName, Collections.max(travelTime))); //放入answers中
                 }
+                travelTime.clear();//清空travel列表
             }
-                SnapshotAggrMaxTx.Result result = new SnapshotAggrMaxTx.Result();
-                result.setRoadTravelTime(answers);
-                return result;
+            SnapshotAggrMaxTx.Result result = new SnapshotAggrMaxTx.Result();
+            result.setRoadTravelTime(answers);
+            return result;
         }
     }
 
+    private Result execute(SnapshotAggrDurationTx tx) {
+        try (Transaction t = db.beginTx()) {
+            List<Triple<String, Integer, Integer>> answers = new ArrayList<>();
+            for (Relationship r : GlobalGraphOperations.at(db).getAllRelationships()) {
+                String roadName = (String) r.getProperty("name");
+                Object v = r.getTemporalProperty(tx.getP(), Helper.time(tx.getT0()), Helper.time(tx.getT1()), new TemporalRangeQuery() {
+                    List<TimePointL> timeList = new ArrayList<>();
+                    List<Integer> statusValueList = new ArrayList<>();
+                    Integer sampleDurationValue;
+                    long complexDurationValue_0 = 0;
+                    long complexDurationValue_1 = 0;
+                    long complexDurationValue_2 = 0;
+                    boolean statusWord = true;
 
-//    private Result execute(SnapshotAggrDurationTx tx){
-//        try(Transaction t = db.beginTx()){
-//            List<String> answers = new ArrayList<>();
-//            for (Relationship r:GlobalGraphOperations.at(db).getAllRelationships()){
-//                if (r.hasProperty("jam_status")){
-//                    answers.add((String)r.getProperty("jam_status"));
-//                }
-//            }
-//        }
-//        SnapshotAggrDurationTx.Result result = new SnapshotAggrDurationTx.Result();
-//        result.setRoadStatDuration(answers);
-//        return result;
+                    @Override
+                    public void onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
+                        timeList.add(time);
+                        statusValueList.add((Integer) val);
+                    }
+
+                    @Override
+                    public Object onReturn() {
+                        for (int i = 0; i < statusValueList.size(); i++) {
+                            if (statusValueList.get(i).equals(statusValueList.get(0)) == false) {
+                                statusWord = false;
+                                break;
+                            }
+                        }
+                        if (statusWord == true) {
+                            sampleDurationValue = Math.toIntExact(Helper.time(tx.getT1()).val() - Helper.time(tx.getT0()).val());
+                            answers.add(Triple.of(roadName, statusValueList.get(0), sampleDurationValue));
+                            return answers;
+                        } else {
+                            long timeStartingPoint = timeList.get(0).val();
+                            for (int i = 1; i < statusValueList.size(); i++) {
+                                if (statusValueList.get(i).equals(statusValueList.get(i - 1)) == false) {
+                                    long timeEndingPoint = timeList.get(i).val();
+                                    long durationValue = timeEndingPoint - timeStartingPoint;
+                                    switch (statusValueList.get(i - 1)) {
+                                        case 0:
+                                            complexDurationValue_0 = complexDurationValue_0 + durationValue;
+                                        case 1:
+                                            complexDurationValue_1 = complexDurationValue_1 + durationValue;
+                                        case 2:
+                                            complexDurationValue_2 = complexDurationValue_2 + durationValue;
+                                    }
+                                }
+                                timeStartingPoint = timeList.get(i).val();
+                            }
+                            if (complexDurationValue_0 != 0) {
+                                answers.add(Triple.of(roadName, 0, Math.toIntExact(complexDurationValue_0)));
+                            } else if (complexDurationValue_1 != 0) {
+                                answers.add(Triple.of(roadName, 1, Math.toIntExact(complexDurationValue_1)));
+                            } else if (complexDurationValue_2 != 0) {
+                                answers.add(Triple.of(roadName, 2, Math.toIntExact(complexDurationValue_2)));
+                            }
+                            System.out.println(answers);
+                            return answers;
+                        }
+                    }
+                });
+            }
+            SnapshotAggrDurationTx.Result result = new SnapshotAggrDurationTx.Result();
+            result.setRoadStatDuration(answers);
+            return result;
+        }
+    }
 //
+//    private Result execute(SnapshotAggrDurationTx tx) {   //getNowTimeValue
+//        try (Transaction t = db.beginTx()) {
+//            List<Triple<String, Integer, Integer>> answers = new ArrayList<>();
+//            for (Relationship r : GlobalGraphOperations.at(db).getAllRelationships()) {
+//                String roadName = (String) r.getProperty("name");
+//                Object v = r.getTemporalProperty(tx.getP(), Helper.time(tx.getT0()), Helper.time(tx.getT1()), new TemporalRangeQuery() {
+//                    List<TimePointL> timeList = new ArrayList<>();
+//                    @Override
+//                    public void onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
+//                        timeList.add(time);
+//                    }
+//
+//                    @Override
+//                    public Object onReturn() {
+//                        long nowTimeValue = timeList.get(timeList.size()-1).val();
+//                        Date date = new Date(nowTimeValue*1000);
+//                        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//                        String nowTimeString = format.format(nowTimeValue);
+//                        System.out.println("Now Time: " +nowTimeString);
+//                        return answers.add(Triple.of(roadName,-1,-1));
+//                    }
+//                });
+//            }
+//            SnapshotAggrDurationTx.Result result = new SnapshotAggrDurationTx.Result();
+//            result.setRoadStatDuration(answers);
+//            return result;
+//        }
 //    }
 
 
@@ -214,11 +299,14 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
                     }
                 });
             }
+            List<String> answersFinal = answers.stream().distinct().collect(Collectors.toList());
             EntityTemporalConditionTx.Result result = new EntityTemporalConditionTx.Result();
             result.setRoads(answers);
             return result;
         }
     }
+
+
 
 
     //===============================我真的没有底线===============================================================

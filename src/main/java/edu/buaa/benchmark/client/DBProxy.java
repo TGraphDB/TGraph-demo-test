@@ -34,9 +34,7 @@ public interface DBProxy {
             return result;
         }
 
-        public void setResult(Result result) {
-            this.result = result;
-        }
+        public void setResult(Result result) { this.result = result; }
 
         public Metrics getMetrics() {
             return metrics;

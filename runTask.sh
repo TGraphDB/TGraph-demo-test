@@ -15,7 +15,7 @@ unset PREPARE_TSC
 export MAVEN_OPTS='-Xmx50g -Xms4g'
 # export MAVEN_OPTS='-Xmx18g -Xms12g'
 # # Debug options
-# export MAVEN_OPTS='-Xmx18g -Xms10g -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005'
+export MAVEN_OPTS='-Xmx18g -Xms10g -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005'
 
 
 # Function: print system info of current machine (both hardware and software), no argument needed.
@@ -35,7 +35,7 @@ function systemInfo() {
 ## Explain: path-to-db-dir is a TGraph DB folder which contains traffic demo road network topology
 #function runTCypherServer() {
 #    mvn -B clean compile exec:java \
-#        -Dexec.mainClass="simple.TCypherSocketServer" \
+#        -Dexec.mainClass="simple.TCypherSocketServer" \3
 #        -Dexec.classpathScope="test" \
 #        -Dexec.args="$1"
 #}
@@ -61,7 +61,7 @@ function runTGraphKernelServer(){
 function runWriteTest() {
   export TEMPORAL_DATA_PER_TX=100
   export TEMPORAL_DATA_START=0501
-  export TEMPORAL_DATA_END=0504
+  export TEMPORAL_DATA_END=0510
   export DB_HOST=localhost
   export RAW_DATA_PATH="E:\tgraph\test-data"
   export MAX_CONNECTION_CNT=16
@@ -69,6 +69,48 @@ function runWriteTest() {
   mvn -B --offline test -Dtest=simple.tgraph.kernel.WriteTemporalPropertyTest
 }
 
+
+function runSnapshotTest() {
+  export DB_HOST=localhost
+  export RAW_DATA_PATH="E:\tgraph\test-data"
+  export MAX_CONNECTION_CNT=16
+  export SERVER_RESULT_FILE="Result_SnapshotTest.gz"
+  export VERIFY_RESULT=false
+  mvn -B --offline test -Dtest=simple.tgraph.kernel.SnapshotTest
+}
+
+function runSnapshotAggregationMaxTest() {
+  export DB_HOST=localhost
+  export RAW_DATA_PATH="E:\tgraph\test-data"
+  export SERVER_RESULT_FILE="Result_SnapshotAggregationMaxTest.gz"
+  export MAX_CONNECTION_CNT=16
+  export VERIFY_RESULT=false
+  mvn -B --offline test -Dtest=simple.tgraph.kernel.SnapshotAggregationMaxTest
+}
+
+function runSnapshotAggregationDurationTest() {
+  export TEMPORAL_DATA_START=201005010940
+  export TEMPORAL_DATA_END=201005030940
+  export DB_HOST=localhost
+  export RAW_DATA_PATH="E:\tgraph\test-data"
+  export SERVER_RESULT_FILE="Result_SnapshotAggregationDurationTest.gz"
+  export MAX_CONNECTION_CNT=16
+  export VERIFY_RESULT=false
+  mvn -B --offline test -Dtest=simple.tgraph.kernel.SnapshotAggregationDurationTest
+}
+
+
+function runEntityTemporalConditionTest() {
+  export TEMPORAL_DATA_PER_TX=100
+  export TEMPORAL_DATA_START=201005010940
+  export TEMPORAL_DATA_END=201005020940
+  export TEMPORAL_CONDITION=600
+  export DB_HOST=localhost
+  export RAW_DATA_PATH="E:\tgraph\test-data"
+  export MAX_CONNECTION_CNT=16
+  export VERIFY_RESULT=false
+  mvn -B --offline test -Dtest=simple.tgraph.kernel.EntityTemporalConditionTest
+}
 ## Function: Test TGraph TCypher Server write performance.
 ## Example: tcypherClientWriteTest /media/song/test/db-network-only-ro 192.168.1.141 8 10 200000 /media/song/test/data-set/beijing-traffic/TGraph/byday/100501
 ## Explain:

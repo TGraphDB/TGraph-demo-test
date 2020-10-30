@@ -1,6 +1,7 @@
 package simple.tgraph.kernel;
 
 
+import com.alibaba.fastjson.parser.ParserConfig;
 import com.aliyun.openservices.aliyun.log.producer.Producer;
 import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
 import edu.buaa.benchmark.BenchmarkTxResultProcessor;
@@ -15,6 +16,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 public class SnapshotTest {
 
@@ -22,6 +24,7 @@ public class SnapshotTest {
     private static String serverHost = Helper.mustEnv("DB_HOST"); // hostname of TGraph (TCypher) server.
     private static boolean verifyResult = Boolean.parseBoolean(Helper.mustEnv("VERIFY_RESULT"));
     private static String resultFile = Helper.mustEnv("SERVER_RESULT_FILE");
+    private static String dataFilePath = Helper.mustEnv("RAW_DATA_PATH"); // should be like '/media/song/test/data-set/beijing-traffic/TGraph/byday/
 
     private static Producer logger;
     private static DBProxy client;
@@ -29,6 +32,7 @@ public class SnapshotTest {
 
     @BeforeClass
     public static void init() throws IOException, ExecutionException, InterruptedException {
+        ParserConfig.getGlobalInstance().setAutoTypeSupport(true);
         client = new TGraphExecutorClient(serverHost, threadCnt, 800);
         client.testServerClientCompatibility();
 
@@ -36,33 +40,41 @@ public class SnapshotTest {
         logger = Helper.getLogger();
         post.setLogger(logger);
         post.setVerifyResult(verifyResult);
-        post.setResult(new File(resultFile));
+        post.setResult(new File(dataFilePath,resultFile));
     }
 
-    @Test
-    public void jam06300940() throws Exception {
-        query("full_status", Helper.timeStr2int("201006300940"));
-    }
+//    @Test
+//    public void jam06300940() throws Exception {
+//        query("full_status", Helper.timeStr2int("201006300940"));
+//    }
 
     @Test
     public void travelTime06300940() throws Exception {
-        query("travel_time", Helper.timeStr2int("201006300940"));
+        query("travel_time", Helper.timeStr2int("201005050940"));
+
     }
 
     private void query(String propertyName, int t) throws Exception {
-        for(int i=0; i<10000; i++){
+//        for(int i=0; i<10; i++){
             SnapshotQueryTx tx = new SnapshotQueryTx();
             tx.setPropertyName(propertyName);
             tx.setTimestamp(t);
             post.process(client.execute(tx), tx);
-        }
+//        }
     }
 
     @AfterClass
     public static void close() throws IOException, InterruptedException, ProducerException {
-        post.close();
+        Thread.sleep(30000);
+        while(true) {
+            try {
+                post.awaitDone(30, TimeUnit.SECONDS);
+                break;
+            } catch (InterruptedException e) {}
+        }
         client.close();
         logger.close();
     }
+
 
 }

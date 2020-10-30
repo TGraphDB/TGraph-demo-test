@@ -21,6 +21,9 @@ public class EntityTemporalConditionTest {
     private static String serverHost = Helper.mustEnv("DB_HOST"); // hostname of TGraph (TCypher) server.
     private static boolean verifyResult = Boolean.parseBoolean(Helper.mustEnv("VERIFY_RESULT"));
     private static String resultFile = Helper.mustEnv("SERVER_RESULT_FILE");
+    private static String startDay = Helper.mustEnv("TEMPORAL_DATA_START"); //0501
+    private static String endDay = Helper.mustEnv("TEMPORAL_DATA_END"); //0503
+    private static int ConditionValue = Integer.parseInt(Helper.mustEnv("TEMPORAL_CONDITION"));
 
     private static Producer logger;
     private static DBProxy client;
@@ -38,37 +41,21 @@ public class EntityTemporalConditionTest {
         post.setResult(new File(resultFile));
     }
 
-    private static int ConditionValueMIN = 1200;
-    private static int ConditionValueMAX = 600;
 
-    @Test
-    //travel_time < ???s
-    public void EntityTemporalConditionInfo_vMIN() throws Exception{
-        query_vMIN("travel_time", Helper.timeStr2int("201006300830"), Helper.timeStr2int("201006300930"), ConditionValueMIN);
-    }
 
     @Test
     //travel_time > ???s
-    public void EntityTemporalConditionInfo_vMAX() throws Exception{
-        query_vMax("travel_time", Helper.timeStr2int("201006300830"), Helper.timeStr2int("201006300930"), ConditionValueMAX);
+    public void EntityTemporalConditionInfoVMIN() throws Exception{
+        queryVMIN("travel_time", Helper.timeStr2int(startDay), Helper.timeStr2int(endDay), ConditionValue);
     }
 
 
-    private void query_vMIN(String PropertyName, int st, int et, int vMIN) throws Exception{
+    private void queryVMIN(String PropertyName, int st, int et, int vMIN) throws Exception{
         EntityTemporalConditionTx tx = new EntityTemporalConditionTx();
         tx.setP(PropertyName);
         tx.setT0(st);
         tx.setT1(et);
         tx.setVmin(vMIN);
-        post.process(client.execute(tx), tx);
-    }
-
-    private void query_vMax(String PropertyName, int st, int et, int vMAX) throws Exception{
-        EntityTemporalConditionTx tx = new EntityTemporalConditionTx();
-        tx.setP(PropertyName);
-        tx.setT0(st);
-        tx.setT1(et);
-        tx.setVmin(vMAX);
         post.process(client.execute(tx), tx);
     }
 

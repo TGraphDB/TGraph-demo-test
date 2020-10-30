@@ -1,18 +1,20 @@
 package edu.buaa.benchmark.transaction;
 
 import edu.buaa.utils.Helper;
-import org.apache.commons.lang3.tuple.Triple;
+import edu.buaa.utils.Triple;
 
 import java.util.List;
 
 public class SnapshotAggrDurationTx extends AbstractTransaction {
+
+    public SnapshotAggrDurationTx(){
+        this.setTxType(TxType.tx_query_snapshot_aggr_duration);
+    }
     private int t0;
     private int t1;
     private String p;
 
-    public int getT0() {
-        return t0;
-    }
+    public int getT0() { return t0; }
 
     public int getT1() {
         return t1;
@@ -22,9 +24,7 @@ public class SnapshotAggrDurationTx extends AbstractTransaction {
         return p;
     }
 
-    public void setT0(int t0) {
-        this.t0 = t0;
-    }
+    public void setT0(int t0) { this.t0 = t0; }
 
     public void setT1(int t1) {
         this.t1 = t1;

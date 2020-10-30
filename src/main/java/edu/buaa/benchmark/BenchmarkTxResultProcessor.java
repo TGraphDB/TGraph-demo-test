@@ -112,6 +112,7 @@ public class BenchmarkTxResultProcessor {
                 if(verifyResult) tx.validateResult(result.getResult());
                 if(writer!=null) {
                     tx.setResult(result.getResult());
+                  //  System.out.println(result.getResult());
                     writer.write(tx);
                 }
             } catch (ProducerException | InterruptedException | IOException e) {

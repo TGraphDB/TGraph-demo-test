@@ -1,11 +1,15 @@
 package edu.buaa.benchmark.transaction;
 
 import edu.buaa.utils.Helper;
-import org.apache.commons.lang3.tuple.Pair;
+import edu.buaa.utils.Pair;
+
 
 import java.util.List;
 
 public class SnapshotQueryTx extends AbstractTransaction {
+    public SnapshotQueryTx() {
+        this.setTxType(TxType.tx_query_snapshot);
+    }
 
     private int timestamp;
 
