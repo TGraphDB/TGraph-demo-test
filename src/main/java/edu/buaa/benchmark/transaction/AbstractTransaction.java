@@ -2,6 +2,9 @@ package edu.buaa.benchmark.transaction;
 
 public abstract class AbstractTransaction {
     public enum TxType{
+        tx_index_tgraph_aggr_max(false),
+        tx_index_tgraph_aggr_duration(false),
+        tx_index_tgraph_temporal_condition(false),
         tx_import_static_data(false),
         tx_import_temporal_data(false),
         tx_query_reachable_area(true),
@@ -9,7 +12,8 @@ public abstract class AbstractTransaction {
         tx_query_road_earliest_arrive_time_aggr(true),
         tx_query_snapshot(true),
         tx_query_snapshot_aggr_max(true),
-        tx_query_snapshot_aggr_duration(true);
+        tx_query_snapshot_aggr_duration(true),
+        tx_query_road_by_temporal_condition(true);
         private boolean isReadTx;
         TxType(boolean isReadTx){
             this.isReadTx = isReadTx;
