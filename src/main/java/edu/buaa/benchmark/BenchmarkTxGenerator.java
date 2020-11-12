@@ -4,7 +4,6 @@ import com.google.common.collect.AbstractIterator;
 import edu.buaa.benchmark.transaction.AbstractTransaction;
 import edu.buaa.benchmark.transaction.ImportStaticDataTx;
 import edu.buaa.benchmark.transaction.ImportTemporalDataTx;
-import edu.buaa.benchmark.transaction.ReachableAreaQueryTx;
 import edu.buaa.model.*;
 import edu.buaa.utils.Helper;
 import edu.buaa.utils.TrafficMultiFileReader;
@@ -92,6 +91,74 @@ public class BenchmarkTxGenerator {
             }else{
                 return endOfData();
             }
+        }
+
+        @Override
+        public void close(){
+            data.close();
+        }
+    }
+
+    /**
+     * 这个解决了16线程写入时 单条道路前面时间的数据后到的问题。
+     */
+    public static class TPAppendTxGenerator extends AbstractIterator<AbstractTransaction> implements AutoCloseable {
+        private final Random rnd = new Random(8438);
+        private final int linePerTx;
+        private final TrafficMultiFileReader data;
+        private final int threadCnt;
+        private final Map<String, Integer> buckets = new HashMap<>();
+        private final Map<Integer, List<StatusUpdate>> data2pack = new HashMap<>();
+
+        public TPAppendTxGenerator(int linePerTx, int threads, List<File> files)
+        {
+            this.linePerTx = linePerTx;
+            this.threadCnt = threads;
+            this.data = new TrafficMultiFileReader(files);
+        }
+        @Override
+        protected AbstractTransaction computeNext()
+        {
+            boolean full = false;
+            int b = -1;
+            do{
+                StatusUpdate line = data.next();
+                if(line!=null){
+                    b = getBucket(line.getRoadId());
+                    full = putBucket(line, b);
+                }else{
+                    break;
+                }
+            }while(!full);
+
+            if(!full){ // data ran out
+                for(Map.Entry<Integer, List<StatusUpdate>> e : data2pack.entrySet()){
+                    List<StatusUpdate> data = e.getValue();
+                    data2pack.remove(e.getKey());
+                    return new ImportTemporalDataTx(data, e.getKey());
+                }
+                return endOfData();
+            }else{ // normal output
+                if(b==-1) throw new RuntimeException("SNH");
+                List<StatusUpdate> data = data2pack.get(b);
+                data2pack.put(b, new ArrayList<>());
+                return new ImportTemporalDataTx(data, b);
+            }
+        }
+
+        private boolean putBucket(StatusUpdate line, int bucket) {
+            List<StatusUpdate> l = data2pack.computeIfAbsent(bucket, k -> new ArrayList<>());
+            l.add(line);
+            return l.size()==linePerTx;
+        }
+
+        private int getBucket(String id){
+            Integer b = buckets.get(id);
+            if(b==null){
+                b = rnd.nextInt(threadCnt);
+                buckets.put(id, b);
+            }
+            return b;
         }
 
         @Override
