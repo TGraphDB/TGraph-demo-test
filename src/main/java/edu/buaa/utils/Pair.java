@@ -1,7 +1,5 @@
 package edu.buaa.utils;
 
-import org.apache.commons.lang3.builder.CompareToBuilder;
-
 import java.io.Serializable;
 
 public class Pair<L, R> implements Serializable {
@@ -10,7 +8,7 @@ public class Pair<L, R> implements Serializable {
     public Pair() {}
 
     public static <L, R> Pair<L, R> of(L left, R right) {
-        Pair<L, R> p = new Pair();
+        Pair<L, R> p = new Pair<>();
         p.setKey(left);
         p.setValue(right);
         return p;

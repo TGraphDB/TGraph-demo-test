@@ -3,6 +3,9 @@ package edu.buaa.benchmark.transaction;
 import java.util.List;
 
 public class EntityTemporalConditionTx extends AbstractTransaction {
+    public EntityTemporalConditionTx(){
+        this.setTxType(TxType.tx_query_road_by_temporal_condition);
+    }
 
     private int t0;
     private int t1;
