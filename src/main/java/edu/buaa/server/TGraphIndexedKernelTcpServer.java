@@ -16,8 +16,14 @@ import edu.buaa.utils.Pair;
 import edu.buaa.utils.TGraphSocketServer;
 import edu.buaa.utils.Triple;
 import org.act.temporalProperty.index.IndexType;
+import org.act.temporalProperty.index.value.IndexMetaData;
 import org.act.temporalProperty.query.TimePointL;
+import org.act.temporalProperty.query.aggr.AggregationIndexQueryResult;
+import org.act.temporalProperty.query.aggr.ValueGroupingMap;
+import org.act.temporalProperty.util.Slice;
 import org.neo4j.graphdb.*;
+import org.neo4j.temporal.IntervalEntry;
+import org.neo4j.temporal.TemporalIndexManager;
 import org.neo4j.temporal.TemporalRangeQuery;
 import org.neo4j.temporal.TimePoint;
 import org.neo4j.tooling.GlobalGraphOperations;
@@ -90,8 +96,9 @@ public class TGraphIndexedKernelTcpServer extends TGraphKernelTcpServer {
     private Result execute(CreateTGraphTemporalValueIndexTx tx) {
         long indexId = -1;
         try(Transaction t = db.beginTx()){
-            indexId = db.temporalIndex().relCreateValueIndex(Helper.time(tx.getStart()), Helper.time(tx.getEnd()), tx.getProName(), tx.getEvery(), tx.getTimeUnit(), IndexType.AGGR_MAX);
+            indexId = db.temporalIndex().relCreateValueIndex(Helper.time(tx.getStart()), Helper.time(tx.getEnd()), tx.getProps().toArray(new String[]{}));
 //            db.temporalIndex().awaitIndexOnline(indexId);
+            t.success();
         }
         CreateTGraphAggrMaxIndexTx.Result r = new CreateTGraphAggrMaxIndexTx.Result();
         r.setIndexId(indexId);
@@ -101,8 +108,9 @@ public class TGraphIndexedKernelTcpServer extends TGraphKernelTcpServer {
     private Result execute(CreateTGraphAggrDurationIndexTx tx) {
         long indexId = -1;
         try(Transaction t = db.beginTx()){
-            indexId = db.temporalIndex().relCreateDurationIndex(Helper.time(tx.getStart()), Helper.time(tx.getEnd()), tx.getProName(), tx.getEvery(), tx.getTimeUnit());
+            indexId = db.temporalIndex().relCreateDurationIndex(Helper.time(tx.getStart()), Helper.time(tx.getEnd()), tx.getProName(), tx.getEvery(), tx.getTimeUnit(), new ValueGroupingMap.IntValueGroupMap());
 //            db.temporalIndex().awaitIndexOnline(indexId);
+            t.success();
         }
         CreateTGraphAggrMaxIndexTx.Result r = new CreateTGraphAggrMaxIndexTx.Result();
         r.setIndexId(indexId);
@@ -113,7 +121,8 @@ public class TGraphIndexedKernelTcpServer extends TGraphKernelTcpServer {
         long indexId = -1;
         try(Transaction t = db.beginTx()){
             indexId = db.temporalIndex().relCreateMinMaxIndex(Helper.time(tx.getStart()), Helper.time(tx.getEnd()), tx.getProName(), tx.getEvery(), tx.getTimeUnit(), IndexType.AGGR_MAX);
-            db.temporalIndex().awaitIndexOnline(indexId);
+//            db.temporalIndex().awaitIndexOnline(indexId);
+            t.success();
         }
         CreateTGraphAggrMaxIndexTx.Result r = new CreateTGraphAggrMaxIndexTx.Result();
         r.setIndexId(indexId);
@@ -156,11 +165,16 @@ public class TGraphIndexedKernelTcpServer extends TGraphKernelTcpServer {
 
     private Result execute(SnapshotAggrMaxTx tx){
         try(Transaction t = db.beginTx()){
+            List<IndexMetaData> indexMetas = db.temporalIndex().relIndexes();
+//            indexMetas.stream().
             List<Pair<String, Integer>> answers = new ArrayList<>();
-            List<Integer> travelTime = new ArrayList<>();   //定义了一个存储最大值的列表
             for (Relationship r:GlobalGraphOperations.at(db).getAllRelationships()){
                 String roadName = (String) r.getProperty("name");
-                Object v = r.getTemporalPropertyWithIndex(tx.getP(), Helper.time(tx.getT0()), Helper.time(tx.getT1()), indexId);
+                AggregationIndexQueryResult v = r.getTemporalPropertyWithIndex(tx.getP(), Helper.time(tx.getT0()), Helper.time(tx.getT1()), indexId);
+                if(v!=null){
+                    Map<Integer, Slice> result = v.getMinMaxResult();
+                    answers.add(Pair.of(roadName, result.get(0).getInt(0))); // 0 min, 1 max
+                }
             }
             SnapshotAggrMaxTx.Result result = new SnapshotAggrMaxTx.Result();
             result.setRoadTravelTime(answers);
@@ -173,7 +187,13 @@ public class TGraphIndexedKernelTcpServer extends TGraphKernelTcpServer {
             List<Triple<String, Integer, Integer>> answers = new ArrayList<>();
             for (Relationship r : GlobalGraphOperations.at(db).getAllRelationships()) {
                 String roadName = (String) r.getProperty("name");
-                Object v = r.getTemporalPropertyWithIndex(tx.getP(), Helper.time(tx.getT0()), Helper.time(tx.getT1()), indexId);
+                AggregationIndexQueryResult v = r.getTemporalPropertyWithIndex(tx.getP(), Helper.time(tx.getT0()), Helper.time(tx.getT1()), indexId);
+                if(v!=null){
+                    Map<Integer, Integer> result = v.getDurationResult();
+                    result.forEach((k, val)->{
+                        answers.add(Triple.of(roadName, k, val));
+                    });
+                }
             }
             SnapshotAggrDurationTx.Result result = new SnapshotAggrDurationTx.Result();
             result.setRoadStatDuration(answers);
@@ -182,28 +202,19 @@ public class TGraphIndexedKernelTcpServer extends TGraphKernelTcpServer {
     }
 
     private Result execute(EntityTemporalConditionTx tx){
+        List<String> answersFinal;
         try(Transaction t = db.beginTx()){
-            List<String> answers = new ArrayList<>();
-            for (Relationship r:GlobalGraphOperations.at(db).getAllRelationships()){
-                String roadName = (String) r.getProperty("travel_time");
-                Object v = r.getTemporalProperty(tx.getP(), Helper.time(tx.getT0()), Helper.time(tx.getT1()), new TemporalRangeQuery() {
-                    @Override
-                    public void onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
-                        if ((Integer)val > tx.getVmin()){
-                            answers.add(tx.getP());
-                        }
-                    }
-                    @Override
-                    public Object onReturn() {
-                        return null;
-                    }
-                });
-            }
-            List<String> answersFinal = answers.stream().distinct().collect(Collectors.toList());
-            EntityTemporalConditionTx.Result result = new EntityTemporalConditionTx.Result();
-            result.setRoads(answers);
-            return result;
+            TemporalIndexManager.PropertyValueIntervalBuilder query = db.temporalIndex().relQueryValueIndex(Helper.time(tx.getT0()), Helper.time(tx.getT1()));
+            query.propertyValRange(tx.getP(), tx.getVmin(), tx.getVmax());
+            List<IntervalEntry> answers = query.query();
+            answersFinal = answers.stream().map(IntervalEntry::getEntityId).distinct().map(id->{
+                Relationship road = db.getRelationshipById(id);
+                return (String) road.getProperty("name");
+            }).collect(Collectors.toList());
         }
+        EntityTemporalConditionTx.Result result = new EntityTemporalConditionTx.Result();
+        result.setRoads(answersFinal);
+        return result;
     }
 
 }

@@ -7,7 +7,7 @@ import java.util.List;
 
 public class CreateTGraphTemporalValueIndexTx extends AbstractTransaction {
     private int start, end;
-    private List<Triple<String, Object, Object>> propValRange; //proId, minVal, maxVal;
+    private List<String> props; //proId
 
     public CreateTGraphTemporalValueIndexTx(){
         setTxType(TxType.tx_index_tgraph_temporal_condition);
@@ -29,12 +29,12 @@ public class CreateTGraphTemporalValueIndexTx extends AbstractTransaction {
         this.end = end;
     }
 
-    public List<Triple<String, Object, Object>> getPropValRange() {
-        return propValRange;
+    public List<String> getProps() {
+        return props;
     }
 
-    public void setPropValRange(List<Triple<String, Object, Object>> propValRange) {
-        this.propValRange = propValRange;
+    public void setProps(List<String> props) {
+        this.props = props;
     }
 
     public static class Result extends AbstractTransaction.Result{
