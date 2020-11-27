@@ -2,13 +2,9 @@ package edu.buaa.server;
 
 import com.alibaba.fastjson.JSON;
 import com.google.common.base.Preconditions;
-import edu.buaa.algo.EarliestArriveTime;
 import edu.buaa.benchmark.transaction.*;
 import edu.buaa.benchmark.transaction.AbstractTransaction.Result;
-import edu.buaa.benchmark.transaction.internal.CreateTGraphAggrDurationIndexTx;
-import edu.buaa.benchmark.transaction.internal.CreateTGraphAggrMaxIndexTx;
-import edu.buaa.benchmark.transaction.internal.CreateTGraphTemporalValueIndexTx;
-import edu.buaa.benchmark.transaction.internal.EarliestArriveTimeAggrTx;
+import edu.buaa.benchmark.transaction.index.*;
 import edu.buaa.client.RuntimeEnv;
 import edu.buaa.model.StatusUpdate;
 import edu.buaa.utils.Helper;
@@ -17,21 +13,18 @@ import edu.buaa.utils.TGraphSocketServer;
 import edu.buaa.utils.Triple;
 import org.act.temporalProperty.index.IndexType;
 import org.act.temporalProperty.index.value.IndexMetaData;
-import org.act.temporalProperty.query.TimePointL;
 import org.act.temporalProperty.query.aggr.AggregationIndexQueryResult;
 import org.act.temporalProperty.query.aggr.ValueGroupingMap;
 import org.act.temporalProperty.util.Slice;
 import org.neo4j.graphdb.*;
 import org.neo4j.temporal.IntervalEntry;
 import org.neo4j.temporal.TemporalIndexManager;
-import org.neo4j.temporal.TemporalRangeQuery;
 import org.neo4j.temporal.TimePoint;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class TGraphIndexedKernelTcpServer extends TGraphKernelTcpServer {
@@ -82,8 +75,8 @@ public class TGraphIndexedKernelTcpServer extends TGraphKernelTcpServer {
         switch (tx.getTxType()){
             case tx_import_static_data: return execute((ImportStaticDataTx) tx);
             case tx_import_temporal_data: return execute((ImportTemporalDataTx) tx);
-            case tx_query_snapshot_aggr_max: return execute((SnapshotAggrMaxTx) tx);
-            case tx_query_snapshot_aggr_duration: return execute((SnapshotAggrDurationTx) tx);
+            case tx_query_snapshot_aggr_max: return execute((SnapshotAggrMaxIndexTx) tx);
+            case tx_query_snapshot_aggr_duration: return execute((SnapshotAggrDurationIndexTx) tx);
             case tx_query_road_by_temporal_condition: return execute((EntityTemporalConditionTx) tx);
             case tx_index_tgraph_aggr_max: return execute((CreateTGraphAggrMaxIndexTx) tx);
             case tx_index_tgraph_aggr_duration: return execute((CreateTGraphAggrDurationIndexTx) tx);
@@ -163,14 +156,14 @@ public class TGraphIndexedKernelTcpServer extends TGraphKernelTcpServer {
         return new Result();
     }
 
-    private Result execute(SnapshotAggrMaxTx tx){
+    private Result execute(SnapshotAggrMaxIndexTx tx){
         try(Transaction t = db.beginTx()){
             List<IndexMetaData> indexMetas = db.temporalIndex().relIndexes();
 //            indexMetas.stream().
             List<Pair<String, Integer>> answers = new ArrayList<>();
             for (Relationship r:GlobalGraphOperations.at(db).getAllRelationships()){
                 String roadName = (String) r.getProperty("name");
-                AggregationIndexQueryResult v = r.getTemporalPropertyWithIndex(tx.getP(), Helper.time(tx.getT0()), Helper.time(tx.getT1()), indexId);
+                AggregationIndexQueryResult v = r.getTemporalPropertyWithIndex(tx.getP(), Helper.time(tx.getT0()), Helper.time(tx.getT1()), tx.getIndexId());
                 if(v!=null){
                     Map<Integer, Slice> result = v.getMinMaxResult();
                     answers.add(Pair.of(roadName, result.get(0).getInt(0))); // 0 min, 1 max
@@ -182,17 +175,15 @@ public class TGraphIndexedKernelTcpServer extends TGraphKernelTcpServer {
         }
     }
 
-    private Result execute(SnapshotAggrDurationTx tx) {
+    private Result execute(SnapshotAggrDurationIndexTx tx) {
         try (Transaction t = db.beginTx()) {
             List<Triple<String, Integer, Integer>> answers = new ArrayList<>();
             for (Relationship r : GlobalGraphOperations.at(db).getAllRelationships()) {
                 String roadName = (String) r.getProperty("name");
-                AggregationIndexQueryResult v = r.getTemporalPropertyWithIndex(tx.getP(), Helper.time(tx.getT0()), Helper.time(tx.getT1()), indexId);
+                AggregationIndexQueryResult v = r.getTemporalPropertyWithIndex(tx.getP(), Helper.time(tx.getT0()), Helper.time(tx.getT1()), tx.getIndexId());
                 if(v!=null){
                     Map<Integer, Integer> result = v.getDurationResult();
-                    result.forEach((k, val)->{
-                        answers.add(Triple.of(roadName, k, val));
-                    });
+                    result.forEach((k, val)-> answers.add(Triple.of(roadName, k, val)));
                 }
             }
             SnapshotAggrDurationTx.Result result = new SnapshotAggrDurationTx.Result();

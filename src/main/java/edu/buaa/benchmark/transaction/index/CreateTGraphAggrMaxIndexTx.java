@@ -1,4 +1,4 @@
-package edu.buaa.benchmark.transaction.internal;
+package edu.buaa.benchmark.transaction.index;
 
 import edu.buaa.benchmark.transaction.AbstractTransaction;
 
@@ -61,5 +61,11 @@ public class CreateTGraphAggrMaxIndexTx extends AbstractTransaction {
         public void setIndexId(long indexId) {
             this.indexId = indexId;
         }
+    }
+
+    @Override
+    public void validateResult(AbstractTransaction.Result result) {
+        Result r = (Result) result;
+        System.out.println("create tgraph min/max index with id: "+r.indexId);
     }
 }

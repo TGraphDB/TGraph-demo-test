@@ -1,4 +1,4 @@
-package edu.buaa.benchmark.transaction.internal;
+package edu.buaa.benchmark.transaction.index;
 
 import edu.buaa.benchmark.transaction.AbstractTransaction;
 import edu.buaa.utils.Triple;
