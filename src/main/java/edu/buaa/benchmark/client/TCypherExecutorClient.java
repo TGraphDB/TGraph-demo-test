@@ -74,28 +74,28 @@ public class TCypherExecutorClient extends TGraphSocketClient implements DBProxy
     private ListenableFuture<ServerResponse> execute(SnapshotAggrMaxTx tx){
         return addQuery(
                 MessageFormat.format(
-                        "MATCH ()-[r:ROAD_TO]->() RETURN r.name, TAGGR_MAX(r.{0}, {1}~{2})"
+                        "MATCH ()-[r:ROAD_TO]->() RETURN r.name, TP_MAX(r.{0}, {1}~{2})"
             ,tx.getP(), tx.getT0(), tx.getT1()));
     }
 
     private ListenableFuture<ServerResponse> execute(SnapshotAggrDurationTx tx){
         return addQuery(
                 MessageFormat.format(
-                        "MATCH ()-[r:ROAD_TO]->() RETURN r.name, TAGGR_DURATION(r.{0}, {1}~{2})"
+                        "MATCH ()-[r:ROAD_TO]->() RETURN r.name, TP_DURATION(r.{0}, {1}~{2})"
                         ,tx.getP(), tx.getT0(), tx.getT1()));
     }
 
     private ListenableFuture<ServerResponse> execute(SnapshotQueryTx tx){
         return addQuery(
                 MessageFormat.format(
-                        "MATCH ()-[r:ROAD_TO]->() RETURN r.name, TFV(r.{0}, {1})"
+                        "MATCH ()-[r:ROAD_TO]->() RETURN r.name, TP_VALUE_AT(r.{0}, {1})"
                         ,tx.getPropertyName(), tx.getTimestamp()));
     }
 
     private ListenableFuture<ServerResponse> execute(EntityTemporalConditionTx tx){
         return addQuery(
                 MessageFormat.format(
-                        "MATCH ()-[r:ROAD_TO]->() WHERE TVRC(r.{0}, any, {1}~{2}, {3}, {4}) RETURN r.name"
+                        "MATCH ()-[r:ROAD_TO]->() WHERE TP_WITHIN_EXISTS(r.{0}, {1}~{2}, {3}, {4}) RETURN r.name"
                         ,tx.getP(), tx.getT0(), tx.getT1(), tx.getVmin(), tx.getVmax()));
     }
 

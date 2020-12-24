@@ -43,7 +43,7 @@ public class BenchmarkTxGenerator {
         }
     }
 
-    public static AbstractTransaction txImportStatic(TrafficTemporalPropertyGraph tgraph){
+    public static ImportStaticDataTx txImportStatic(TrafficTemporalPropertyGraph tgraph){
         final Map<CrossNode, Long> crossIdMap = new HashMap<>();
         final List<ImportStaticDataTx.StaticCrossNode> crosses = new ArrayList<>();
         final List<ImportStaticDataTx.StaticRoadRel> roads = new ArrayList<>();
