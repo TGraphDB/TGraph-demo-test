@@ -113,6 +113,18 @@ public class SimpleIndexTest {
     }
 
     @Test
+    public void dropTemporalPropertyIndex(){
+        try(Transaction tx = db.beginTx()){
+            db.temporalIndex().relDropIndex(0);
+            tx.success();
+        }
+        try(Transaction tx = db.beginTx()){
+            System.out.println(db.temporalIndex().relIndexes());
+            tx.success();
+        }
+    }
+
+    @Test
     public void createAggrMinMaxIndex() throws InterruptedException {
         try(Transaction tx = db.beginTx()){
             long indexId = db.temporalIndex().relCreateMinMaxIndex(
@@ -211,8 +223,8 @@ public class SimpleIndexTest {
 
     @Test
     public void queryValueWithoutIndex(){
+        Set<Long> answers = new HashSet<>();
         try(Transaction tx = db.beginTx()){
-            Set<Long> answers = new HashSet<>();
             for (Relationship r:GlobalGraphOperations.at(db).getAllRelationships()){
                 Object v = r.getTemporalProperty("travel_time",
                         Helper.time(Helper.timeStr2int("201005020800")),
@@ -233,6 +245,8 @@ public class SimpleIndexTest {
             tx.success();
             System.out.println(answers.size());
         }
+        queryValueIndex();
+        Helper.compareSets(answers, answersFinal);
     }
 
 
