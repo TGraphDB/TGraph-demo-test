@@ -1,5 +1,6 @@
 package simple.tgraph.kernel;
 
+import com.alibaba.fastjson.parser.ParserConfig;
 import com.aliyun.openservices.aliyun.log.producer.Producer;
 import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
 import edu.buaa.benchmark.BenchmarkTxResultProcessor;
@@ -7,6 +8,7 @@ import edu.buaa.benchmark.client.DBProxy;
 import edu.buaa.benchmark.client.TGraphExecutorClient;
 import edu.buaa.benchmark.transaction.EntityTemporalConditionTx;
 import edu.buaa.utils.Helper;
+import javafx.scene.shape.HLineTo;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -14,6 +16,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 
 public class EntityTemporalConditionTest {
@@ -21,8 +24,10 @@ public class EntityTemporalConditionTest {
     private static String serverHost = Helper.mustEnv("DB_HOST"); // hostname of TGraph (TCypher) server.
     private static boolean verifyResult = Boolean.parseBoolean(Helper.mustEnv("VERIFY_RESULT"));
     private static String resultFile = Helper.mustEnv("SERVER_RESULT_FILE");
-    private static String startDay = Helper.mustEnv("TEMPORAL_DATA_START"); //0501
-    private static String endDay = Helper.mustEnv("TEMPORAL_DATA_END"); //0503
+    private static String dataFilePath = Helper.mustEnv("RAW_DATA_PATH");
+    private static String testPropertyName = Helper.mustEnv("TEST_PROPERTY_NAME");
+    private static String startTime = Helper.mustEnv("TEMPORAL_DATA_START");
+    private static String endTime = Helper.mustEnv("TEMPORAL_DATA_END");
     private static int ConditionValue = Integer.parseInt(Helper.mustEnv("TEMPORAL_CONDITION"));
 
     private static Producer logger;
@@ -31,6 +36,7 @@ public class EntityTemporalConditionTest {
 
     @BeforeClass
     public static void init() throws IOException, ExecutionException, InterruptedException {
+        ParserConfig.getGlobalInstance().setAutoTypeSupport(true);
         client = new TGraphExecutorClient(serverHost, threadCnt, 800);
         client.testServerClientCompatibility();
 
@@ -38,30 +44,37 @@ public class EntityTemporalConditionTest {
         logger = Helper.getLogger();
         post.setLogger(logger);
         post.setVerifyResult(verifyResult);
-        post.setResult(new File(resultFile));
+        post.setResult(new File(dataFilePath,resultFile));
     }
-
-
 
     @Test
     //travel_time > ???s
-    public void EntityTemporalConditionInfoVMIN() throws Exception{
-        queryVMIN("travel_time", Helper.timeStr2int(startDay), Helper.timeStr2int(endDay), ConditionValue);
+    public void entityTemporalConditionInfo() throws Exception{
+        queryVMIN(testPropertyName,Helper.timeStr2int(startTime),Helper.timeStr2int(endTime), ConditionValue);
+        //queryVMIN("travel_time", Helper.timeStr2int("201006300830"), Helper.timeStr2int("201006300930"), 600);
     }
 
 
     private void queryVMIN(String PropertyName, int st, int et, int vMIN) throws Exception{
-        EntityTemporalConditionTx tx = new EntityTemporalConditionTx();
-        tx.setP(PropertyName);
-        tx.setT0(st);
-        tx.setT1(et);
-        tx.setVmin(vMIN);
-        post.process(client.execute(tx), tx);
+        for (int i=0;i<160;i++) {
+            EntityTemporalConditionTx tx = new EntityTemporalConditionTx();
+            tx.setP(PropertyName);
+            tx.setT0(st);
+            tx.setT1(et);
+            tx.setVmin(vMIN);
+            post.process(client.execute(tx), tx);
+        }
     }
 
     @AfterClass
     public static void close() throws IOException, InterruptedException, ProducerException {
-        post.close();
+        Thread.sleep(30000);
+        while(true) {
+            try {
+                post.awaitDone(30, TimeUnit.SECONDS);
+                break;
+            } catch (InterruptedException e) {}
+        }
         client.close();
         logger.close();
     }

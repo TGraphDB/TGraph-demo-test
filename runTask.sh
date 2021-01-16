@@ -15,7 +15,7 @@ unset PREPARE_TSC
 export MAVEN_OPTS='-Xmx50g -Xms4g'
 # export MAVEN_OPTS='-Xmx18g -Xms12g'
 # # Debug options
-export MAVEN_OPTS='-Xmx18g -Xms10g -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005'
+#export MAVEN_OPTS='-Xmx18g -Xms10g -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005'
 
 
 # Function: print system info of current machine (both hardware and software), no argument needed.
@@ -41,6 +41,7 @@ function systemInfo() {
 #}
 
 function runTGraphKernelServer(){
+ # export DB_PATH="E:\tgraph\test-db\tgraph"
   export DB_PATH="E:\tgraph\test-db"
   mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.server.TGraphKernelTcpServer"
 }
@@ -58,6 +59,9 @@ function runTGraphKernelServer(){
 #}
 
 
+#======================================== TESTS without INDEX ========================================
+
+
 function runWriteTest() {
   export TEMPORAL_DATA_PER_TX=100
   export TEMPORAL_DATA_START=0501
@@ -69,10 +73,11 @@ function runWriteTest() {
   mvn -B --offline test -Dtest=simple.tgraph.kernel.WriteTemporalPropertyTest
 }
 
-
 function runSnapshotTest() {
+  export TEST_PROPERTY_NAME=travel_time
+  export TEMPORAL_DATA_START=201006300940
   export DB_HOST=localhost
-  export RAW_DATA_PATH="E:\tgraph\test-data"
+  export RAW_DATA_PATH="E:\tgraph\test-result"
   export MAX_CONNECTION_CNT=16
   export SERVER_RESULT_FILE="Result_SnapshotTest.gz"
   export VERIFY_RESULT=false
@@ -80,8 +85,11 @@ function runSnapshotTest() {
 }
 
 function runSnapshotAggregationMaxTest() {
+  export TEST_PROPERTY_NAME=travel_time
+  export TEMPORAL_DATA_START=201006300830
+  export TEMPORAL_DATA_END=201006300930
   export DB_HOST=localhost
-  export RAW_DATA_PATH="E:\tgraph\test-data"
+  export RAW_DATA_PATH="E:\tgraph\test-result"
   export SERVER_RESULT_FILE="Result_SnapshotAggregationMaxTest.gz"
   export MAX_CONNECTION_CNT=16
   export VERIFY_RESULT=false
@@ -89,28 +97,127 @@ function runSnapshotAggregationMaxTest() {
 }
 
 function runSnapshotAggregationDurationTest() {
-  export TEMPORAL_DATA_START=201005010940
-  export TEMPORAL_DATA_END=201005030940
+  export TEST_PROPERTY_NAME=jam_status
+  export TEMPORAL_DATA_START=201006300830
+  export TEMPORAL_DATA_END=201006300930
   export DB_HOST=localhost
-  export RAW_DATA_PATH="E:\tgraph\test-data"
+  export RAW_DATA_PATH="E:\tgraph\test-result"
   export SERVER_RESULT_FILE="Result_SnapshotAggregationDurationTest.gz"
   export MAX_CONNECTION_CNT=16
   export VERIFY_RESULT=false
   mvn -B --offline test -Dtest=simple.tgraph.kernel.SnapshotAggregationDurationTest
 }
 
-
 function runEntityTemporalConditionTest() {
-  export TEMPORAL_DATA_PER_TX=100
-  export TEMPORAL_DATA_START=201005010940
-  export TEMPORAL_DATA_END=201005020940
+  export TEST_PROPERTY_NAME=travel_time
+  export TEMPORAL_DATA_START=201006300830
+  export TEMPORAL_DATA_END=201006300930
   export TEMPORAL_CONDITION=600
   export DB_HOST=localhost
-  export RAW_DATA_PATH="E:\tgraph\test-data"
+  export RAW_DATA_PATH="E:\tgraph\test-result"
+  export SERVER_RESULT_FILE="Result_EntityTemporalConditionTest.gz"
   export MAX_CONNECTION_CNT=16
   export VERIFY_RESULT=false
   mvn -B --offline test -Dtest=simple.tgraph.kernel.EntityTemporalConditionTest
 }
+
+function runEntityTemporalConditionTest() {
+  export TEST_PROPERTY_NAME=travel_time
+  export TEMPORAL_DATA_START=201006300830
+  export TEMPORAL_DATA_END=201006300930
+  export TEMPORAL_CONDITION=600
+  export DB_HOST=localhost
+  export RAW_DATA_PATH="E:\tgraph\test-result"
+  export SERVER_RESULT_FILE="Result_EntityTemporalConditionTest.gz"
+  export MAX_CONNECTION_CNT=16
+  export VERIFY_RESULT=false
+  mvn -B --offline test -Dtest=simple.tgraph.kernel.EntityTemporalConditionTest
+}
+
+function runReachableAreaQueryTest() {
+  export TEST_START_CROSS_ID=75124
+  export TEMPORAL_DATA_START=201006300830
+  export TRAVEL_TIME=50000
+  export DB_HOST=localhost
+  export RAW_DATA_PATH="E:\tgraph\test-result"
+  export SERVER_RESULT_FILE="Result_EntityTemporalConditionTest.gz"
+  export MAX_CONNECTION_CNT=16
+  export VERIFY_RESULT=false
+  mvn -B --offline test -Dtest=simple.tgraph.kernel.ReachableAreaQueryTest
+}
+
+
+#=====================================================================================================
+
+
+#========================================== TESTS with INDEX =========================================
+
+
+function runSnapshotAggregationMaxIndexTest() {
+  export TEST_PROPERTY_NAME=travel_time
+  export TEMPORAL_DATA_START=201006300830
+  export TEMPORAL_DATA_END=201006300930
+  export INDEX_PROPERTY_NAME=travel_time
+  export INDEX_TEMPORAL_DATA_START=201006280000
+  export INDEX_TEMPORAL_DATA_END=201006300000
+  export DB_HOST=localhost
+  export RAW_DATA_PATH="E:\tgraph\test-result"
+  export SERVER_RESULT_FILE="Result_SnapshotAggregationMaxTest.gz"
+  export MAX_CONNECTION_CNT=16
+  export VERIFY_RESULT=false
+  mvn -B --offline test -Dtest=simple.tgraph.kernel.SnapshotAggregationMaxTest
+}
+
+function runSnapshotAggregationDurationTest() {
+  export TEST_PROPERTY_NAME=jam_status
+  export TEMPORAL_DATA_START=201006300830
+  export TEMPORAL_DATA_END=201006300930
+  export DB_HOST=localhost
+  export RAW_DATA_PATH="E:\tgraph\test-result"
+  export SERVER_RESULT_FILE="Result_SnapshotAggregationDurationTest.gz"
+  export MAX_CONNECTION_CNT=16
+  export VERIFY_RESULT=false
+  mvn -B --offline test -Dtest=simple.tgraph.kernel.SnapshotAggregationDurationTest
+}
+
+function runEntityTemporalConditionTest() {
+  export TEST_PROPERTY_NAME=travel_time
+  export TEMPORAL_DATA_START=201006300830
+  export TEMPORAL_DATA_END=201006300930
+  export TEMPORAL_CONDITION=600
+  export DB_HOST=localhost
+  export RAW_DATA_PATH="E:\tgraph\test-result"
+  export SERVER_RESULT_FILE="Result_EntityTemporalConditionTest.gz"
+  export MAX_CONNECTION_CNT=16
+  export VERIFY_RESULT=false
+  mvn -B --offline test -Dtest=simple.tgraph.kernel.EntityTemporalConditionTest
+}
+
+function runEntityTemporalConditionTest() {
+  export TEST_PROPERTY_NAME=travel_time
+  export TEMPORAL_DATA_START=201006300830
+  export TEMPORAL_DATA_END=201006300930
+  export TEMPORAL_CONDITION=600
+  export DB_HOST=localhost
+  export RAW_DATA_PATH="E:\tgraph\test-result"
+  export SERVER_RESULT_FILE="Result_EntityTemporalConditionTest.gz"
+  export MAX_CONNECTION_CNT=16
+  export VERIFY_RESULT=false
+  mvn -B --offline test -Dtest=simple.tgraph.kernel.EntityTemporalConditionTest
+}
+
+function runReachableAreaQueryTest() {
+  export TEST_START_CROSS_ID=75124
+  export TEMPORAL_DATA_START=201006300830
+  export TRAVEL_TIME=50000
+  export DB_HOST=localhost
+  export RAW_DATA_PATH="E:\tgraph\test-result"
+  export SERVER_RESULT_FILE="Result_EntityTemporalConditionTest.gz"
+  export MAX_CONNECTION_CNT=16
+  export VERIFY_RESULT=false
+  mvn -B --offline test -Dtest=simple.tgraph.kernel.ReachableAreaQueryTest
+}
+
 ## Function: Test TGraph TCypher Server write performance.
 ## Example: tcypherClientWriteTest /media/song/test/db-network-only-ro 192.168.1.141 8 10 200000 /media/song/test/data-set/beijing-traffic/TGraph/byday/100501
 ## Explain:

@@ -23,6 +23,9 @@ public class SnapshotAggregationMaxTest {
     private static boolean verifyResult = Boolean.parseBoolean(Helper.mustEnv("VERIFY_RESULT"));
     private static String resultFile = Helper.mustEnv("SERVER_RESULT_FILE");
     private static String dataFilePath = Helper.mustEnv("RAW_DATA_PATH");
+    private static String testPropertyName = Helper.mustEnv("TEST_PROPERTY_NAME");
+    private static String startTime = Helper.mustEnv("TEMPORAL_DATA_START");
+    private static String endTime = Helper.mustEnv("TEMPORAL_DATA_END");
 
     private static Producer logger;
     private static DBProxy client;
@@ -33,6 +36,7 @@ public class SnapshotAggregationMaxTest {
         ParserConfig.getGlobalInstance().setAutoTypeSupport(true);
         client = new TGraphExecutorClient(serverHost, threadCnt, 800);
         client.testServerClientCompatibility();
+
         post = new BenchmarkTxResultProcessor("TGraph(SnapshotAggregationMaxTest)", Helper.codeGitVersion());
         logger = Helper.getLogger();
         post.setLogger(logger);
@@ -41,16 +45,19 @@ public class SnapshotAggregationMaxTest {
     }
 
     @Test
-    public void travelTimeInfo() throws Exception {
-        query("travel_time", Helper.timeStr2int("201005010940"), Helper.timeStr2int("201005020950"));
+    public void snapshotAggregationMaxTestInfo() throws Exception {
+        query(testPropertyName, Helper.timeStr2int(startTime), Helper.timeStr2int(endTime));
+        //query("travel_time", Helper.timeStr2int("201006300830"), Helper.timeStr2int("201006300930"));
     }
 
     private void query(String propertyName, int st, int et) throws Exception {
-        SnapshotAggrMaxTx tx = new SnapshotAggrMaxTx();
-        tx.setP(propertyName);
-        tx.setT0(st);
-        tx.setT1(et);
-        post.process(client.execute(tx), tx);
+        for(int i=0; i<160; i++) {
+            SnapshotAggrMaxTx tx = new SnapshotAggrMaxTx();
+            tx.setP(propertyName);
+            tx.setT0(st);
+            tx.setT1(et);
+            post.process(client.execute(tx), tx);
+        }
     }
 
     @AfterClass

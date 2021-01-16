@@ -91,6 +91,7 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
             case tx_query_snapshot_aggr_duration: return execute((SnapshotAggrDurationTx) tx);
 //            case tx_query_node_neighbor_road: return execute((NodeNeighborRoadTx) tx);
             case tx_query_snapshot: return execute((SnapshotQueryTx) tx);
+            case tx_query_road_by_temporal_condition:return execute((EntityTemporalConditionTx) tx);
             default:
                 throw new UnsupportedOperationException();
         }
@@ -249,65 +250,32 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
             return result;
         }
     }
-//
-//    private Result execute(SnapshotAggrDurationTx tx) {   //getNowTimeValue
-//        try (Transaction t = db.beginTx()) {
-//            List<Triple<String, Integer, Integer>> answers = new ArrayList<>();
-//            for (Relationship r : GlobalGraphOperations.at(db).getAllRelationships()) {
-//                String roadName = (String) r.getProperty("name");
-//                Object v = r.getTemporalProperty(tx.getP(), Helper.time(tx.getT0()), Helper.time(tx.getT1()), new TemporalRangeQuery() {
-//                    List<TimePointL> timeList = new ArrayList<>();
-//                    @Override
-//                    public void onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
-//                        timeList.add(time);
-//                    }
-//
-//                    @Override
-//                    public Object onReturn() {
-//                        long nowTimeValue = timeList.get(timeList.size()-1).val();
-//                        Date date = new Date(nowTimeValue*1000);
-//                        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-//                        String nowTimeString = format.format(nowTimeValue);
-//                        System.out.println("Now Time: " +nowTimeString);
-//                        return answers.add(Triple.of(roadName,-1,-1));
-//                    }
-//                });
-//            }
-//            SnapshotAggrDurationTx.Result result = new SnapshotAggrDurationTx.Result();
-//            result.setRoadStatDuration(answers);
-//            return result;
-//        }
-//    }
-
-
 
     private Result execute(EntityTemporalConditionTx tx){
         try(Transaction t = db.beginTx()){
             List<String> answers = new ArrayList<>();
             for (Relationship r:GlobalGraphOperations.at(db).getAllRelationships()){
-                String roadName = (String) r.getProperty("travel_time");
+                String roadName = (String) r.getProperty("name");
+                final Boolean[] isEmpty = {true};
                 Object v = r.getTemporalProperty(tx.getP(), Helper.time(tx.getT0()), Helper.time(tx.getT1()), new TemporalRangeQuery() {
                     @Override
                     public void onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
-                        if ((Integer)val > tx.getVmin()){
+                        if (isEmpty[0] &&(Integer)val > tx.getVmin()){
                             answers.add(tx.getP());
+                            isEmpty[0] = false;
                         }
                     }
                     @Override
                     public Object onReturn() {
-                        return null;
+                        return answers;
                     }
                 });
             }
-            List<String> answersFinal = answers.stream().distinct().collect(Collectors.toList());
             EntityTemporalConditionTx.Result result = new EntityTemporalConditionTx.Result();
             result.setRoads(answers);
             return result;
         }
     }
-
-
-
 
     //===============================我真的没有底线===============================================================
 
