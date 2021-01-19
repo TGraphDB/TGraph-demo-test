@@ -38,8 +38,8 @@ public class SnapshotAggregationDurationTest {
         client.testServerClientCompatibility();
 
         post = new BenchmarkTxResultProcessor("TGraph(SnapshotAggregationDurationTest)", Helper.codeGitVersion());
-        logger = Helper.getLogger();
-        post.setLogger(logger);
+       // logger = Helper.getLogger();
+      //  post.setLogger(logger);
         post.setVerifyResult(verifyResult);
         post.setResult(new File(dataFilePath,resultFile));
     }

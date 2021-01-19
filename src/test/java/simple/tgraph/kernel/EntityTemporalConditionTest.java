@@ -42,28 +42,27 @@ public class EntityTemporalConditionTest {
 
         post = new BenchmarkTxResultProcessor("TGraph(EntityTemporalConditionTest)", Helper.codeGitVersion());
         logger = Helper.getLogger();
-        post.setLogger(logger);
         post.setVerifyResult(verifyResult);
         post.setResult(new File(dataFilePath,resultFile));
     }
 
     @Test
     //travel_time > ???s
-    public void entityTemporalConditionInfo() throws Exception{
-        queryVMIN(testPropertyName,Helper.timeStr2int(startTime),Helper.timeStr2int(endTime), ConditionValue);
-        //queryVMIN("travel_time", Helper.timeStr2int("201006300830"), Helper.timeStr2int("201006300930"), 600);
+    public void entityTemporalConditionInfo() throws Exception {
+        for (int i = 0; i < 160; i++) {
+            queryVMIN(testPropertyName, Helper.timeStr2int(startTime), Helper.timeStr2int(endTime), ConditionValue);
+            //queryVMIN("travel_time", Helper.timeStr2int("201006300830"), Helper.timeStr2int("201006300930"), 600);
+        }
     }
 
 
     private void queryVMIN(String PropertyName, int st, int et, int vMIN) throws Exception{
-        for (int i=0;i<160;i++) {
             EntityTemporalConditionTx tx = new EntityTemporalConditionTx();
             tx.setP(PropertyName);
             tx.setT0(st);
             tx.setT1(et);
             tx.setVmin(vMIN);
             post.process(client.execute(tx), tx);
-        }
     }
 
     @AfterClass
@@ -78,5 +77,4 @@ public class EntityTemporalConditionTest {
         client.close();
         logger.close();
     }
-
 }

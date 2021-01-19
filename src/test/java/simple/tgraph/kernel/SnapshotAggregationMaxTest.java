@@ -51,13 +51,13 @@ public class SnapshotAggregationMaxTest {
     }
 
     private void query(String propertyName, int st, int et) throws Exception {
-        for(int i=0; i<160; i++) {
+        //for(int i=0; i<160; i++) {
             SnapshotAggrMaxTx tx = new SnapshotAggrMaxTx();
             tx.setP(propertyName);
             tx.setT0(st);
             tx.setT1(et);
             post.process(client.execute(tx), tx);
-        }
+       // }
     }
 
     @AfterClass
