@@ -38,16 +38,18 @@ public class SnapshotAggregationDurationTest {
         client.testServerClientCompatibility();
 
         post = new BenchmarkTxResultProcessor("TGraph(SnapshotAggregationDurationTest)", Helper.codeGitVersion());
-       // logger = Helper.getLogger();
-      //  post.setLogger(logger);
+        logger = Helper.getLogger();
+        post.setLogger(logger);
         post.setVerifyResult(verifyResult);
         post.setResult(new File(dataFilePath,resultFile));
     }
 
     @Test
     public void snapshotAggregationDurationTestInfo() throws Exception{
-        query(testPropertyName, Helper.timeStr2int(startTime), Helper.timeStr2int(endTime));
-        //query("jam_status", Helper.timeStr2int("201006300830"), Helper.timeStr2int("201006300930"));
+//        for(int i=0;i<160;i++) {
+            query(testPropertyName, Helper.timeStr2int(startTime), Helper.timeStr2int(endTime));
+            //query("jam_status", Helper.timeStr2int("201006300830"), Helper.timeStr2int("201006300930"));
+//        }
     }
 
     private void query(String propertyName, int st, int et) throws Exception {

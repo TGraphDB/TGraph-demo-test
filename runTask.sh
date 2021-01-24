@@ -169,7 +169,7 @@ function runSnapshotAggregationMaxIndexTest() {
 }
 
 function runSnapshotAggregationDurationTest() {
-  export TEST_PROPERTY_NAME=jam_status
+  export TEST_PROPERTY_NAME=full_status
   export TEMPORAL_DATA_START=201006300830
   export TEMPORAL_DATA_END=201006300930
   export DB_HOST=localhost
