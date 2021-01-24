@@ -202,22 +202,21 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
                         return res;
                     }
                 });
-                if (res.size() == 1) {
+                if (res.size() == 0){
+                    answers.add(Triple.of(roadName, -1, Math.toIntExact(t1 - t0)));
+                } else if (res.size() == 1) {
                     answers.add(Triple.of(roadName, res.get(0).getValue(), Math.toIntExact(t1 - t0)));
                 }
                 else {
                     List<Pair<Integer, Integer>> tmp = new ArrayList<>();
                     long st = res.get(0).getKey().val();
-                    long et = res.get(res.size() - 1).getKey().val();
+                    long et = t1;
                     int duration = 0;
-                    duration = Math.toIntExact(st - t0);
-                    tmp.add(Pair.of(res.get(0).getValue(), duration));
                     for (int i = 0; i < res.size() - 1; i++) {
-                        duration = Math.toIntExact(res.get(i + 1).getKey().val() - res.get(0).getKey().val());
+                        duration = Math.toIntExact(res.get(i + 1).getKey().val() - res.get(i).getKey().val());
                         tmp.add(Pair.of(res.get(i).getValue(), duration));
                     }
-                    duration = Math.toIntExact(t1 - et);
-                    tmp.add(Pair.of(res.get(res.size() - 1).getValue(), duration));
+                    tmp.add(Pair.of(res.get(res.size() - 1).getValue(), Math.toIntExact(t1 - res.get(res.size() - 1).getKey().val())));
                     int key_tmp = 0, value_tmp = 0;
                     for (int i = 0; i < tmp.size(); i++) {
                         key_tmp = tmp.get(i).getKey();
@@ -234,7 +233,6 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
                     tmp.clear();
                 }
                 res.clear();
-
             }
 
             SnapshotAggrDurationTx.Result result = new SnapshotAggrDurationTx.Result();
