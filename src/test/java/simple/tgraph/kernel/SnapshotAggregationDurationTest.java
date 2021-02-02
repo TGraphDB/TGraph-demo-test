@@ -46,10 +46,10 @@ public class SnapshotAggregationDurationTest {
 
     @Test
     public void snapshotAggregationDurationTestInfo() throws Exception{
-       for(int i=0;i<160;i++) {
+//       for(int i=0;i<160;i++) {
             query(testPropertyName, Helper.timeStr2int(startTime), Helper.timeStr2int(endTime));
             //query("jam_status", Helper.timeStr2int("201006300830"), Helper.timeStr2int("201006300930"));
-      }
+//      }
     }
 
     private void query(String propertyName, int st, int et) throws Exception {

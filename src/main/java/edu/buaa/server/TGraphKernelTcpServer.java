@@ -203,20 +203,20 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
                     }
                 });
                 if (res.size() == 0){
-                    answers.add(Triple.of(roadName, -1, Math.toIntExact(t1 - t0)));
-                } else if (res.size() == 1) {
-                    answers.add(Triple.of(roadName, res.get(0).getValue(), Math.toIntExact(t1 - t0)));
-                }
+                    //answers.add(Triple.of(roadName, -1, Math.toIntExact(t1 - t0)));
+               }
                 else {
                     List<Pair<Integer, Integer>> tmp = new ArrayList<>();
-                    long st = res.get(0).getKey().val();
-                    long et = t1;
-                    int duration = 0;
-                    for (int i = 0; i < res.size() - 1; i++) {
-                        duration = Math.toIntExact(res.get(i + 1).getKey().val() - res.get(i).getKey().val());
-                        tmp.add(Pair.of(res.get(i).getValue(), duration));
+                    int k = 1;
+                    for (int i = 0; i < res.size(); i++) {
+                        if (k == res.size()) {
+                            tmp.add(Pair.of(res.get(i).getValue(), Math.toIntExact(t1 - res.get(k - 1).getKey().val())));
+                        }
+                        else{
+                            tmp.add(Pair.of(res.get(i).getValue(), Math.toIntExact(res.get(i+1).getKey().val() - res.get(i).getKey().val())));
+                            k++;
+                        }
                     }
-                    tmp.add(Pair.of(res.get(res.size() - 1).getValue(), Math.toIntExact(t1 - res.get(res.size() - 1).getKey().val())));
                     int key_tmp = 0, value_tmp = 0;
                     for (int i = 0; i < tmp.size(); i++) {
                         key_tmp = tmp.get(i).getKey();
@@ -262,8 +262,12 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
                 for (int i = 0; i < res.size(); i++) {
                     sum = res.get(i) + sum;
                 }
+                System.out.println(roadName);
+                System.out.println(sum);
                 if (sum > tx.getVmin()) {
                     answers.add(roadName);
+                    System.out.println(roadName);
+                    System.out.println("--------------------------");
                 }
                 res.clear();
             }
