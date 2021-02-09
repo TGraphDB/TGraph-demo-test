@@ -32,7 +32,7 @@ public class SnapshotAggregationMaxIndexTest {
     private static String startTime = Helper.mustEnv("TEMPORAL_DATA_START");
     private static String endTime = Helper.mustEnv("TEMPORAL_DATA_END");
     private static String indexStartTime = Helper.mustEnv("INDEX_TEMPORAL_DATA_START");
-    private static String indexEndTime = Helper.mustEnv("INDEX_TEMPORAL_DATA_END_INDEX");
+    private static String indexEndTime = Helper.mustEnv("INDEX_TEMPORAL_DATA_END");
 
 
     private static Producer logger;

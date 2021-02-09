@@ -15,7 +15,7 @@ unset PREPARE_TSC
 export MAVEN_OPTS='-Xmx50g -Xms4g'
 # export MAVEN_OPTS='-Xmx18g -Xms12g'
 # # Debug options
-#export MAVEN_OPTS='-Xmx18g -Xms10g -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005'
+export MAVEN_OPTS='-Xmx18g -Xms10g -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005'
 
 
 # Function: print system info of current machine (both hardware and software), no argument needed.
@@ -63,7 +63,7 @@ function runTGraphKernelServer(){
 
 
 function runWriteTest() {
-  export TEMPORAL_DATA_PER_TX=100
+  export TEMPORAL_DATA_PER_TX=250
   export TEMPORAL_DATA_START=0501
   export TEMPORAL_DATA_END=0630
   export DB_HOST=localhost
@@ -152,7 +152,11 @@ function runReachableAreaQueryTest() {
 
 #========================================== TESTS with INDEX =========================================
 
-
+function runTGraphIndexedKernelServer(){
+ # export DB_PATH="E:\tgraph\test-db\tgraph"
+  export DB_PATH="E:\tgraph\test-db\tgraph100-1"
+  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.server.TGraphIndexedKernelTcpServer"
+}
 function runSnapshotAggregationMaxIndexTest() {
   export TEST_PROPERTY_NAME=travel_time
   export TEMPORAL_DATA_START=201006300830
@@ -165,7 +169,7 @@ function runSnapshotAggregationMaxIndexTest() {
   export SERVER_RESULT_FILE="Result_SnapshotAggregationMaxIndexTest.gz"
   export MAX_CONNECTION_CNT=16
   export VERIFY_RESULT=false
-  mvn -B --offline test -Dtest=simple.tgraph.kernel.SnapshotAggregationMaxIndexTest
+  mvn -B --offline test -Dtest=simple.tgraph.kernel.index.SnapshotAggregationMaxIndexTest
 }
 
 function runSnapshotAggregationDurationIndexTest() {
