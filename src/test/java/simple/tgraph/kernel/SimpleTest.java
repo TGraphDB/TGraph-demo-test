@@ -7,6 +7,7 @@ import edu.buaa.benchmark.client.DBProxy;
 import edu.buaa.benchmark.transaction.AbstractTransaction;
 import edu.buaa.benchmark.transaction.SnapshotQueryTx;
 import edu.buaa.utils.Helper;
+import edu.buaa.utils.TrafficMultiFileReader;
 import org.act.temporalProperty.impl.PackInternalKeyIterator;
 import org.act.temporalProperty.query.TimePointL;
 import org.junit.Test;
@@ -19,6 +20,7 @@ import org.neo4j.temporal.TimePoint;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 import java.io.*;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -247,5 +249,17 @@ public class SimpleTest {
         }finally {
             db.shutdown();
         }
+    }
+
+    @Test
+    public void calcDataLineCount(){
+        List<File> fileList = Helper.trafficFileList("D:\\bygzip", "0501", "0630");
+        TrafficMultiFileReader r = new TrafficMultiFileReader(fileList);
+        long i = 0;
+        while(r.hasNext()){
+            i++;
+            r.next();
+        }
+        System.out.println(i);
     }
 }

@@ -14,6 +14,7 @@ import org.act.temporalProperty.index.IndexType;
 import org.act.temporalProperty.query.TimePointL;
 import org.act.temporalProperty.query.aggr.AggregationIndexQueryResult;
 import org.act.temporalProperty.util.Slice;
+import org.apache.commons.lang3.tuple.Triple;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -43,7 +44,7 @@ public class SimpleIndexTest {
     @BeforeClass
     public static void connectdb(){
         roadMap = new HashMap<>();
-        db = new GraphDatabaseFactory().newEmbeddedDatabase( new File("Z:\\TEMP") );
+        db = new GraphDatabaseFactory().newEmbeddedDatabase( new File("D:\\tgraph100-1") );
     }
 
     private void execute(ImportStaticDataTx tx){
@@ -195,8 +196,10 @@ public class SimpleIndexTest {
     public void createEntityTemporalValueIndex() throws InterruptedException {
         try(Transaction tx = db.beginTx()){
             long indexId = db.temporalIndex().relCreateValueIndex(
-                    Helper.time(Helper.timeStr2int("201005020800")),
-                    Helper.time(Helper.timeStr2int("201005021200")),
+//                    Helper.time(Helper.timeStr2int("201005020800")),
+//                    Helper.time(Helper.timeStr2int("201005021200")),
+                    Helper.time(Helper.timeStr2int("201006300800")),
+                    Helper.time(Helper.timeStr2int("201006301200")),
                     "travel_time");
             tx.success();
             System.out.println(indexId);
@@ -210,8 +213,10 @@ public class SimpleIndexTest {
     public void queryValueIndex(){
         try(Transaction tx = db.beginTx()){
             TemporalIndexManager.PropertyValueIntervalBuilder query = db.temporalIndex().relQueryValueIndex(
-                    Helper.time(Helper.timeStr2int("201005020800")),
-                    Helper.time(Helper.timeStr2int("201005021200"))
+//                    Helper.time(Helper.timeStr2int("201005020800")),
+//                    Helper.time(Helper.timeStr2int("201005021200"))
+                    Helper.time(Helper.timeStr2int("201006300800")),
+                    Helper.time(Helper.timeStr2int("201006301200"))
             );
             query.propertyValRange("travel_time", 100, 200);
             List<IntervalEntry> answers = query.query();
@@ -227,8 +232,11 @@ public class SimpleIndexTest {
         try(Transaction tx = db.beginTx()){
             for (Relationship r:GlobalGraphOperations.at(db).getAllRelationships()){
                 Object v = r.getTemporalProperty("travel_time",
-                        Helper.time(Helper.timeStr2int("201005020800")),
-                        Helper.time(Helper.timeStr2int("201005021200")), new TemporalRangeQuery() {
+//                        Helper.time(Helper.timeStr2int("201005020800")),
+//                        Helper.time(Helper.timeStr2int("201005021200")),
+                        Helper.time(Helper.timeStr2int("201006300800")),
+                        Helper.time(Helper.timeStr2int("201006301200")),
+                        new TemporalRangeQuery() {
                     @Override
                     public void onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
                         int iVal = (Integer) val;
@@ -246,7 +254,8 @@ public class SimpleIndexTest {
             System.out.println(answers.size());
         }
         queryValueIndex();
-        Helper.compareSets(answers, answersFinal);
+        Triple<Set<Long>, Integer, Set<Long>> cpResult = Helper.compareSets(answers, answersFinal);
+        System.out.println(cpResult.getLeft()+"\ncommon.size="+ cpResult.getMiddle()+"\n"+cpResult.getRight());
     }
 
 

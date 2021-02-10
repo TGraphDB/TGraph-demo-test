@@ -20,7 +20,7 @@ import java.util.*;
 public class RTreeIndexTest {
     @Test
     public void readRTreeInfo() throws IOException {
-        try ( FileChannel readChannel = new FileInputStream( new File( "Z:\\TEMP\\temporal.relationship.properties\\index", "value.000000.index" ) ).getChannel() ) {
+        try ( FileChannel readChannel = new FileInputStream( new File( "D:\\tgraph100-1\\temporal.relationship.properties\\index", "value.000000.index" ) ).getChannel() ) {
             new IndexTableReader( readChannel, new IndexEntryOperator(Collections.singletonList(IndexValueType.INT), 4096 ));
 
         }
@@ -51,6 +51,7 @@ public class RTreeIndexTest {
             System.out.println(entities.size());
             System.out.println(entities.stream().min(Comparator.naturalOrder()).get());
             System.out.println(entities.stream().max(Comparator.naturalOrder()).get());
+            System.out.println(cntt);
         }
 
         private RTreeNode getNode(int pos, RTreeRange bound) {
@@ -61,13 +62,19 @@ public class RTreeIndexTest {
             return node;
         }
 
+        int cntt = 0;
+
         private void getChildren(RTreeNode node, int pos, int level){
             cnt.merge(level, 1, Integer::sum);
             System.out.print(level+" "+pos+" "+node.isLeaf()+" "+node.getBound()+" ");
             if(node.isLeaf()){
                 System.out.println(node.getEntries().size());
                 for(IndexEntry entry : node.getEntries()){
-                    entities.add(entry.getEntityId());
+                    int val = entry.getValue(0).getInt(0);
+                    if(1000<=val && val<=20000){
+                        entities.add(entry.getEntityId());
+                        cntt++;
+                    }
                 }
             }else {
                 System.out.println();
