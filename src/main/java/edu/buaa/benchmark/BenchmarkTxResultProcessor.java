@@ -14,10 +14,7 @@ import edu.buaa.benchmark.transaction.AbstractTransaction.Metrics;
 
 import java.io.*;
 import java.util.Map;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class BenchmarkTxResultProcessor {
     public final ExecutorService thread = Executors.newSingleThreadExecutor();
@@ -47,12 +44,17 @@ public class BenchmarkTxResultProcessor {
 
     public void process(ListenableFuture<DBProxy.ServerResponse> result, AbstractTransaction tx) {
         Futures.addCallback( result, new PostProcessing(tx), this.thread);
-//sync mode:
-//        try {
-//            callback(tx).onSuccess(result.get());
-//        } catch (InterruptedException | ExecutionException e) {
-//            e.printStackTrace();
-//        }
+    }
+
+    public DBProxy.ServerResponse processSync(ListenableFuture<DBProxy.ServerResponse> result, AbstractTransaction tx) {
+        try {
+            DBProxy.ServerResponse r = result.get();
+            new PostProcessing(tx).onSuccess(r);
+            return r;
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
     }
 
     private void logMetrics(AbstractTransaction tx, DBProxy.ServerResponse response) throws ProducerException, InterruptedException {

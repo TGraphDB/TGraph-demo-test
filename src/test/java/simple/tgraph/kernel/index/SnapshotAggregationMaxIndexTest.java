@@ -3,6 +3,7 @@ package simple.tgraph.kernel.index;
 import com.alibaba.fastjson.parser.ParserConfig;
 import com.aliyun.openservices.aliyun.log.producer.Producer;
 import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
+import com.google.common.util.concurrent.ListenableFuture;
 import edu.buaa.benchmark.BenchmarkTxResultProcessor;
 import edu.buaa.benchmark.client.DBProxy;
 import edu.buaa.benchmark.client.TGraphExecutorClient;
@@ -54,6 +55,7 @@ public class SnapshotAggregationMaxIndexTest {
     @Test
     public void snapshotAggregationMaxIndexTestInfo() throws Exception{
         long indexId = createIndex();
+        System.out.println(indexId);
         query(testPropertyName, Helper.timeStr2int(startTime), Helper.timeStr2int(endTime),indexId);
     }
 
@@ -64,8 +66,8 @@ public class SnapshotAggregationMaxIndexTest {
         tx.setEnd(Helper.timeStr2int(indexEndTime));
         tx.setEvery(1);
         tx.setTimeUnit(Calendar.HOUR);
-        post.process(client.execute(tx), tx);
-        AbstractTransaction.Result result = tx.getResult();
+        DBProxy.ServerResponse response = post.processSync(client.execute(tx), tx);
+        AbstractTransaction.Result result = response.getResult();
         CreateTGraphAggrMaxIndexTx.Result res = (CreateTGraphAggrMaxIndexTx.Result) result;
         long indexId = res.getIndexId();
         return indexId;
