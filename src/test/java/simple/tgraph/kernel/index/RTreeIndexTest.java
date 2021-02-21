@@ -1,7 +1,16 @@
 package simple.tgraph.kernel.index;
 
+import edu.buaa.utils.Helper;
 import org.act.temporalProperty.index.IndexValueType;
+import org.act.temporalProperty.index.value.IndexQueryRegion;
+import org.act.temporalProperty.index.value.PropertyValueInterval;
+import org.act.temporalProperty.index.value.cardinality.HyperLogLog;
 import org.act.temporalProperty.index.value.rtree.*;
+import org.act.temporalProperty.query.TimePointL;
+import org.act.temporalProperty.util.Slice;
+import org.act.temporalProperty.util.SliceInput;
+import org.act.temporalProperty.util.SliceOutput;
+import org.act.temporalProperty.util.TemporalPropertyValueConvertor;
 import org.junit.Test;
 
 import java.io.File;
@@ -20,9 +29,17 @@ import java.util.*;
 public class RTreeIndexTest {
     @Test
     public void readRTreeInfo() throws IOException {
-        try ( FileChannel readChannel = new FileInputStream( new File( "D:\\tgraph100-1\\temporal.relationship.properties\\index", "value.000000.index" ) ).getChannel() ) {
+        try ( FileChannel readChannel = new FileInputStream( new File( "D:\\tgraph\\testdb\\temporal.relationship.properties\\index", "value.000000.index" ) ).getChannel() ) {
             new IndexTableReader( readChannel, new IndexEntryOperator(Collections.singletonList(IndexValueType.INT), 4096 ));
-
+//            IndexQueryRegion queryRegion = new IndexQueryRegion(
+//                    Helper.time(Helper.timeStr2int("201005020800")),
+//                    Helper.time(Helper.timeStr2int("201005021200"))
+//            );
+//            Slice minValue = TemporalPropertyValueConvertor.toSlice( 100 );
+//            Slice maxValue = TemporalPropertyValueConvertor.toSlice( 200 );
+//            queryRegion.add(new PropertyValueInterval(0, minValue, maxValue, IndexValueType.INT));
+//            RTreeCardinality r = new RTreeCardinality(readChannel, queryRegion, new IndexEntryOperator(Collections.singletonList(IndexValueType.INT), 4096));
+//            System.out.println(r.cardinalityEstimator().cardinality());
         }
     }
 
@@ -49,8 +66,8 @@ public class RTreeIndexTest {
             getChildren(rootNode, rootPos,0);
             System.out.println(cnt);
             System.out.println(entities.size());
-            System.out.println(entities.stream().min(Comparator.naturalOrder()).get());
-            System.out.println(entities.stream().max(Comparator.naturalOrder()).get());
+//            System.out.println(entities.stream().min(Comparator.naturalOrder()).get());
+//            System.out.println(entities.stream().max(Comparator.naturalOrder()).get());
             System.out.println(cntt);
         }
 
@@ -67,13 +84,15 @@ public class RTreeIndexTest {
         private void getChildren(RTreeNode node, int pos, int level){
             cnt.merge(level, 1, Integer::sum);
             System.out.print(level+" "+pos+" "+node.isLeaf()+" "+node.getBound()+" ");
+//            if(node.getBound().getMax().getEnd().val()>=1272772800) System.out.println("-----");
             if(node.isLeaf()){
                 System.out.println(node.getEntries().size());
                 for(IndexEntry entry : node.getEntries()){
                     int val = entry.getValue(0).getInt(0);
-                    if(1000<=val && val<=20000){
-                        entities.add(entry.getEntityId());
-                        cntt++;
+                    if(entry.getEntityId()==49822){
+                        System.out.println("found: "+entry.getStart()+" "+entry.getEnd()+" "+val);
+//                        entities.add(entry.getEntityId());
+//                        cntt++;
                     }
                 }
             }else {
@@ -82,6 +101,87 @@ public class RTreeIndexTest {
                     RTreeNode rtNode = getNode(diskNode.getPos(), diskNode.getBound());
                     getChildren(rtNode, diskNode.getPos(), level+1);
                 }
+            }
+        }
+    }
+
+
+    public class RTreeCardinality {
+        RTreeNode root;
+        List<RTreeNode> firstLevel;
+
+        private RTreeRange queryRegion;
+        private IndexEntryOperator op;
+        // constructor used for read
+        public RTreeCardinality(FileChannel channel, IndexQueryRegion regions, IndexEntryOperator op) throws IOException {
+            this.op = op;
+            this.queryRegion = op.toRTreeRange(regions);
+
+            MappedByteBuffer map = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
+            map.order(ByteOrder.LITTLE_ENDIAN);
+            int rootPos = map.getInt();
+            System.out.println(rootPos);
+            map.position(rootPos);
+            new RTreeNodeBlock(map, op);
+            System.out.println(map.position());
+
+            int len = map.getInt();
+            System.out.println(len);
+            byte[] content = new byte[len];
+            map.get(content);
+            SliceInput in = new Slice(content).input();
+
+            this.root = new RTreeCardinalityNodeBlock(in);
+            System.out.println(root.getCardinality());
+            this.firstLevel = new ArrayList<>();
+            int size = in.readInt();
+            for(int i=0; i<size; i++){
+                firstLevel.add(new RTreeCardinalityNodeBlock(in));
+            }
+        }
+
+        public HyperLogLog cardinalityEstimator() {
+            HyperLogLog result = HyperLogLog.defaultBuilder();
+            System.out.println(queryRegion);
+            for(RTreeNode node : firstLevel){
+                System.out.println(node.getCardinality()+" "+node.getBound().overlap(queryRegion)+" "+node.getBound());
+                if(node.getBound().overlap(queryRegion)) {
+                    result.addAll(node.getCardinalityEstimator());
+                }
+            }
+            return result;
+        }
+
+
+        private class RTreeCardinalityNodeBlock extends RTreeNode{
+
+            public RTreeCardinalityNodeBlock(SliceInput in) {
+                this.setBound(RTreeRange.decode(in, op));
+                this.setCardinalityEstimator(HyperLogLog.decode(in));
+            }
+
+            private void setCardinalityEstimator(HyperLogLog decode) {
+                this.c = decode;
+            }
+
+            @Override
+            public boolean isLeaf() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public void encode(SliceOutput out) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public List<RTreeNode> getChildren() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public List<IndexEntry> getEntries() {
+                throw new UnsupportedOperationException();
             }
         }
     }

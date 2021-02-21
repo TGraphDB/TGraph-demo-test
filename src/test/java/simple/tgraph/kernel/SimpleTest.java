@@ -4,11 +4,9 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.alibaba.fastjson.parser.ParserConfig;
 import edu.buaa.benchmark.client.DBProxy;
-import edu.buaa.benchmark.transaction.AbstractTransaction;
 import edu.buaa.benchmark.transaction.SnapshotQueryTx;
 import edu.buaa.utils.Helper;
 import edu.buaa.utils.TrafficMultiFileReader;
-import org.act.temporalProperty.impl.PackInternalKeyIterator;
 import org.act.temporalProperty.query.TimePointL;
 import org.junit.Test;
 import org.neo4j.graphdb.*;
@@ -223,9 +221,10 @@ public class SimpleTest {
                     Object cnt = r.getTemporalProperty("travel_time", new TimePoint(startTime), new TimePoint(endTime), new TemporalRangeQuery() {
                         int cnt = 0;
                         @Override
-                        public void onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
+                        public boolean onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
 //                            System.out.print(time.val()+" ");
                             cnt++;
+                            return true;
                         }
                         @Override
                         public Object onReturn() {
