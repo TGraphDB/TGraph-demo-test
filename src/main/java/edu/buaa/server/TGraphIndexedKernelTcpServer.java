@@ -168,7 +168,9 @@ public class TGraphIndexedKernelTcpServer extends TGraphKernelTcpServer {
                 AggregationIndexQueryResult v = r.getTemporalPropertyWithIndex(tx.getP(), Helper.time(tx.getT0()), Helper.time(tx.getT1()), tx.getIndexId());
                 if(v!=null){
                     Map<Integer, Slice> result = v.getMinMaxResult();
-                    answers.add(Pair.of(roadName, result.get(0).getInt(0))); // 0 min, 1 max
+                    if (result.get(0)!=null) {
+                        answers.add(Pair.of(roadName, result.get(0).getInt(0))); // 0 min, 1 max
+                    }
                 }
             }
             SnapshotAggrMaxTx.Result result = new SnapshotAggrMaxTx.Result();

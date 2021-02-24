@@ -57,13 +57,13 @@ public class CreateTGraphAggrDurationIndexTest {
     private long createIndex() throws Exception {
         CreateTGraphAggrDurationIndexTx tx = new CreateTGraphAggrDurationIndexTx();
         tx.setProName("full_status");
-        tx.setStart(Helper.timeStr2int(indexStartTime));
-        tx.setEnd(Helper.timeStr2int(indexEndTime));
+        tx.setStart(Helper.timeStr2int("201005010100"));
+        tx.setEnd(Helper.timeStr2int("201005012300"));
         tx.setEvery(1);
         tx.setTimeUnit(Calendar.HOUR);
         DBProxy.ServerResponse response = post.processSync(client.execute(tx), tx);
         AbstractTransaction.Result result = response.getResult();
-        CreateTGraphAggrMaxIndexTx.Result res = (CreateTGraphAggrMaxIndexTx.Result) result;
+        CreateTGraphAggrDurationIndexTx.Result res = (CreateTGraphAggrDurationIndexTx.Result) result;
         long indexId = res.getIndexId();
         return indexId;
     }
