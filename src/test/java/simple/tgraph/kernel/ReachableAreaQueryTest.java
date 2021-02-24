@@ -22,7 +22,7 @@ public class ReachableAreaQueryTest {
     private static String serverHost = Helper.mustEnv("DB_HOST"); // hostname of TGraph (TCypher) server.
     private static boolean verifyResult = Boolean.parseBoolean(Helper.mustEnv("VERIFY_RESULT"));
     private static String resultFile = Helper.mustEnv("SERVER_RESULT_FILE");
-    private static String dataFilePath = Helper.mustEnv("RAW_DATA_PATH");
+    private static String dataFilePath = Helper.mustEnv("RESULT_DATA_PATH");
     private static long testStartCrossId = Long.parseLong(Helper.mustEnv("TEST_START_CROSS_ID"));
     private static String startTime = Helper.mustEnv("TEMPORAL_DATA_START");
     private static String testTravelTime = Helper.mustEnv("TRAVEL_TIME");

@@ -17,6 +17,39 @@ export MAVEN_OPTS='-Xmx50g -Xms4g'
 # # Debug options
 #export MAVEN_OPTS='-Xmx18g -Xms10g -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005'
 
+#======================================== environment variable ========================================
+
+#the local storage of the TGraphDB
+export DB_PATH="C:\tgraph\test-db\tgraph1d"
+#the directory where the CSV files are stored
+export RAW_DATA_PATH="E:\test-data"
+#the start date of the date
+export DATA_START=0501
+#the end date of the date
+export DATA_END=0501
+#host
+export DB_HOST=localhost
+#the start time of the query operation
+export TEMPORAL_DATA_START=201005011000
+#the end time of the query operation
+export TEMPORAL_DATA_END=201005011800
+#the start time of creating index
+export INDEX_TEMPORAL_DATA_START=201005010900
+#the end time of creating index
+export INDEX_TEMPORAL_DATA_END=201005011900
+#the result file is saved in the file directory
+export RESULT_DATA_PATH="E:\tgraph\test-result"
+#index id of aggregation max
+export INDEX_ID_OF_MAX=1
+#index id of aggregation duration
+export INDEX_ID_OF_DURATION=1
+#index id of entity temporal condition test
+export INDEX_ID_OF_CONDITION=1
+
+export VERIFY_RESULT=false
+
+#====================================================================================================
+
 
 # Function: print system info of current machine (both hardware and software), no argument needed.
 function systemInfo() {
@@ -40,15 +73,22 @@ function systemInfo() {
 #        -Dexec.args="$1"
 #}
 
+#======================================== server ON an OFF ========================================
+
+#server without index
 function runTGraphKernelServer(){
- # export DB_PATH="E:\tgraph\test-db\tgraph"
-  export DB_PATH="C:\tgraph\test-db\tgraph1d"
   mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.server.TGraphKernelTcpServer"
 }
-
+#server with index
+function runTGraphIndexedKernelServer(){
+  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.server.TGraphIndexedKernelTcpServer"
+}
+#close server
 function closeServer(){
   echo EXIT | nc localhost 8438
 }
+
+#====================================================================================================
 #function runSQLServer(){
 #  export DB_PATH=/tmp/testdb
 #  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.server.TGraphKernelTcpServer"
@@ -64,158 +104,153 @@ function closeServer(){
 
 #======================================== TESTS without INDEX ========================================
 
-
 function runWriteTest() {
   export TEMPORAL_DATA_PER_TX=100
-  export TEMPORAL_DATA_START=0501
-  export TEMPORAL_DATA_END=0501
-  export DB_HOST=localhost
-  export RAW_DATA_PATH="E:\test-data"
   export MAX_CONNECTION_CNT=1
-  export VERIFY_RESULT=false
   mvn -B --offline test -Dtest=simple.tgraph.kernel.WriteTemporalPropertyTest
 }
 
 function runSnapshotTest() {
   export TEST_PROPERTY_NAME=travel_time
-  export TEMPORAL_DATA_START=201006300940
-  export DB_HOST=localhost
-  export RAW_DATA_PATH="E:\tgraph\test-result"
   export MAX_CONNECTION_CNT=16
   export SERVER_RESULT_FILE="Result_SnapshotTest.gz"
-  export VERIFY_RESULT=false
   mvn -B --offline test -Dtest=simple.tgraph.kernel.SnapshotTest
 }
 
 function runSnapshotAggregationMaxTest() {
   export TEST_PROPERTY_NAME=travel_time
-  export TEMPORAL_DATA_START=201006300830
-  export TEMPORAL_DATA_END=201006300930
-  export DB_HOST=localhost
-  export RAW_DATA_PATH="E:\tgraph\test-result"
   export SERVER_RESULT_FILE="Result_SnapshotAggregationMaxTest.gz"
   export MAX_CONNECTION_CNT=16
-  export VERIFY_RESULT=false
   mvn -B --offline test -Dtest=simple.tgraph.kernel.SnapshotAggregationMaxTest
 }
 
 function runSnapshotAggregationDurationTest() {
   export TEST_PROPERTY_NAME=full_status
-  export TEMPORAL_DATA_START=201006300830
-  export TEMPORAL_DATA_END=201006300930
-  export DB_HOST=localhost
-  export RAW_DATA_PATH="E:\tgraph\test-result"
   export SERVER_RESULT_FILE="Result_SnapshotAggregationDurationTest.gz"
   export MAX_CONNECTION_CNT=16
-  export VERIFY_RESULT=false
   mvn -B --offline test -Dtest=simple.tgraph.kernel.SnapshotAggregationDurationTest
 }
 
 function runEntityTemporalConditionTest() {
   export TEST_PROPERTY_NAME=travel_time
-  export TEMPORAL_DATA_START=201006300830
-  export TEMPORAL_DATA_END=201006300930
   export TEMPORAL_CONDITION=600
-  export DB_HOST=localhost
-  export RAW_DATA_PATH="E:\tgraph\test-result"
   export SERVER_RESULT_FILE="Result_EntityTemporalConditionTest.gz"
   export MAX_CONNECTION_CNT=16
-  export VERIFY_RESULT=false
   mvn -B --offline test -Dtest=simple.tgraph.kernel.EntityTemporalConditionTest
 }
 
+function autoTest() {
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ SnapshotTest is Starting ]--------------- \033[0m"
+  sleep 5
+  runSnapshotTest
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of SnapshotTest ]--------------- \033[0m"
+  sleep 60
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ SnapshotAggregationMaxTest is Starting ]--------------- \033[0m"
+  sleep 5
+  runSnapshotAggregationMaxTest
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of SnapshotTest is Starting ]--------------- \033[0m"
+  sleep 60
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ SnapshotAggregationDurationTest is Starting ]--------------- \033[0m"
+  sleep 5
+  runSnapshotAggregationDurationTest
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of SnapshotTest is Starting ]--------------- \033[0m"
+  sleep 60
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ EntityTemporalConditionTest is Starting ]--------------- \033[0m"
+  sleep 5
+  runEntityTemporalConditionTest
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of SnapshotTest is Starting ]--------------- \033[0m"
+  sleep 60
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of all tests, Server is closing ]--------------- \033[0m"
+  sleep 5
+  closeServer
 
-function runReachableAreaQueryTest() {
-  export TEST_START_CROSS_ID=75124
-  export TEMPORAL_DATA_START=201006300830
-  export TRAVEL_TIME=50000
-  export DB_HOST=localhost
-  export RAW_DATA_PATH="E:\tgraph\test-result"
-  export SERVER_RESULT_FILE="Result_EntityTemporalConditionTest.gz"
-  export MAX_CONNECTION_CNT=16
-  export VERIFY_RESULT=false
-  mvn -B --offline test -Dtest=simple.tgraph.kernel.ReachableAreaQueryTest
+  EOF
 }
 
 
-#=====================================================================================================
-
+#function runReachableAreaQueryTest() {
+#  export TEST_START_CROSS_ID=75124
+#  export TEMPORAL_DATA_START=201006300830
+#  export TRAVEL_TIME=50000
+#  export DB_HOST=localhost
+#  export RAW_DATA_PATH="E:\tgraph\test-result"
+#  export SERVER_RESULT_FILE="Result_EntityTemporalConditionTest.gz"
+#  export MAX_CONNECTION_CNT=16
+#  export VERIFY_RESULT=false
+#  mvn -B --offline test -Dtest=simple.tgraph.kernel.ReachableAreaQueryTest
+#}
 
 #========================================== TESTS with INDEX =========================================
 
-function runTGraphIndexedKernelServer(){
- # export DB_PATH="E:\tgraph\test-db\tgraph"
-  export DB_PATH="C:\tgraph\test-db\tgraph1d"
-  mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.server.TGraphIndexedKernelTcpServer"
-}
-
 function runCreateAggrMaxIndex() {
   export INDEX_PROPERTY_NAME=travel_time
-  export INDEX_TEMPORAL_DATA_START=201005010900
-  export INDEX_TEMPORAL_DATA_END=201005011900
-  export DB_HOST=localhost
-  export RAW_DATA_PATH="E:\tgraph\test-result"
   export SERVER_RESULT_FILE="ID_CreateAggrMaxIndexTest.gz"
   export MAX_CONNECTION_CNT=1
-  export VERIFY_RESULT=false
   mvn -B --offline test -Dtest=simple.tgraph.kernel.index.CreateTGraphAggrMaxIndexTest
 }
 
 function runSnapshotAggregationMaxIndexTest() {
-  export INDEX_ID=1
-  export TEST_PROPERTY_NAME=travel_time
-  export TEMPORAL_DATA_START=201005011200
-  export TEMPORAL_DATA_END=201005011600
-#  export INDEX_PROPERTY_NAME=travel_time
-#  export INDEX_TEMPORAL_DATA_START=201006290000
-#  export INDEX_TEMPORAL_DATA_END=201006300000
-  export DB_HOST=localhost
-  export RAW_DATA_PATH="E:\tgraph\test-result"
   export SERVER_RESULT_FILE="Result_SnapshotAggregationMaxIndexTest.gz"
   export MAX_CONNECTION_CNT=1
-  export VERIFY_RESULT=false
   mvn -B --offline test -Dtest=simple.tgraph.kernel.index.SnapshotAggregationMaxIndexTest
 }
 
 function runCreateAggrDurationIndex {
-#  export INDEX_PROPERTY_NAME=travel_time
-  export INDEX_TEMPORAL_DATA_START=201005010000
-  export INDEX_TEMPORAL_DATA_END=201005012300
-  export DB_HOST=localhost
-  export RAW_DATA_PATH="E:\tgraph\test-result"
   export SERVER_RESULT_FILE="ID_CreateAggrDurationIndexTest.gz"
   export MAX_CONNECTION_CNT=1
-  export VERIFY_RESULT=false
   mvn -B --offline test -Dtest=simple.tgraph.kernel.index.CreateTGraphAggrDurationIndexTest
 }
 
 function runSnapshotAggregationDurationIndexTest() {
   export TEST_PROPERTY_NAME=full_status
-  export TEMPORAL_DATA_START=201006300830
-  export TEMPORAL_DATA_END=201006300930
-#  export INDEX_TEMPORAL_DATA_START=201006290000
-#  export INDEX_TEMPORAL_DATA_END=201006300000
-  export DB_HOST=localhost
-  export RAW_DATA_PATH="E:\tgraph\test-result"
   export SERVER_RESULT_FILE="Result_SnapshotAggregationDurationIndexTest.gz"
   export MAX_CONNECTION_CNT=16
-  export VERIFY_RESULT=false
   mvn -B --offline test -Dtest=simple.tgraph.kernel.SnapshotAggregationDurationIndexTest
 }
 
 function runEntityTemporalConditionIndexTest() {
-  export TEST_PROPERTY_NAME=travel_time
-  export TEMPORAL_DATA_START=201006300830
-  export TEMPORAL_DATA_END=201006300930
   export TEMPORAL_CONDITION=600
-  export DB_HOST=localhost
-  export RAW_DATA_PATH="E:\tgraph\test-result"
   export SERVER_RESULT_FILE="Result_EntityTemporalConditionTest.gz"
   export MAX_CONNECTION_CNT=16
-  export VERIFY_RESULT=false
   mvn -B --offline test -Dtest=simple.tgraph.kernel.EntityTemporalConditionTest
 }
 
+#function autoTestWithIndex() {
+#
+#  TXT_FILE_PATH="E:\tgraph\test-result"
+#  SHELL_FILE_PATH="E:\TGraphDB\TGraph-demo-test"
+#
+#
+#  runCreateAggrMaxIndex
+#
+#  closeServer
+#
+#  sleep 60
+#
+#  cd $TXT_FILE_PATH
+#  firstline=`head -1 INDEX_ID_OF_MAX.txt`
+#  export INDEX_ID_OF_MAX=$firstline
+#  cd $SHELL_FILE_PATH
+#
+#  runSnapshotAggregationMaxIndexTest
+#
+#  sleep 60
+#
+#  runCreateAggrDurationIndex
+#
+#  closeServer
+#
+#  sleep 60
+#
+#  cd $TXT_FILE_PATH
+#  firstline=`head -1 INDEX_ID_OF_DURATION.txt`
+#  export INDEX_ID_OF_DURATION=$firstline
+#  cd $SHELL_FILE_PATH
+#
+#  runSnapshotAggregationDurationIndexTest
+#
+#
+#}
 
 
 #function runReachableAreaQueryTest() {

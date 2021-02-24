@@ -15,6 +15,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Calendar;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -24,7 +25,7 @@ public class CreateTGraphAggrDurationIndexTest {
     private static String serverHost = Helper.mustEnv("DB_HOST"); // hostname of TGraph (TCypher) server.
     private static boolean verifyResult = Boolean.parseBoolean(Helper.mustEnv("VERIFY_RESULT"));
     private static String resultFile = Helper.mustEnv("SERVER_RESULT_FILE");
-    private static String dataFilePath = Helper.mustEnv("RAW_DATA_PATH");
+    private static String dataFilePath = Helper.mustEnv("RESULT_DATA_PATH");
     //    private static String testPropertyName = Helper.mustEnv("TEST_PROPERTY_NAME");
 //    private static String startTime = Helper.mustEnv("TEMPORAL_DATA_START");
 //    private static String endTime = Helper.mustEnv("TEMPORAL_DATA_END");
@@ -51,14 +52,16 @@ public class CreateTGraphAggrDurationIndexTest {
     @Test
     public void IndexTestInfo() throws Exception{
         long indexId = createIndex();
+        PrintStream ps = new PrintStream("E:\\tgraph\\test-result\\INDEX_ID_OF_DURATION.txt");
+        System.setOut(ps);
         System.out.println(indexId);
     }
 
     private long createIndex() throws Exception {
         CreateTGraphAggrDurationIndexTx tx = new CreateTGraphAggrDurationIndexTx();
         tx.setProName("full_status");
-        tx.setStart(Helper.timeStr2int("201005010100"));
-        tx.setEnd(Helper.timeStr2int("201005012300"));
+        tx.setStart(Helper.timeStr2int(indexStartTime));
+        tx.setEnd(Helper.timeStr2int(indexEndTime));
         tx.setEvery(1);
         tx.setTimeUnit(Calendar.HOUR);
         DBProxy.ServerResponse response = post.processSync(client.execute(tx), tx);

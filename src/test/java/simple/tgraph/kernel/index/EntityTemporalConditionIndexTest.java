@@ -18,6 +18,7 @@
 //import java.io.IOException;
 //import java.util.Calendar;
 //import java.util.concurrent.ExecutionException;
+//import java.util.concurrent.TimeUnit;
 //
 //public class EntityTemporalConditionIndexTest {
 //    private static int threadCnt = Integer.parseInt(Helper.mustEnv("MAX_CONNECTION_CNT")); // number of threads to send queries.
@@ -30,7 +31,9 @@
 //    private static String endTime = Helper.mustEnv("TEMPORAL_DATA_END");
 //    private static String indexStartTime = Helper.mustEnv("INDEX_TEMPORAL_DATA_START");
 //    private static String indexEndTime = Helper.mustEnv("INDEX_TEMPORAL_DATA_END_INDEX");
-//    private static int ConditionValue = Integer.parseInt(Helper.mustEnv("TEMPORAL_CONDITION"));
+//    private static int vMin = Integer.parseInt(Helper.mustEnv("TEMPORAL_CONDITION"));
+//    private static int vMAX = Integer.parseInt(Helper.mustEnv("TEMPORAL_CONDITION"));
+//    private static long indexId = Long.valueOf(Helper.mustEnv("INDEX_ID"));
 //
 //    private static Producer logger;
 //    private static DBProxy client;
@@ -53,51 +56,29 @@
 //    @Test
 //    //travel_time > ???s
 //    public void EntityTemporalConditionInfoVMIN() throws Exception{
-//        queryVMIN("travel_time", Helper.timeStr2int(startDay), Helper.timeStr2int(endDay), ConditionValue);
+//        query("travel_time", Helper.timeStr2int(startTime), Helper.timeStr2int(endTime), vMin,vMAX,indexId);
 //    }
 //
 //
-//    private void queryVMIN(String PropertyName, int st, int et, int vMIN, long indexID) throws Exception{
+//    private void query(String PropertyName, int st, int et, int vMIN, int vMAX, long indexID) throws Exception{
 //        EntityTemporalConditionTx tx = new EntityTemporalConditionTx();
 //        tx.setP(PropertyName);
 //        tx.setT0(st);
 //        tx.setT1(et);
 //        tx.setVmin(vMIN);
-//        post.process(client.execute(tx), tx);
-//    }
-//    public void EntityTemporalConditionIndexTestInfo() throws Exception{
-//        long indexId = createIndex();
-//        query(testPropertyName, Helper.timeStr2int(startTime), Helper.timeStr2int(endTime),ConditionValue,indexId);
-//    }
-//
-//    private long createIndex() throws Exception {
-//        CreateTGraphAggrMaxIndexTx tx = new CreateTGraphAggrMaxIndexTx();
-//        tx.setProName("jam_status");
-//        tx.setStart(Helper.timeStr2int(indexStartTime));
-//        tx.setEnd(Helper.timeStr2int(indexEndTime));
-//        tx.setEvery(1);
-//        tx.setTimeUnit(Calendar.HOUR);
-//        post.process(client.execute(tx), tx);
-//        AbstractTransaction.Result result = tx.getResult();
-//        CreateTGraphAggrMaxIndexTx.Result res = (CreateTGraphAggrMaxIndexTx.Result) result;
-//        long indexId = res.getIndexId();
-//        return indexId;
-//    }
-//    private void query(String propertyName, int st, int et, long indexID) throws Exception{
-//         tx = new EntityTemporalConditionIndexTest();
-//        tx.
-//        tx.setP(propertyName);
-//        tx.setT0(st);
-//        tx.setT1(et);
-//        tx.setIndexId(indexID);
+//        tx.setVmax(vMAX);
 //        post.process(client.execute(tx), tx);
 //    }
 //
 //    @AfterClass
 //    public static void close() throws IOException, InterruptedException, ProducerException {
-//        post.close();
 //        client.close();
+//        while(true) {
+//            try {
+//                post.awaitDone(30, TimeUnit.SECONDS);
+//                break;
+//            } catch (InterruptedException e) {}
+//        }
 //        logger.close();
 //    }
-//
 //}

@@ -24,8 +24,8 @@ public class WriteTemporalPropertyTest {
 
     private static int threadCnt = Integer.parseInt(Helper.mustEnv("MAX_CONNECTION_CNT")); // number of threads to send queries.
     private static int opPerTx = Integer.parseInt(Helper.mustEnv("TEMPORAL_DATA_PER_TX")); // number of TCypher queries executed in one transaction.
-    private static String startDay = Helper.mustEnv("TEMPORAL_DATA_START"); //0501
-    private static String endDay = Helper.mustEnv("TEMPORAL_DATA_END"); //0503
+    private static String startDay = Helper.mustEnv("DATA_START"); //0501
+    private static String endDay = Helper.mustEnv("DATA_END"); //0503
     private static String serverHost = Helper.mustEnv("DB_HOST"); // hostname of TGraph (TCypher) server.
     private static String dataFilePath = Helper.mustEnv("RAW_DATA_PATH"); // should be like '/media/song/test/data-set/beijing-traffic/TGraph/byday/'
 

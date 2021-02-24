@@ -22,7 +22,7 @@ public class SnapshotTest {
     private static String serverHost = Helper.mustEnv("DB_HOST"); // hostname of TGraph (TCypher) server.
     private static boolean verifyResult = Boolean.parseBoolean(Helper.mustEnv("VERIFY_RESULT"));
     private static String resultFile = Helper.mustEnv("SERVER_RESULT_FILE");
-    private static String dataFilePath = Helper.mustEnv("RAW_DATA_PATH"); // should be like '/media/song/test/data-set/beijing-traffic/TGraph/byday/
+    private static String dataFilePath = Helper.mustEnv("RESULT_DATA_PATH"); // should be like '/media/song/test/data-set/beijing-traffic/TGraph/byday/
     private static String testPropertyName = Helper.mustEnv("TEST_PROPERTY_NAME");
     private static String startTime = Helper.mustEnv("TEMPORAL_DATA_START");
 
@@ -61,14 +61,13 @@ public class SnapshotTest {
 
     @AfterClass
     public static void close() throws IOException, InterruptedException, ProducerException {
-        Thread.sleep(30000);
+        client.close();
         while(true) {
             try {
                 post.awaitDone(30, TimeUnit.SECONDS);
                 break;
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException ignored) {}
         }
-        client.close();
         logger.close();
     }
 
