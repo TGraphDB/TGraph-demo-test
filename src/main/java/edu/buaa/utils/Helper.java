@@ -167,15 +167,18 @@ public class Helper {
         String dayStr = tStr.substring(6,8);
         String hourStr = tStr.substring(8,10);
         String minuteStr = tStr.substring(10, 12);
+        //String secondStr = tStr.substring(12,14);
 //        System.out.println(yearStr+" "+monthStr+" "+dayStr+" "+hourStr+" "+minuteStr);
         int year = Integer.parseInt(yearStr);
         int month = Integer.parseInt(monthStr)-1;//month count from 0 to 11, no 12
         int day = Integer.parseInt(dayStr);
         int hour = Integer.parseInt(hourStr);
         int minute = Integer.parseInt(minuteStr);
+       // int second = Integer.parseInt(secondStr);
 //        System.out.println(year+" "+month+" "+day+" "+hour+" "+minute);
         Calendar ca= Calendar.getInstance();
         ca.set(year, month, day, hour, minute, 0); //seconds set to 0
+     //   ca.set(year, month, day, hour, minute, second); //seconds set to 0
         long timestamp = ca.getTimeInMillis();
 //        System.out.println(timestamp);
         if(timestamp/1000<Integer.MAX_VALUE){

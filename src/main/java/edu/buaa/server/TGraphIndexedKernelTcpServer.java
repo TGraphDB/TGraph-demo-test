@@ -94,6 +94,7 @@ public class TGraphIndexedKernelTcpServer extends TGraphKernelTcpServer {
             t.success();
         }
         CreateTGraphAggrMaxIndexTx.Result r = new CreateTGraphAggrMaxIndexTx.Result();
+        System.out.println(r);
         r.setIndexId(indexId);
         return r;
     }
@@ -118,6 +119,7 @@ public class TGraphIndexedKernelTcpServer extends TGraphKernelTcpServer {
             t.success();
         }
         CreateTGraphAggrMaxIndexTx.Result r = new CreateTGraphAggrMaxIndexTx.Result();
+        System.out.println(indexId);
         r.setIndexId(indexId);
         return r;
     }

@@ -32,8 +32,9 @@ public class SnapshotAggregationMaxIndexTest {
     private static String testPropertyName = Helper.mustEnv("TEST_PROPERTY_NAME");
     private static String startTime = Helper.mustEnv("TEMPORAL_DATA_START");
     private static String endTime = Helper.mustEnv("TEMPORAL_DATA_END");
-    private static String indexStartTime = Helper.mustEnv("INDEX_TEMPORAL_DATA_START");
-    private static String indexEndTime = Helper.mustEnv("INDEX_TEMPORAL_DATA_END");
+//    private static String indexStartTime = Helper.mustEnv("INDEX_TEMPORAL_DATA_START");
+//    private static String indexEndTime = Helper.mustEnv("INDEX_TEMPORAL_DATA_END");
+    private static long indexId = Long.valueOf(Helper.mustEnv("INDEX_ID"));
 
 
     private static Producer logger;
@@ -54,24 +55,23 @@ public class SnapshotAggregationMaxIndexTest {
 
     @Test
     public void snapshotAggregationMaxIndexTestInfo() throws Exception{
-        long indexId = createIndex();
-        System.out.println(indexId);
+
         query(testPropertyName, Helper.timeStr2int(startTime), Helper.timeStr2int(endTime),indexId);
     }
 
-    private long createIndex() throws Exception {
-        CreateTGraphAggrMaxIndexTx tx = new CreateTGraphAggrMaxIndexTx();
-        tx.setProName("travel_time");
-        tx.setStart(Helper.timeStr2int(indexStartTime));
-        tx.setEnd(Helper.timeStr2int(indexEndTime));
-        tx.setEvery(1);
-        tx.setTimeUnit(Calendar.HOUR);
-        DBProxy.ServerResponse response = post.processSync(client.execute(tx), tx);
-        AbstractTransaction.Result result = response.getResult();
-        CreateTGraphAggrMaxIndexTx.Result res = (CreateTGraphAggrMaxIndexTx.Result) result;
-        long indexId = res.getIndexId();
-        return indexId;
-    }
+//    private long createIndex() throws Exception {
+//        CreateTGraphAggrMaxIndexTx tx = new CreateTGraphAggrMaxIndexTx();
+//        tx.setProName("travel_time");
+//        tx.setStart(Helper.timeStr2int(indexStartTime));
+//        tx.setEnd(Helper.timeStr2int(indexEndTime));
+//        tx.setEvery(1);
+//        tx.setTimeUnit(Calendar.HOUR);
+//        DBProxy.ServerResponse response = post.processSync(client.execute(tx), tx);
+//        AbstractTransaction.Result result = response.getResult();
+//        CreateTGraphAggrMaxIndexTx.Result res = (CreateTGraphAggrMaxIndexTx.Result) result;
+//        long indexId = res.getIndexId();
+//        return indexId;
+//    }
     private void query(String propertyName, int st, int et, long indexID) throws Exception{
         SnapshotAggrMaxIndexTx tx = new SnapshotAggrMaxIndexTx();
         tx.setP(propertyName);

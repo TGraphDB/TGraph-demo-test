@@ -6,38 +6,22 @@ import edu.buaa.algo.EarliestArriveTime;
 import edu.buaa.benchmark.transaction.*;
 import edu.buaa.benchmark.transaction.AbstractTransaction.Result;
 import edu.buaa.benchmark.transaction.internal.EarliestArriveTimeAggrTx;
-import edu.buaa.benchmark.transaction.internal.NodeNeighborRoadTx;
 import edu.buaa.client.RuntimeEnv;
 import edu.buaa.model.StatusUpdate;
 import edu.buaa.utils.Helper;
 import edu.buaa.utils.Pair;
 import edu.buaa.utils.TGraphSocketServer;
 import edu.buaa.utils.Triple;
-import javafx.scene.shape.HLineTo;
 import org.act.temporalProperty.query.TimePointL;
-import org.act.temporalProperty.query.range.TimeRangeQuery;
-import org.apache.commons.lang.time.DateUtils;
 
 import org.neo4j.graphdb.*;
-import org.neo4j.kernel.configuration.Internal;
-import org.neo4j.kernel.impl.store.TransactionId;
-import org.neo4j.kernel.impl.store.record.SchemaRule;
-import org.neo4j.kernel.impl.util.Listener;
-import org.neo4j.kernel.impl.util.register.NeoRegister;
-import org.neo4j.register.Register;
 import org.neo4j.temporal.TemporalRangeQuery;
 import org.neo4j.temporal.TimePoint;
 import org.neo4j.tooling.GlobalGraphOperations;
-import org.neo4j.unsafe.impl.batchimport.input.csv.Data;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.Array;
-import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
     public static void main(String[] args){
@@ -163,9 +147,11 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
                 String roadName = (String) r.getProperty("name");
                 Object v = r.getTemporalProperty(tx.getP(), Helper.time(tx.getT0()), Helper.time(tx.getT1()), new TemporalRangeQuery() {
                     @Override
-                    public void onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
+                    public boolean onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
                         travelTime.add((Integer) val);
+                        return true;
                     }
+
                     @Override
                     public Object onReturn() {
                         return travelTime;
@@ -193,8 +179,9 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
                 String roadName = (String) r.getProperty("name");
                 Object v = r.getTemporalProperty(tx.getP(), Helper.time(tx.getT0()), Helper.time(tx.getT1()), new TemporalRangeQuery() {
                     @Override
-                    public void onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
+                    public boolean onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
                         res.add(Pair.of(time, (Integer) val));
+                        return true;
                     }
 
                     @Override
@@ -249,8 +236,9 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
                 String roadName = (String) r.getProperty("name");
                 Object v = r.getTemporalProperty(tx.getP(), Helper.time(tx.getT0()), Helper.time(tx.getT1()), new TemporalRangeQuery() {
                     @Override
-                    public void onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
+                    public boolean onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
                         res.add((Integer) val);
+                        return true;
                     }
 
                     @Override
@@ -259,15 +247,13 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
                     }
                 });
                 int sum = 0;
-                for (int i = 0; i < res.size(); i++) {
-                    sum = res.get(i) + sum;
-                }
-                System.out.println(roadName);
-                System.out.println(sum);
-                if (sum > tx.getVmin()) {
-                    answers.add(roadName);
-                    System.out.println(roadName);
-                    System.out.println("--------------------------");
+                if(res.size() > 0) {
+                    for (int i = 0; i < res.size(); i++) {
+                        sum = res.get(i) + sum;
+                    }
+                    if (sum > tx.getVmin()) {
+                        answers.add(roadName);
+                    }
                 }
                 res.clear();
             }
@@ -316,7 +302,7 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
                 private int minArriveT = Integer.MAX_VALUE;
                 private int entryIndex = 0;
                 @Override
-                public void onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
+                public boolean onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
                     Preconditions.checkState(time.valInt() >= tx.getDepartureTime());
                     Preconditions.checkNotNull(val);
                     int curT = time.valInt();
@@ -326,6 +312,7 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
                     entryIndex++;
                     int travelT = (int) val;
                     if(curT +travelT<minArriveT) minArriveT = curT +travelT;
+                    return true;
                 }
                 @Override
                 public Object onReturn() {
@@ -386,7 +373,7 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
                 private int minArriveT = Integer.MAX_VALUE;
                 private boolean firstEntry = true;
                 @Override
-                public void onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
+                public boolean onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
                     Preconditions.checkState(time.valInt() >= departureTime);
                     Preconditions.checkNotNull(val);
                     int curT = time.valInt();
@@ -396,6 +383,7 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
                     firstEntry=false;
                     int travelT = (int) val;
                     if(curT +travelT<minArriveT) minArriveT = curT +travelT;
+                    return false;
                 }
                 @Override
                 public Object onReturn() {

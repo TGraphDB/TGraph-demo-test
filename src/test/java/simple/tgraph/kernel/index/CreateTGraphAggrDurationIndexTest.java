@@ -7,33 +7,30 @@ import edu.buaa.benchmark.BenchmarkTxResultProcessor;
 import edu.buaa.benchmark.client.DBProxy;
 import edu.buaa.benchmark.client.TGraphExecutorClient;
 import edu.buaa.benchmark.transaction.AbstractTransaction;
-import edu.buaa.benchmark.transaction.SnapshotAggrDurationTx;
+import edu.buaa.benchmark.transaction.index.CreateTGraphAggrDurationIndexTx;
 import edu.buaa.benchmark.transaction.index.CreateTGraphAggrMaxIndexTx;
-import edu.buaa.benchmark.transaction.index.SnapshotAggrDurationIndexTx;
-import edu.buaa.benchmark.transaction.index.SnapshotAggrMaxIndexTx;
 import edu.buaa.utils.Helper;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-public class SnapshotAggregationDurationIndexTest {
+public class CreateTGraphAggrDurationIndexTest {
     private static int threadCnt = Integer.parseInt(Helper.mustEnv("MAX_CONNECTION_CNT")); // number of threads to send queries.
     private static String serverHost = Helper.mustEnv("DB_HOST"); // hostname of TGraph (TCypher) server.
     private static boolean verifyResult = Boolean.parseBoolean(Helper.mustEnv("VERIFY_RESULT"));
     private static String resultFile = Helper.mustEnv("SERVER_RESULT_FILE");
     private static String dataFilePath = Helper.mustEnv("RAW_DATA_PATH");
-    private static String testPropertyName = Helper.mustEnv("TEST_PROPERTY_NAME");
-    private static String startTime = Helper.mustEnv("TEMPORAL_DATA_START");
-    private static String endTime = Helper.mustEnv("TEMPORAL_DATA_END");
+    //    private static String testPropertyName = Helper.mustEnv("TEST_PROPERTY_NAME");
+//    private static String startTime = Helper.mustEnv("TEMPORAL_DATA_START");
+//    private static String endTime = Helper.mustEnv("TEMPORAL_DATA_END");
     private static String indexStartTime = Helper.mustEnv("INDEX_TEMPORAL_DATA_START");
     private static String indexEndTime = Helper.mustEnv("INDEX_TEMPORAL_DATA_END");
-    private static long indexId = Long.valueOf(Helper.mustEnv("INDEX_ID"));
+
 
     private static Producer logger;
     private static DBProxy client;
@@ -44,41 +41,34 @@ public class SnapshotAggregationDurationIndexTest {
         ParserConfig.getGlobalInstance().setAutoTypeSupport(true);
         client = new TGraphExecutorClient(serverHost, threadCnt, 800);
         client.testServerClientCompatibility();
-
-        post = new BenchmarkTxResultProcessor("TGraph(SnapshotAggregationDurationIndexTest)", Helper.codeGitVersion());
+        post = new BenchmarkTxResultProcessor("TGraph(CreateTGraphAggrDurationIndexTest)", Helper.codeGitVersion());
         logger = Helper.getLogger();
         post.setLogger(logger);
-        post.setVerifyResult(verifyResult);
-        post.setResult(new File(dataFilePath,resultFile));
+        //post.setVerifyResult(verifyResult);
+        //post.setResult(new File(dataFilePath,resultFile));
     }
 
     @Test
-    public void snapshotAggregationDurationIndexTestInfo() throws Exception{
-
-        query(testPropertyName, Helper.timeStr2int(startTime), Helper.timeStr2int(endTime),indexId);
+    public void IndexTestInfo() throws Exception{
+        long indexId = createIndex();
+        System.out.println(indexId);
     }
 
-//    private long createIndex() throws Exception {
-//        CreateTGraphAggrMaxIndexTx tx = new CreateTGraphAggrMaxIndexTx();
-//        tx.setProName("jam_status");
-//        tx.setStart(Helper.timeStr2int(indexStartTime));
-//        tx.setEnd(Helper.timeStr2int(indexEndTime));
-//        tx.setEvery(1);
-//        tx.setTimeUnit(Calendar.HOUR);
-//        post.process(client.execute(tx), tx);
-//        AbstractTransaction.Result result = tx.getResult();
-//        CreateTGraphAggrMaxIndexTx.Result res = (CreateTGraphAggrMaxIndexTx.Result) result;
-//        long indexId = res.getIndexId();
-//        return indexId;
-//    }
-    private void query(String propertyName, int st, int et, long indexID) throws Exception{
-        SnapshotAggrDurationIndexTx tx = new SnapshotAggrDurationIndexTx();
-        tx.setP(propertyName);
-        tx.setT0(st);
-        tx.setT1(et);
-        tx.setIndexId(indexID);
-        post.process(client.execute(tx), tx);
+    private long createIndex() throws Exception {
+        CreateTGraphAggrDurationIndexTx tx = new CreateTGraphAggrDurationIndexTx();
+        tx.setProName("full_status");
+        tx.setStart(Helper.timeStr2int(indexStartTime));
+        tx.setEnd(Helper.timeStr2int(indexEndTime));
+        tx.setEvery(1);
+        tx.setTimeUnit(Calendar.HOUR);
+        DBProxy.ServerResponse response = post.processSync(client.execute(tx), tx);
+        AbstractTransaction.Result result = response.getResult();
+        CreateTGraphAggrMaxIndexTx.Result res = (CreateTGraphAggrMaxIndexTx.Result) result;
+        long indexId = res.getIndexId();
+        return indexId;
     }
+
+
     @AfterClass
     public static void close() throws IOException, InterruptedException, ProducerException {
         client.close();
@@ -86,7 +76,7 @@ public class SnapshotAggregationDurationIndexTest {
             try {
                 post.awaitDone(30, TimeUnit.SECONDS);
                 break;
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException ignored) {}
         }
         logger.close();
     }
