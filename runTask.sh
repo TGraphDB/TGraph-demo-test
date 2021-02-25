@@ -19,14 +19,17 @@ export MAVEN_OPTS='-Xmx50g -Xms4g'
 
 #======================================== environment variable ========================================
 
+datasetName="bj1c"
+datasetSize="1day"
+
 #the local storage of the TGraphDB
-export DB_PATH="C:\tgraph\test-db\tgraph1d"
+export DB_PATH="C:\tgraph\test-db\Tgraph-$datasetName-$datasetSize"
 #the directory where the CSV files are stored
 export RAW_DATA_PATH="E:\test-data"
-#the start date of the date
+#the start date
 export DATA_START=0501
-#the end date of the date
-export DATA_END=0501
+#the end date
+export DATA_END=0630
 #host
 export DB_HOST=localhost
 #the start time of the query operation
@@ -38,13 +41,19 @@ export INDEX_TEMPORAL_DATA_START=201005010900
 #the end time of creating index
 export INDEX_TEMPORAL_DATA_END=201005011900
 #the result file is saved in the file directory
-export RESULT_DATA_PATH="E:\tgraph\test-result"
-#index id of aggregation max
-export INDEX_ID_OF_MAX=1
-#index id of aggregation duration
-export INDEX_ID_OF_DURATION=1
-#index id of entity temporal condition test
-export INDEX_ID_OF_CONDITION=1
+fileName="Tgraph-${datasetName}-${datasetSize}-result"
+RESULT_DATA_PATH="E:\tgraph\test-result"\\"$fileName"
+if [ ! -d "$RESULT_DATA_PATH" ]; then
+    mkdir $RESULT_DATA_PATH
+fi
+export RESULT_DATA_PATH
+
+##index id of aggregation max
+#export INDEX_ID_OF_MAX=1
+##index id of aggregation duration
+#export INDEX_ID_OF_DURATION=1
+##index id of entity temporal condition test
+#export INDEX_ID_OF_CONDITION=1
 
 export VERIFY_RESULT=false
 
@@ -135,20 +144,20 @@ function runWriteTest() {
 function runSnapshotTest() {
   export TEST_PROPERTY_NAME=travel_time
   export MAX_CONNECTION_CNT=16
-  export SERVER_RESULT_FILE="Result_SnapshotTest.gz"
+  export SERVER_RESULT_FILE="Tgraph_Result_SnapshotTest.gz"
   mvn -B --offline test -Dtest=simple.tgraph.kernel.SnapshotTest
 }
 
 function runSnapshotAggregationMaxTest() {
   export TEST_PROPERTY_NAME=travel_time
-  export SERVER_RESULT_FILE="Result_SnapshotAggregationMaxTest.gz"
+  export SERVER_RESULT_FILE="Tgraph_Result_SnapshotAggregationMaxTest.gz"
   export MAX_CONNECTION_CNT=16
   mvn -B --offline test -Dtest=simple.tgraph.kernel.SnapshotAggregationMaxTest
 }
 
 function runSnapshotAggregationDurationTest() {
   export TEST_PROPERTY_NAME=full_status
-  export SERVER_RESULT_FILE="Result_SnapshotAggregationDurationTest.gz"
+  export SERVER_RESULT_FILE="Tgraph_Result_SnapshotAggregationDurationTest.gz"
   export MAX_CONNECTION_CNT=16
   mvn -B --offline test -Dtest=simple.tgraph.kernel.SnapshotAggregationDurationTest
 }
@@ -156,7 +165,7 @@ function runSnapshotAggregationDurationTest() {
 function runEntityTemporalConditionTest() {
   export TEST_PROPERTY_NAME=travel_time
   export TEMPORAL_CONDITION=600
-  export SERVER_RESULT_FILE="Result_EntityTemporalConditionTest.gz"
+  export SERVER_RESULT_FILE="Tgraph_Result_EntityTemporalConditionTest.gz"
   export MAX_CONNECTION_CNT=16
   mvn -B --offline test -Dtest=simple.tgraph.kernel.EntityTemporalConditionTest
 }
@@ -186,7 +195,7 @@ function runCreateAggrMaxIndex() {
 }
 
 function runSnapshotAggregationMaxIndexTest() {
-  export SERVER_RESULT_FILE="Result_SnapshotAggregationMaxIndexTest.gz"
+  export SERVER_RESULT_FILE="Tgraph_Result_SnapshotAggregationMaxIndexTest.gz"
   export MAX_CONNECTION_CNT=1
   mvn -B --offline test -Dtest=simple.tgraph.kernel.index.SnapshotAggregationMaxIndexTest
 }
@@ -199,7 +208,7 @@ function runCreateAggrDurationIndex {
 
 function runSnapshotAggregationDurationIndexTest() {
   export TEST_PROPERTY_NAME=full_status
-  export SERVER_RESULT_FILE="Result_SnapshotAggregationDurationIndexTest.gz"
+  export SERVER_RESULT_FILE="Tgraph_Result_SnapshotAggregationDurationIndexTest.gz"
   export MAX_CONNECTION_CNT=16
   mvn -B --offline test -Dtest=simple.tgraph.kernel.index.SnapshotAggregationDurationIndexTest
 }
@@ -211,7 +220,7 @@ function runCreateTemporalConditionIndex {
 }
 function runEntityTemporalConditionIndexTest() {
   export TEMPORAL_CONDITION=600
-  export SERVER_RESULT_FILE="Result_EntityTemporalConditionIndexTest.gz"
+  export SERVER_RESULT_FILE="Tgraph_Result_EntityTemporalConditionIndexTest.gz"
   export MAX_CONNECTION_CNT=16
   mvn -B --offline test -Dtest=simple.tgraph.kernel.index.EntityTemporalConditionIndexTest
 }

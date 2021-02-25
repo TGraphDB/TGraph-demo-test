@@ -28,7 +28,7 @@ public class EntityTemporalConditionTest {
     private static String testPropertyName = Helper.mustEnv("TEST_PROPERTY_NAME");
     private static String startTime = Helper.mustEnv("TEMPORAL_DATA_START");
     private static String endTime = Helper.mustEnv("TEMPORAL_DATA_END");
-    private static int ConditionValue = Integer.parseInt(Helper.mustEnv("TEMPORAL_CONDITION"));
+    private static int conditionValue = Integer.parseInt(Helper.mustEnv("TEMPORAL_CONDITION"));
 
     private static Producer logger;
     private static DBProxy client;
@@ -51,7 +51,7 @@ public class EntityTemporalConditionTest {
     //travel_time > ???s
     public void entityTemporalConditionInfo() throws Exception {
         //for (int i = 0; i < 160; i++) {
-            queryVMIN(testPropertyName, Helper.timeStr2int(startTime), Helper.timeStr2int(endTime), ConditionValue);
+            queryVMIN(testPropertyName, Helper.timeStr2int(startTime), Helper.timeStr2int(endTime), conditionValue);
             //queryVMIN("travel_time", Helper.timeStr2int("201006300830"), Helper.timeStr2int("201006300930"), 600);
        // }
     }
