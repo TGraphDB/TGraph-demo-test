@@ -161,30 +161,40 @@ public class Helper {
         return new String(hexChars);
     }
 
-    public static int timeStr2int(String tStr){
+    public static int timeStr2intImpl(String tStr){
         String yearStr = tStr.substring(0,4);
         String monthStr = tStr.substring(4,6);
         String dayStr = tStr.substring(6,8);
         String hourStr = tStr.substring(8,10);
         String minuteStr = tStr.substring(10, 12);
-        //String secondStr = tStr.substring(12,14);
+        String secondStr = tStr.substring(12,14);
 //        System.out.println(yearStr+" "+monthStr+" "+dayStr+" "+hourStr+" "+minuteStr);
         int year = Integer.parseInt(yearStr);
         int month = Integer.parseInt(monthStr)-1;//month count from 0 to 11, no 12
         int day = Integer.parseInt(dayStr);
         int hour = Integer.parseInt(hourStr);
         int minute = Integer.parseInt(minuteStr);
-       // int second = Integer.parseInt(secondStr);
+        int second = Integer.parseInt(secondStr);
 //        System.out.println(year+" "+month+" "+day+" "+hour+" "+minute);
         Calendar ca= Calendar.getInstance();
-        ca.set(year, month, day, hour, minute, 0); //seconds set to 0
-     //   ca.set(year, month, day, hour, minute, second); //seconds set to 0
+//        ca.set(year, month, day, hour, minute, 0); //seconds set to 0
+        ca.set(year, month, day, hour, minute, second); //seconds set to 0
         long timestamp = ca.getTimeInMillis();
 //        System.out.println(timestamp);
         if(timestamp/1000<Integer.MAX_VALUE){
             return (int) (timestamp/1000);
         }else {
             throw new RuntimeException("timestamp larger than Integer.MAX_VALUE, this should not happen");
+        }
+    }
+
+    public static int timeStr2int(String tStr){
+        if(tStr.length() != 12 && tStr.length() !=14){
+            throw new RuntimeException("timestamp format error");
+        } else if (tStr.length() == 12){
+            return timeStr2intImpl(tStr + "00");
+        }else {
+            return timeStr2intImpl(tStr);
         }
     }
 

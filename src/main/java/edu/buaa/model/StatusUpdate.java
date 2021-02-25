@@ -1,5 +1,7 @@
 package edu.buaa.model;
 
+import org.neo4j.kernel.impl.util.register.NeoRegister;
+
 import java.util.Calendar;
 
 /**
@@ -32,22 +34,34 @@ public class StatusUpdate {
      * @param tStr 05270005: month(05),day(27),hour(00),minute(05)
      * @return timestamp by seconds
      */
-    private int timeStr2timestamp(String tStr){
+    private int timeStr2timestampImpl(String tStr){
         String monthStr = tStr.substring(0,2);
         String dayStr = tStr.substring(2,4);
         String hourStr = tStr.substring(4,6);
         String minuteStr = tStr.substring(6, 8);
+        String secondStr = tStr.substring(8,10);
         int month = Integer.parseInt(monthStr)-1;//month count from 0 to 11, no 12
         int day = Integer.parseInt(dayStr);
         int hour = Integer.parseInt(hourStr);
         int minute = Integer.parseInt(minuteStr);
+        int second = Integer.parseInt(secondStr);
         Calendar ca= Calendar.getInstance();
-        ca.set(2010, month, day, hour, minute, 0); //seconds set to 0
+        ca.set(2010, month, day, hour, minute, second); //seconds set to 0
         long timestamp = ca.getTimeInMillis();
         if(timestamp/1000<Integer.MAX_VALUE){
             return (int) (timestamp/1000);
         }else {
             throw new RuntimeException("timestamp larger than Integer.MAX_VALUE, this should not happen");
+        }
+    }
+
+    private int timeStr2timestamp(String tStr){
+        if(tStr.length() != 8 && tStr.length() !=10){
+            throw new RuntimeException("timestamp foramt error!");
+        }else if(tStr.length() == 8){
+            return timeStr2timestampImpl(tStr + "00");
+        }else {
+            return timeStr2timestampImpl(tStr);
         }
     }
 

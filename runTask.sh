@@ -73,6 +73,28 @@ function systemInfo() {
 #        -Dexec.args="$1"
 #}
 
+#======================================== server install and compile ========================================
+
+function codeInstallAndCompile() {
+  #the path of TGraphDB
+  NEO4J_PATH="E:\TGraphDB\temporal-neo4j"
+  STORAGE_PATH="E:\TGraphDB\temporal-storage"
+  SHELL_FILE_PATH="E:\TGraphDB\TGraph-demo-test"
+  #install temporal-storage
+  echo -e "\033[47;30m [Tgraph Install Info]---------------[ Installation of Temporal-storage is about to start ]--------------- \033[0m"
+  cd $STORAGE_PATH
+  mvn clean compile
+  mvn install -Dmaven.test.skip
+  echo -e "\033[47;30m [Tgraph Install Info]---------------[ Installation of Temporal-storage is complete ]--------------- \033[0m"
+  #install temporal-neo4j-kernel
+  echo -e "\033[47;30m [Tgraph Install Info]---------------[ Installation of Temporal-neo4j-kernel is about to start ]--------------- \033[0m"
+  cd $NEO4J_PATH
+  mvn install -pl org.neo4j:neo4j-kernel -am -Dmaven.test.skip -Dlicensing.skip -Dlicense.skip
+  echo -e "\033[47;30m [Tgraph Install Info]---------------[ Installation of Temporal-neo4j-kernel is complete ]--------------- \033[0m"
+  cd $SHELL_FILE_PATH
+  echo -e "\033[47;30m [Tgraph Install Info]---------------[ Installation of TGraphDB is complete ]--------------- \033[0m"
+}
+
 #======================================== server ON an OFF ========================================
 
 #server without index
@@ -139,33 +161,7 @@ function runEntityTemporalConditionTest() {
   mvn -B --offline test -Dtest=simple.tgraph.kernel.EntityTemporalConditionTest
 }
 
-function autoTest() {
-  echo -e "\033[47;30m [Tgraph Test Info]---------------[ SnapshotTest is Starting ]--------------- \033[0m"
-  sleep 5
-  runSnapshotTest
-  echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of SnapshotTest ]--------------- \033[0m"
-  sleep 60
-  echo -e "\033[47;30m [Tgraph Test Info]---------------[ SnapshotAggregationMaxTest is Starting ]--------------- \033[0m"
-  sleep 5
-  runSnapshotAggregationMaxTest
-  echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of SnapshotTest is Starting ]--------------- \033[0m"
-  sleep 60
-  echo -e "\033[47;30m [Tgraph Test Info]---------------[ SnapshotAggregationDurationTest is Starting ]--------------- \033[0m"
-  sleep 5
-  runSnapshotAggregationDurationTest
-  echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of SnapshotTest is Starting ]--------------- \033[0m"
-  sleep 60
-  echo -e "\033[47;30m [Tgraph Test Info]---------------[ EntityTemporalConditionTest is Starting ]--------------- \033[0m"
-  sleep 5
-  runEntityTemporalConditionTest
-  echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of SnapshotTest is Starting ]--------------- \033[0m"
-  sleep 60
-  echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of all tests, Server is closing ]--------------- \033[0m"
-  sleep 5
-  closeServer
 
-  EOF
-}
 
 
 #function runReachableAreaQueryTest() {
@@ -205,52 +201,128 @@ function runSnapshotAggregationDurationIndexTest() {
   export TEST_PROPERTY_NAME=full_status
   export SERVER_RESULT_FILE="Result_SnapshotAggregationDurationIndexTest.gz"
   export MAX_CONNECTION_CNT=16
-  mvn -B --offline test -Dtest=simple.tgraph.kernel.SnapshotAggregationDurationIndexTest
+  mvn -B --offline test -Dtest=simple.tgraph.kernel.index.SnapshotAggregationDurationIndexTest
 }
 
+function runCreateTemporalConditionIndex {
+  export SERVER_RESULT_FILE="ID_CreateTGraphEntityTemporalConditionIndexTest.gz"
+  export MAX_CONNECTION_CNT=1
+  mvn -B --offline test -Dtest=simple.tgraph.kernel.index.CreateTGraphEntityTemporalConditionIndexTest
+}
 function runEntityTemporalConditionIndexTest() {
   export TEMPORAL_CONDITION=600
-  export SERVER_RESULT_FILE="Result_EntityTemporalConditionTest.gz"
+  export SERVER_RESULT_FILE="Result_EntityTemporalConditionIndexTest.gz"
   export MAX_CONNECTION_CNT=16
-  mvn -B --offline test -Dtest=simple.tgraph.kernel.EntityTemporalConditionTest
+  mvn -B --offline test -Dtest=simple.tgraph.kernel.index.EntityTemporalConditionIndexTest
 }
 
-#function autoTestWithIndex() {
-#
-#  TXT_FILE_PATH="E:\tgraph\test-result"
-#  SHELL_FILE_PATH="E:\TGraphDB\TGraph-demo-test"
-#
-#
-#  runCreateAggrMaxIndex
-#
-#  closeServer
-#
-#  sleep 60
-#
-#  cd $TXT_FILE_PATH
-#  firstline=`head -1 INDEX_ID_OF_MAX.txt`
-#  export INDEX_ID_OF_MAX=$firstline
-#  cd $SHELL_FILE_PATH
-#
-#  runSnapshotAggregationMaxIndexTest
-#
-#  sleep 60
-#
-#  runCreateAggrDurationIndex
-#
-#  closeServer
-#
-#  sleep 60
-#
-#  cd $TXT_FILE_PATH
-#  firstline=`head -1 INDEX_ID_OF_DURATION.txt`
-#  export INDEX_ID_OF_DURATION=$firstline
-#  cd $SHELL_FILE_PATH
-#
-#  runSnapshotAggregationDurationIndexTest
-#
-#
-#}
+
+#========================================== auto test =========================================
+
+#tests without index
+function autoTest() {
+
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ Tests are about to start ]--------------- \033[0m"
+  sleep 5
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ SnapshotTest is about to start ]---------------$(date "+%Y-%m-%d %H:%M:%S") \033[0m"
+  sleep 5
+  runSnapshotTest
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of SnapshotTest ]--------------- \033[0m"
+  sleep 60
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ SnapshotAggregationMaxTest is about to start ]---------------$(date "+%Y-%m-%d %H:%M:%S") \033[0m"
+  sleep 5
+  runSnapshotAggregationMaxTest
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of SnapshotAggregationMaxTest ]--------------- \033[0m"
+  sleep 60
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ SnapshotAggregationDurationTest is about to start ]---------------$(date "+%Y-%m-%d %H:%M:%S") \033[0m"
+  sleep 5
+  runSnapshotAggregationDurationTest
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of SnapshotAggregationDurationTest ]--------------- \033[0m"
+  sleep 60
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ EntityTemporalConditionTest is about to start ]---------------$(date "+%Y-%m-%d %H:%M:%S") \033[0m"
+  sleep 5
+  runEntityTemporalConditionTest
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of EntityTemporalConditionTest ]--------------- \033[0m"
+  sleep 60
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of all tests, Server is closing ]--------------- \033[0m"
+  sleep 5
+  closeServer
+}
+
+#tests with index.
+#Tips: 1st, start the server automation script. 2nd, start the client automation script
+
+function serverAutoTestWithIndex() {
+  runTGraphIndexedKernelServer
+  runTGraphIndexedKernelServer
+  runTGraphIndexedKernelServer
+  runTGraphIndexedKernelServer
+ }
+
+function clientAutoTestWithIndex() {
+
+  TXT_FILE_PATH="E:\tgraph\test-result"
+  SHELL_FILE_PATH="E:\TGraphDB\TGraph-demo-test"
+
+  #get max index id
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ All tests with index are about to start ]--------------- \033[0m"
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ Aggregation Max Index is creating ]--------------- \033[0m"
+  runCreateAggrMaxIndex
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ Aggregation Max Index is created ]--------------- \033[0m"
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ Waiting! server is restarting ]--------------- \033[0m"
+  closeServer
+  sleep 120
+  #SnapshotAggregationMaxIndexTest
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ Server restart successfully ]--------------- \033[0m"
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ Getting aggregation max Index ID ]--------------- \033[0m"
+  cd $TXT_FILE_PATH
+  firstline=`head -1 INDEX_ID_OF_MAX.txt`
+  export INDEX_ID_OF_MAX=$firstline
+  cd $SHELL_FILE_PATH
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ Aggregation max Index ID was obtained successfully ]--------------- \033[0m"
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ SnapshotAggregationMaxIndexTest is about to start ]---------------$(date "+%Y-%m-%d %H:%M:%S") \033[0m"
+  runSnapshotAggregationMaxIndexTest
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of SnapshotAggregationMaxIndexTest ]--------------- \033[0m"
+  sleep 60
+
+  #get duration index id
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ Aggregation Duration Index is creating ]--------------- \033[0m"
+  runCreateAggrDurationIndex
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ Aggregation Duration Index is created ]--------------- \033[0m"
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ Waiting! server is restarting ]--------------- \033[0m"
+  closeServer
+  sleep 120
+  #SnapshotAggregationDurationIndexTest
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ Server restart successfully ]--------------- \033[0m"
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ Getting aggregation duration Index ID ]--------------- \033[0m"
+  cd $TXT_FILE_PATH
+  firstline=`head -1 INDEX_ID_OF_DURATION.txt`
+  export INDEX_ID_OF_DURATION=$firstline
+  cd $SHELL_FILE_PATH
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ Aggregation duration Index ID was obtained successfully ]--------------- \033[0m"
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ SnapshotAggregationDurationIndexTest is about to start ]---------------$(date "+%Y-%m-%d %H:%M:%S") \033[0m"
+  runSnapshotAggregationDurationIndexTest
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of SnapshotAggregationDurationIndexTest ]--------------- \033[0m"
+  sleep 60
+
+  #get Temporal Condition Index
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ Temporal Condition Index is creating ]--------------- \033[0m"
+  runCreateTemporalConditionIndex
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ Temporal Condition Index is created ]--------------- \033[0m"
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ Waiting! server is restarting ]--------------- \033[0m"
+  closeServer
+  sleep 120
+  #EntityTemporalConditionIndexTest
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ Server restart successfully ]--------------- \033[0m"
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ EntityTemporalConditionIndexTest is about to start ]---------------$(date "+%Y-%m-%d %H:%M:%S") \033[0m"
+  runEntityTemporalConditionIndexTest
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of SnapshotAggregationDurationIndexTest ]--------------- \033[0m"
+  sleep 60
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of all tests, Server is closing ]--------------- \033[0m"
+  closeServer
+}
+
+
 
 
 #function runReachableAreaQueryTest() {

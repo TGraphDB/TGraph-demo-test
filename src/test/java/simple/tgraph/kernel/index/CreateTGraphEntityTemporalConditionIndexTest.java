@@ -29,8 +29,8 @@ public class CreateTGraphEntityTemporalConditionIndexTest {
 //    private static String testPropertyName = Helper.mustEnv("TEST_PROPERTY_NAME");
 //    private static String startTime = Helper.mustEnv("TEMPORAL_DATA_START");
 //    private static String endTime = Helper.mustEnv("TEMPORAL_DATA_END");
-//    private static String indexStartTime = Helper.mustEnv("INDEX_TEMPORAL_DATA_START");
-//    private static String indexEndTime = Helper.mustEnv("INDEX_TEMPORAL_DATA_END");
+    private static String indexStartTime = Helper.mustEnv("INDEX_TEMPORAL_DATA_START");
+    private static String indexEndTime = Helper.mustEnv("INDEX_TEMPORAL_DATA_END");
 
 
     private static Producer logger;
@@ -57,10 +57,8 @@ public class CreateTGraphEntityTemporalConditionIndexTest {
 
     private long createIndex() throws Exception {
         CreateTGraphTemporalValueIndexTx tx =new CreateTGraphTemporalValueIndexTx();
-//        tx.setStart(Helper.timeStr2int(indexStartTime));
-//        tx.setEnd(Helper.timeStr2int(indexEndTime));
-        tx.setStart(Helper.timeStr2int("201005011000"));
-        tx.setEnd(Helper.timeStr2int("201005012000"));
+        tx.setStart(Helper.timeStr2int(indexStartTime));
+        tx.setEnd(Helper.timeStr2int(indexEndTime));
         DBProxy.ServerResponse response = post.processSync(client.execute(tx), tx);
         AbstractTransaction.Result result = response.getResult();
         CreateTGraphTemporalValueIndexTx.Result res = (CreateTGraphTemporalValueIndexTx.Result) result;
