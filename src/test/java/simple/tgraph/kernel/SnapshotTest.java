@@ -45,8 +45,10 @@ public class SnapshotTest {
 
     @Test
     public void snapshotTestInfo() throws Exception {
-        query(testPropertyName, Helper.timeStr2int(startTime));
-       // query("travel_time", Helper.timeStr2int("201005300940"));
+        for(int i=0;i<200;i++) {
+            query(testPropertyName, Helper.timeStr2int(startTime));
+            // query("travel_time", Helper.timeStr2int("201005300940"));
+        }
 
     }
 

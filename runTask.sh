@@ -20,7 +20,7 @@ export MAVEN_OPTS='-Xmx50g -Xms4g'
 #======================================== environment variable ========================================
 
 datasetName="bj1c"
-datasetSize="1day"
+datasetSize="3day"
 
 #the local storage of the TGraphDB
 export DB_PATH="C:\tgraph\test-db\Tgraph-$datasetName-$datasetSize"
@@ -29,7 +29,7 @@ export RAW_DATA_PATH="E:\test-data"
 #the start date
 export DATA_START=0501
 #the end date
-export DATA_END=0630
+export DATA_END=0501
 #host
 export DB_HOST=localhost
 #the start time of the query operation

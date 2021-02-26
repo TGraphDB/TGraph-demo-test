@@ -54,7 +54,9 @@ public class EntityTemporalConditionIndexTest {
     @Test
     //travel_time > ???s
     public void EntityTemporalConditionInfoVMIN() throws Exception{
-        query("travel_time", Helper.timeStr2int(startTime), Helper.timeStr2int(endTime), vMin,vMAX);
+        for(int i=0;i<200;i++) {
+            query("travel_time", Helper.timeStr2int(startTime), Helper.timeStr2int(endTime), vMin, vMAX);
+        }
     }
 
 

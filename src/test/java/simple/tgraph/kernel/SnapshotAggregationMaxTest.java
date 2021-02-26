@@ -46,8 +46,10 @@ public class SnapshotAggregationMaxTest {
 
     @Test
     public void snapshotAggregationMaxTestInfo() throws Exception {
-        query(testPropertyName, Helper.timeStr2int(startTime), Helper.timeStr2int(endTime));
-        //query("travel_time", Helper.timeStr2int("201006300830"), Helper.timeStr2int("201006300930"));
+        for(int i=0;i<200;i++) {
+            query(testPropertyName, Helper.timeStr2int(startTime), Helper.timeStr2int(endTime));
+            //query("travel_time", Helper.timeStr2int("201006300830"), Helper.timeStr2int("201006300930"));
+        }
     }
 
     private void query(String propertyName, int st, int et) throws Exception {

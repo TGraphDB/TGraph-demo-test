@@ -54,8 +54,9 @@ public class SnapshotAggregationDurationIndexTest {
 
     @Test
     public void snapshotAggregationDurationIndexTestInfo() throws Exception{
-
-        query(testPropertyName, Helper.timeStr2int(startTime), Helper.timeStr2int(endTime),indexId);
+        for(int i=0;i<200;i++) {
+            query(testPropertyName, Helper.timeStr2int(startTime), Helper.timeStr2int(endTime), indexId);
+        }
     }
 
 //    private long createIndex() throws Exception {

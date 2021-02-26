@@ -50,10 +50,10 @@ public class EntityTemporalConditionTest {
     @Test
     //travel_time > ???s
     public void entityTemporalConditionInfo() throws Exception {
-        //for (int i = 0; i < 160; i++) {
+        for (int i = 0; i < 160; i++) {
             queryVMIN(testPropertyName, Helper.timeStr2int(startTime), Helper.timeStr2int(endTime), conditionValue);
             //queryVMIN("travel_time", Helper.timeStr2int("201006300830"), Helper.timeStr2int("201006300930"), 600);
-       // }
+        }
     }
 
 
