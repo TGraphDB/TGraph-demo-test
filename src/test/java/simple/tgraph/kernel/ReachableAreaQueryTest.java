@@ -46,18 +46,17 @@ public class ReachableAreaQueryTest {
 
     @Test
     public void reachableAreaQueryInfo() throws Exception {
-        query(testStartCrossId, Helper.timeStr2int(startTime), Helper.timeStr2int(testTravelTime));
-        //query("travel_time", Helper.timeStr2int("201006300830"), Helper.timeStr2int("201006300930"));
+        for(int i=0;i<200;i++) {
+            query(testStartCrossId, Helper.timeStr2int(startTime), Helper.timeStr2int(testTravelTime));
+        }        //query("travel_time", Helper.timeStr2int("201006300830"), Helper.timeStr2int("201006300930"));
     }
 
     private void query(long propertyName, int st, int tt) throws Exception {
-        for(int i=0; i<160; i++) {
             ReachableAreaQueryTx tx = new ReachableAreaQueryTx();
             tx.setStartCrossId(propertyName);
             tx.setDepartureTime(st);
             tx.setTravelTime(tt);
             post.process(client.execute(tx), tx);
-        }
     }
 
     @AfterClass

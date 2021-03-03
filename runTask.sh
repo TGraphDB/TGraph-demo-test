@@ -19,17 +19,17 @@ export MAVEN_OPTS='-Xmx50g -Xms4g'
 
 #======================================== environment variable ========================================
 
-datasetName="bj1c"
-datasetSize="3day"
+datasetName="bj60c"
+datasetSize="60day"
 
 #the local storage of the TGraphDB
 export DB_PATH="C:\tgraph\test-db\Tgraph-$datasetName-$datasetSize"
 #the directory where the CSV files are stored
-export RAW_DATA_PATH="E:\test-data"
+export RAW_DATA_PATH="E:\test-data-60c"
 #the start date
 export DATA_START=0501
 #the end date
-export DATA_END=0501
+export DATA_END=0630
 #host
 export DB_HOST=localhost
 #the start time of the query operation
@@ -237,22 +237,22 @@ function autoTest() {
   sleep 5
   runSnapshotTest
   echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of SnapshotTest ]--------------- \033[0m"
-  sleep 60
+  sleep 100
   echo -e "\033[47;30m [Tgraph Test Info]---------------[ SnapshotAggregationMaxTest is about to start ]---------------$(date "+%Y-%m-%d %H:%M:%S") \033[0m"
   sleep 5
   runSnapshotAggregationMaxTest
   echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of SnapshotAggregationMaxTest ]--------------- \033[0m"
-  sleep 60
+  sleep 100
   echo -e "\033[47;30m [Tgraph Test Info]---------------[ SnapshotAggregationDurationTest is about to start ]---------------$(date "+%Y-%m-%d %H:%M:%S") \033[0m"
   sleep 5
   runSnapshotAggregationDurationTest
   echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of SnapshotAggregationDurationTest ]--------------- \033[0m"
-  sleep 60
+  sleep 100
   echo -e "\033[47;30m [Tgraph Test Info]---------------[ EntityTemporalConditionTest is about to start ]---------------$(date "+%Y-%m-%d %H:%M:%S") \033[0m"
   sleep 5
   runEntityTemporalConditionTest
   echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of EntityTemporalConditionTest ]--------------- \033[0m"
-  sleep 60
+  sleep 100
   echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of all tests, Server is closing ]--------------- \033[0m"
   sleep 5
   closeServer
