@@ -68,14 +68,13 @@ public class EntityTemporalConditionTest {
 
     @AfterClass
     public static void close() throws IOException, InterruptedException, ProducerException {
-        Thread.sleep(30000);
+        client.close();
         while(true) {
             try {
                 post.awaitDone(30, TimeUnit.SECONDS);
                 break;
             } catch (InterruptedException e) {}
         }
-        client.close();
         logger.close();
     }
 }

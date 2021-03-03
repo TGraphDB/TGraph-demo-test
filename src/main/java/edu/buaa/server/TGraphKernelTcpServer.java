@@ -237,25 +237,18 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
                 Object v = r.getTemporalProperty(tx.getP(), Helper.time(tx.getT0()), Helper.time(tx.getT1()), new TemporalRangeQuery() {
                     @Override
                     public boolean onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
-                        res.add((Integer) val);
-                        return true;
+                        if ((Integer) val > tx.getVmin()){
+                            answers.add(roadName);
+                            return false;
+                        }else {
+                            return true;
+                        }
                     }
-
                     @Override
                     public Object onReturn() {
-                        return res;
+                        return answers;
                     }
                 });
-                int sum = 0;
-                if(res.size() > 0) {
-                    for (int i = 0; i < res.size(); i++) {
-                        sum = res.get(i) + sum;
-                    }
-                    if (sum > tx.getVmin()) {
-                        answers.add(roadName);
-                    }
-                }
-                res.clear();
             }
             EntityTemporalConditionTx.Result result = new EntityTemporalConditionTx.Result();
             result.setRoads(answers);
