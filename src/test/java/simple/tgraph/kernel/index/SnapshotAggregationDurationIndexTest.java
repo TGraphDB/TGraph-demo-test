@@ -34,6 +34,7 @@ public class SnapshotAggregationDurationIndexTest {
     private static String indexStartTime = Helper.mustEnv("INDEX_TEMPORAL_DATA_START");
     private static String indexEndTime = Helper.mustEnv("INDEX_TEMPORAL_DATA_END");
     private static long indexId = Long.valueOf(Helper.mustEnv("INDEX_ID_OF_DURATION"));
+    private static String logTestName = Helper.mustEnv("LOG_TEST_NAME");
 
     private static Producer logger;
     private static DBProxy client;
@@ -45,7 +46,7 @@ public class SnapshotAggregationDurationIndexTest {
         client = new TGraphExecutorClient(serverHost, threadCnt, 800);
         client.testServerClientCompatibility();
 
-        post = new BenchmarkTxResultProcessor("TGraph(SnapshotAggregationDurationIndexTest)", Helper.codeGitVersion());
+        post = new BenchmarkTxResultProcessor(logTestName, Helper.codeGitVersion());
         logger = Helper.getLogger();
         post.setLogger(logger);
         post.setVerifyResult(verifyResult);

@@ -14,6 +14,7 @@ import edu.buaa.utils.Helper;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.neo4j.kernel.impl.util.register.NeoRegister;
 
 import javax.management.Query;
 import java.io.File;
@@ -34,7 +35,8 @@ public class SnapshotAggregationMaxIndexTest {
     private static String endTime = Helper.mustEnv("TEMPORAL_DATA_END");
 //    private static String indexStartTime = Helper.mustEnv("INDEX_TEMPORAL_DATA_START");
 //    private static String indexEndTime = Helper.mustEnv("INDEX_TEMPORAL_DATA_END");
-    private static long indexId = Long.valueOf(Helper.mustEnv("INDEX_ID_OF_MAX"));
+    private static String indexId = Helper.mustEnv("INDEX_ID_OF_MAX");
+    private static String logTestName = Helper.mustEnv("LOG_TEST_NAME");
 
 
     private static Producer logger;
@@ -46,7 +48,7 @@ public class SnapshotAggregationMaxIndexTest {
         ParserConfig.getGlobalInstance().setAutoTypeSupport(true);
         client = new TGraphExecutorClient(serverHost, threadCnt, 800);
         client.testServerClientCompatibility();
-        post = new BenchmarkTxResultProcessor("TGraph(SnapshotAggregationMaxIndexTest)", Helper.codeGitVersion());
+        post = new BenchmarkTxResultProcessor(logTestName, Helper.codeGitVersion());
         logger = Helper.getLogger();
         post.setLogger(logger);
         post.setVerifyResult(verifyResult);
@@ -56,7 +58,7 @@ public class SnapshotAggregationMaxIndexTest {
     @Test
     public void snapshotAggregationMaxIndexTestInfo() throws Exception{
         for(int i=0;i<200;i++) {
-            query(testPropertyName, Helper.timeStr2int(startTime), Helper.timeStr2int(endTime), indexId);
+            query(testPropertyName, Helper.timeStr2int(startTime), Helper.timeStr2int(endTime), Long.parseLong(indexId));
         }
     }
 

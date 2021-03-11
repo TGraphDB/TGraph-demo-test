@@ -33,6 +33,7 @@ public class EntityTemporalConditionIndexTest {
     private static String indexEndTime = Helper.mustEnv("INDEX_TEMPORAL_DATA_END_INDEX");
     private static int vMin = Integer.parseInt(Helper.mustEnv("TEMPORAL_CONDITION"));
     private static int vMAX = Integer.parseInt(Helper.mustEnv("TEMPORAL_CONDITION"));
+    private static String logTestName = Helper.mustEnv("LOG_TEST_NAME");
 
     private static Producer logger;
     private static DBProxy client;
@@ -43,7 +44,7 @@ public class EntityTemporalConditionIndexTest {
         client = new TGraphExecutorClient(serverHost, threadCnt, 800);
         client.testServerClientCompatibility();
 
-        post = new BenchmarkTxResultProcessor("TGraph(EntityTemporalConditionIndexTest)", Helper.codeGitVersion());
+        post = new BenchmarkTxResultProcessor(logTestName, Helper.codeGitVersion());
         logger = Helper.getLogger();
         post.setLogger(logger);
         post.setVerifyResult(verifyResult);

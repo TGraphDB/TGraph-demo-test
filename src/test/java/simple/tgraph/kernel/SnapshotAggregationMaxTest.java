@@ -26,6 +26,7 @@ public class SnapshotAggregationMaxTest {
     private static String testPropertyName = Helper.mustEnv("TEST_PROPERTY_NAME");
     private static String startTime = Helper.mustEnv("TEMPORAL_DATA_START");
     private static String endTime = Helper.mustEnv("TEMPORAL_DATA_END");
+    private static String logTestName = Helper.mustEnv("LOG_TEST_NAME");
 
     private static Producer logger;
     private static DBProxy client;
@@ -37,7 +38,7 @@ public class SnapshotAggregationMaxTest {
         client = new TGraphExecutorClient(serverHost, threadCnt, 800);
         client.testServerClientCompatibility();
 
-        post = new BenchmarkTxResultProcessor("TGraph(SnapshotAggregationMaxTest)", Helper.codeGitVersion());
+        post = new BenchmarkTxResultProcessor(logTestName, Helper.codeGitVersion());
         logger = Helper.getLogger();
         post.setLogger(logger);
         post.setVerifyResult(verifyResult);

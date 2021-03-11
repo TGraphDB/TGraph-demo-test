@@ -25,6 +25,7 @@ public class SnapshotTest {
     private static String dataFilePath = Helper.mustEnv("RESULT_DATA_PATH"); // should be like '/media/song/test/data-set/beijing-traffic/TGraph/byday/
     private static String testPropertyName = Helper.mustEnv("TEST_PROPERTY_NAME");
     private static String startTime = Helper.mustEnv("TEMPORAL_DATA_START");
+    private static String logTestName = Helper.mustEnv("LOG_TEST_NAME");
 
     private static Producer logger;
     private static DBProxy client;
@@ -36,7 +37,7 @@ public class SnapshotTest {
         client = new TGraphExecutorClient(serverHost, threadCnt, 800);
         client.testServerClientCompatibility();
 
-        post = new BenchmarkTxResultProcessor("TGraph(Snapshot)", Helper.codeGitVersion());
+        post = new BenchmarkTxResultProcessor(logTestName, Helper.codeGitVersion());
         logger = Helper.getLogger();
         post.setLogger(logger);
         post.setVerifyResult(verifyResult);

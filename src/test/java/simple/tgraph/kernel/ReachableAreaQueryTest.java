@@ -26,6 +26,7 @@ public class ReachableAreaQueryTest {
     private static long testStartCrossId = Long.parseLong(Helper.mustEnv("TEST_START_CROSS_ID"));
     private static String startTime = Helper.mustEnv("TEMPORAL_DATA_START");
     private static String testTravelTime = Helper.mustEnv("TRAVEL_TIME");
+    private static String logTestName = Helper.mustEnv("LOG_TEST_NAME");
 
     private static Producer logger;
     private static DBProxy client;
@@ -37,7 +38,7 @@ public class ReachableAreaQueryTest {
         client = new TGraphExecutorClient(serverHost, threadCnt, 800);
         client.testServerClientCompatibility();
 
-        post = new BenchmarkTxResultProcessor("TGraph(ReachableAreaQueryTest)", Helper.codeGitVersion());
+        post = new BenchmarkTxResultProcessor(logTestName, Helper.codeGitVersion());
         logger = Helper.getLogger();
         post.setLogger(logger);
         post.setVerifyResult(verifyResult);
