@@ -89,11 +89,12 @@ public class TGraphIndexedKernelTcpServer extends TGraphKernelTcpServer {
     private Result execute(CreateTGraphTemporalValueIndexTx tx) {
         long indexId = -1;
         try(Transaction t = db.beginTx()){
+            System.out.println(tx.getStart()+" "+tx.getEnd()+" "+tx.getProps());
             indexId = db.temporalIndex().relCreateValueIndex(Helper.time(tx.getStart()), Helper.time(tx.getEnd()), tx.getProps().toArray(new String[]{}));
 //            db.temporalIndex().awaitIndexOnline(indexId);
             t.success();
         }
-        CreateTGraphAggrMaxIndexTx.Result r = new CreateTGraphAggrMaxIndexTx.Result();
+        CreateTGraphTemporalValueIndexTx.Result r = new CreateTGraphTemporalValueIndexTx.Result();
         System.out.println(r);
         r.setIndexId(indexId);
         return r;
@@ -106,7 +107,7 @@ public class TGraphIndexedKernelTcpServer extends TGraphKernelTcpServer {
 //            db.temporalIndex().awaitIndexOnline(indexId);
             t.success();
         }
-        CreateTGraphAggrMaxIndexTx.Result r = new CreateTGraphAggrMaxIndexTx.Result();
+        CreateTGraphAggrDurationIndexTx.Result r = new CreateTGraphAggrDurationIndexTx.Result();
         r.setIndexId(indexId);
         return r;
     }
