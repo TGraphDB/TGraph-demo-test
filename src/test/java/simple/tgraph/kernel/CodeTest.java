@@ -33,24 +33,22 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class CodeTest {
-    GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase(new File("C:\\tgraph\\test-db\\Tgraph-bj60c-49day"));
+    GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase(new File("D:\\tgraph\\db\\Tgraph-bj60c-7day"));
 
     @Test
     public void algoTest() throws Exception {
         try(Transaction t = db.beginTx()) {
 
-            EarliestArriveTime algo = new TGraphKernelTcpServer.EarliestArriveTimeTGraphKernel(db, "travel_time", 47294, Helper.timeStr2int("201005300830"), 3600);
+            EarliestArriveTime algo = new TGraphKernelTcpServer.EarliestArriveTimeTGraphKernel(db, "travel_time", 47294,
+                    Helper.timeStr2int("201005070830"), 600);
             List<EarliestArriveTime.NodeCross> answers = new ArrayList<>(algo.run());
             answers.sort(Comparator.comparingLong(EarliestArriveTime.NodeCross::getId));
             ReachableAreaQueryTx.Result result = new ReachableAreaQueryTx.Result();
             result.setNodeArriveTime(answers);
-            System.out.println(answers);
+            System.out.println(answers.size());
 //            t.failure();//do not commit;
-
             t.success();
-        }
-
-        finally {
+        } finally {
             db.shutdown();
         }
 

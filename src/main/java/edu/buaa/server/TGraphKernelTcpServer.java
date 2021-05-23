@@ -366,37 +366,23 @@ public class TGraphKernelTcpServer extends TGraphSocketServer.ReqExecutor {
             Object tObj = r.getTemporalProperty(travelTimePropertyKey, Helper.time(departureTime), Helper.time(this.endTime), new TemporalRangeQuery() {
                 private int minArriveT = Integer.MAX_VALUE;
                 private boolean firstEntry = true;
-                private int proId = 0;
-                private TimePointL preT = null;
-                private Object preV = null;
                 @Override
                 public boolean onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
-                    proId = propertyId;
-                    if(time.valInt()<=departureTime){
-                        preT = time;
-                        preV = val;
-                        return false;
-                    }else if(preT!=null){
-                        onNewEntry(entityId, propertyId, new TimePointL(departureTime), preV);
-                    }
-                    Preconditions.checkState(time.valInt() >= departureTime);
                     Preconditions.checkNotNull(val);
                     int curT = time.valInt();
-                    if(firstEntry && curT>departureTime){
-                        throw new UnsupportedOperationException();
+                    if(firstEntry){
+                        if(curT>departureTime) return false;
+                        else curT = departureTime;
+                        firstEntry=false;
+                    }else{
+                        Preconditions.checkArgument(curT > departureTime);
                     }
-                    firstEntry=false;
                     int travelT = (int) val;
                     if(curT +travelT<minArriveT) minArriveT = curT +travelT;
-                    return false;
+                    return true;
                 }
                 @Override
                 public Object onReturn() {
-                    if(firstEntry && preT!=null){
-                        onNewEntry(r.getId(), proId, new TimePointL(departureTime), preV);
-                        preT=null;
-                        onNewEntry(r.getId(), proId, new TimePointL(departureTime+180000), 100000);
-                    }
                     if(minArriveT<Integer.MAX_VALUE){
                         return minArriveT;
                     }else{
