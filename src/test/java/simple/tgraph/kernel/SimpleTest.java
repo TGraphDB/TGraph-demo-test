@@ -186,12 +186,33 @@ public class SimpleTest {
 
     @Test
     public void entityTemporalConditionQuery(){
-        GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase( new File("Z:\\TEMP") );
+        GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase( new File("D:\\tgraph\\testdb") );
         try{
             try(Transaction tx = db.beginTx()){
-                int startTime = Helper.timeStr2int("201005020800");
-                int endTime = Helper.timeStr2int("201005021200");
-                Result r = db.execute("MATCH ()-[r:ROAD_TO]->() WHERE tp_within_exists(r.travel_time,"+startTime+", "+endTime+", 100, 200) RETURN r.name");
+                int startTime = Helper.timeStr2int("201005020900");
+                int endTime = Helper.timeStr2int("201005021000");
+                Result r = db.execute("MATCH (a)-[r:ROAD_TO]->(b) WHERE tp_within_exists(r.travel_time,"+startTime+", "+endTime+", 800, 1000) RETURN r.name");
+                System.out.println(r.getExecutionPlanDescription());
+//                while (r.hasNext()){
+//                    Map<String, Object> row = r.next();
+//                    System.out.println(row);
+//                }
+                System.out.println(r.resultAsString());
+                tx.success();
+            }
+        }finally {
+            db.shutdown();
+        }
+    }
+
+    @Test
+    public void timeRangeQuery(){
+        GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabase( new File("D:\\tgraph\\testdb") );
+        try{
+            try(Transaction tx = db.beginTx()){
+                int startTime = Helper.timeStr2int("201005020900");
+                int endTime = Helper.timeStr2int("201005021000");
+                Result r = db.execute("MATCH (a)-[r:ROAD_TO]->(b) WHERE id(r)<10 RETURN r.name, id(r), tp_max(r.travel_time,"+startTime+", "+endTime+") ");
                 System.out.println(r.getExecutionPlanDescription());
 //                while (r.hasNext()){
 //                    Map<String, Object> row = r.next();

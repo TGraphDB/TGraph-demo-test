@@ -5,6 +5,7 @@ import edu.buaa.benchmark.BenchmarkTxGenerator;
 import edu.buaa.benchmark.transaction.AbstractTransaction;
 import edu.buaa.benchmark.transaction.ImportStaticDataTx;
 import edu.buaa.benchmark.transaction.ImportTemporalDataTx;
+import edu.buaa.model.CrossNode;
 import edu.buaa.model.StatusUpdate;
 import edu.buaa.model.TrafficTemporalPropertyGraph;
 import edu.buaa.server.RoadType;
@@ -87,26 +88,29 @@ public class SimpleIndexTest {
         String dataFilePath = "D:\\tgraph\\data";
         TrafficTemporalPropertyGraph tgraph = new TrafficTemporalPropertyGraph();
         tgraph.importTopology(new File(dataFilePath, "road_topology.csv.gz"));
-        execute(BenchmarkTxGenerator.txImportStatic(tgraph));
-        // create index
-
-        // import temporal data.
-        List<File> fileList = Helper.trafficFileList(dataFilePath, "0501", "0502");
-//        System.out.println(fileList.size());
-
-        startMonitor();
-        try(BenchmarkTxGenerator.TemporalPropertyAppendTxGenerator g = new BenchmarkTxGenerator.TemporalPropertyAppendTxGenerator(10000, fileList)) {
-            int i=0;
-            while (g.hasNext()) {
-                AbstractTransaction tx = g.next();
-                execute((ImportTemporalDataTx) tx);
-//                if(++i==100) createAggrMinMaxIndex();
-            }
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
+        for(CrossNode n :tgraph.getAllCross()){
+            if(n.name.contains("605602_08838")) System.out.println(n.name);
         }
-        Thread.sleep(10_000);
-        shouldGo=false;
+//        execute(BenchmarkTxGenerator.txImportStatic(tgraph));
+//        // create index
+//
+//        // import temporal data.
+//        List<File> fileList = Helper.trafficFileList(dataFilePath, "0501", "0507");
+////        System.out.println(fileList.size());
+//
+//        startMonitor();
+//        try(BenchmarkTxGenerator.TemporalPropertyAppendTxGenerator g = new BenchmarkTxGenerator.TemporalPropertyAppendTxGenerator(10000, fileList)) {
+//            int i=0;
+//            while (g.hasNext()) {
+//                AbstractTransaction tx = g.next();
+//                execute((ImportTemporalDataTx) tx);
+////                if(++i==100) createAggrMinMaxIndex();
+//            }
+////        } catch (InterruptedException e) {
+////            e.printStackTrace();
+//        }
+//        Thread.sleep(10_000);
+//        shouldGo=false;
     }
 
     private void startMonitor() {
