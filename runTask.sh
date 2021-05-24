@@ -27,19 +27,19 @@ datasetSize="60day"
 #the directory where the CSV files are stored
 export RAW_DATA_PATH="E:\test-data-60c"
 #the start date
-export DATA_START=0501
-#the end date
-export DATA_END=0630
+#export DATA_START=0501
+##the end date
+#export DATA_END=0630
 #host
 export DB_HOST=localhost
 #the start time of the query operation
-export TEMPORAL_DATA_START=201005011000
+export TEMPORAL_DATA_START=20100501100000
 #the end time of the query operation
 export TEMPORAL_DATA_END=201005011800
 #the start time of creating index
-export INDEX_TEMPORAL_DATA_START=201005010900
+export INDEX_TEMPORAL_DATA_START=201005010000
 #the end time of creating index
-export INDEX_TEMPORAL_DATA_END=201005011900
+export INDEX_TEMPORAL_DATA_END=201006302300
 #the result file is saved in the file directory
 #fileName="Tgraph-${datasetName}-${datasetSize}-result"
 #RESULT_DATA_PATH="E:\tgraph\test-result"\\"$fileName"
@@ -108,10 +108,12 @@ function codeInstallAndCompile() {
 
 #server without index
 function runTGraphKernelServer(){
+  export DB_PATH="C:\tgraph\test-db\Tgraph-bj60c-60day"
   mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.server.TGraphKernelTcpServer"
 }
 #server with index
 function runTGraphIndexedKernelServer(){
+  export DB_PATH="C:\tgraph\test-db\Tgraph-bj60c-60day"
   mvn -B --offline compile exec:java -Dexec.mainClass="edu.buaa.server.TGraphIndexedKernelTcpServer"
 }
 #close server
@@ -155,26 +157,66 @@ function runEntityTemporalConditionTest() {
   mvn -B --offline test -Dtest=simple.tgraph.kernel.EntityTemporalConditionTest
 }
 
+
 function runReachableAreaQueryTest() {
-  export TEST_START_CROSS_ID=75124
-  export TRAVEL_TIME=5000
-  export SERVER_RESULT_FILE="Result_EntityTemporalConditionTest.gz"
+  export TEMPORAL_DATA_START=201006301900
+  export RESULT_DATA_PATH="E:\tgraph\test-result"
+  export MAX_CONNECTION_CNT=1
+  LOG_TEST_NAME="TGraph(ReachableAreaQueryTest)"
+  export LOG_TEST_NAME
+  export SERVER_RESULT_FILE="Result_ReachableAreaQueryTest.gz"
   mvn -B --offline test -Dtest=simple.tgraph.kernel.ReachableAreaQueryTest
 }
 
+function runHybirdReadandWriteTest() {
+  export RESULT_DATA_PATH="E:\tgraph\test-result"
+  export WRITE_CONNECTION_CNT=1
+  export READ_CONNECTION_CNT=1
+  export TEMPORAL_DATA_START=201006300000
+  export TEMPORAL_DATA_END=201006302300
+  export TEMPORAL_DATA_START=201006290800
+  export TEMPORAL_DATA_END=201006292000
+  LOG_TEST_NAME="TGraph(HybridReadandWriteTest)"
+  export LOG_TEST_NAME
+  export SERVER_RESULT_FILE="Result_HybirdReadandWriteTest.gz"
+  mvn -B --offline test -Dtest=simple.tgraph.kernel.HybridReadandWriteTest
+}
+
+function autoHybirdReadandWriteTest() {
+
+  write_thread=(0 4 8 12 16)
+  read_thread=(16 12 8 4 0)
+
+  export TEMPORAL_DATA_START=201006300000
+  export TEMPORAL_DATA_END=201006302300
+  export TEMPORAL_DATA_START=201006290800
+  export TEMPORAL_DATA_END=201006292000
+
+  thread_length=${#write_thread[@]}
+  export RESULT_DATA_PATH="E:\tgraph\test-result"
+
+  for (( i = 0; i < thread_length; i++ )); do
+    WRITE_CONNECTION_CNT=${write_thread[i]}
+    WRITE_CONNECTION_CNT=${read_thread[i]}
+
+    echo -e "\033[47;30m [Tgraph Test Info]---------------[ Test Information : Write Thread Num-${write_thread[i]} Read Thread Num-${read_thread[i]} ]--------------- \033[0m"
+    echo -e "\033[47;30m [Tgraph Test Info]---------------[ Tests are about to start ]--------------- \033[0m"
+    sleep 5
+    LOG_TEST_NAME="TGraph(HybridTest-W${write_thread[i]}-R${read_thread[i]} )"
+    export LOG_TEST_NAME
+    export SERVER_RESULT_FILE="Result_HybirdReadandWriteTest.gz"
+    mvn -B --offline test -Dtest=simple.tgraph.kernel.HybridReadandWriteTest
+
+  done
+
+  echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of all tests, Server is closing ]--------------- \033[0m"
+  sleep 5
+  closeServer
+  sleep 120
 
 
-#function runReachableAreaQueryTest() {
-#  export TEST_START_CROSS_ID=75124
-#  export TEMPORAL_DATA_START=201006300830
-#  export TRAVEL_TIME=50000
-#  export DB_HOST=localhost
-#  export RAW_DATA_PATH="E:\tgraph\test-result"
-#  export SERVER_RESULT_FILE="Result_EntityTemporalConditionTest.gz"
-#  export MAX_CONNECTION_CNT=16
-#  export VERIFY_RESULT=false
-#  mvn -B --offline test -Dtest=simple.tgraph.kernel.ReachableAreaQueryTest
-#}
+}
+
 
 #========================================== TESTS with INDEX =========================================
 
@@ -186,6 +228,7 @@ function runCreateAggrMaxIndex() {
 }
 
 function runSnapshotAggregationMaxIndexTest() {
+  export TEST_PROPERTY_NAME=travel_time
   export SERVER_RESULT_FILE="Tgraph_Result_SnapshotAggregationMaxIndexTest.gz"
   export MAX_CONNECTION_CNT=1
   mvn -B --offline test -Dtest=simple.tgraph.kernel.index.SnapshotAggregationMaxIndexTest
@@ -241,6 +284,8 @@ function serverAutotest() {
     echo -e "\033[47;30m [Tgraph Test Info]---------------[ TGraph Server closed successfully ]--------------- \033[0m"
 
   done
+
+
 
  }
 
@@ -318,6 +363,64 @@ function clientAutotest() {
  }
 
 
+#=================================write auto=================================================
+datasetSize_arr=("49day")
+db_hour_array=("1h" "12h")
+data_end_array=(0617)
+
+size_length=${#datasetSize_arr[@]}
+
+function serverAutoWrite() {
+
+  for (( i = 0; i < size_length; i++ )); do
+    export DB_PATH="C:\tgraph\test-db\Tgraph-bj60c-${datasetSize_arr[i]}"
+
+    echo -e "\033[47;30m [Tgraph Test Info]---------------[ DataBase Information : Tgraph-bj60c-${datasetSize_arr[i]} ]--------------- \033[0m"
+    echo -e "\033[47;30m [Tgraph Test Info]---------------[ TGraph Server is about to start ]--------------- \033[0m"
+
+    runTGraphKernelServer
+
+    echo -e "\033[47;30m [Tgraph Test Info]---------------[ TGraph Server closed successfully ]--------------- \033[0m"
+
+  done
+
+ }
+
+ function clientAutoWrite() {
+
+  export MAX_CONNECTION_CNT=1
+
+  for (( i = 0; i < size_length; i++ )); do
+
+      DATA_END=${data_end_array[i]}
+      export DATA_START=0501
+      #the end date
+      export DATA_END
+
+
+      echo -e "\033[47;30m [Tgraph Test Info]---------------[ Test Information : Tgraph-60c-${datasetSize_arr[i]} ]--------------- \033[0m"
+      echo -e "\033[47;30m [Tgraph Test Info]---------------[ Start Time :$DATA_START ]--------------- \033[0m"
+      echo -e "\033[47;30m [Tgraph Test Info]---------------[ End Time : $DATA_END ]--------------- \033[0m"
+
+      echo -e "\033[47;30m [Tgraph Test Info]---------------[ Tests are about to start ]--------------- \033[0m"
+      sleep 5
+      LOG_TEST_NAME="TGraph(WriteTest)"
+      export LOG_TEST_NAME
+      echo -e "\033[47;30m [Tgraph Test Info]---------------[ $LOG_TEST_NAME is about to start ]---------------$(date "+%Y-%m-%d %H:%M:%S") \033[0m"
+      sleep 5
+      runWriteTest
+      echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of SnapshotTest ]--------------- \033[0m"
+      sleep 100
+
+      echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of all tests, Server is closing ]--------------- \033[0m"
+      sleep 5
+      closeServer
+      sleep 120
+  done
+
+ }
+#========================================================================================
+
 
 #tests with index.
 #Tips: 1st, start the server automation script. 2nd, start the client automation script
@@ -393,9 +496,6 @@ function clientAutoTestWithIndex() {
   echo -e "\033[47;30m [Tgraph Test Info]---------------[ End of all tests, Server is closing ]--------------- \033[0m"
   closeServer
 }
-
-
-
 
 
 
