@@ -59,8 +59,8 @@ public class BenchmarkTxGenerator {
         for(RoadRel r: tgraph.getAllRoads()){
             roads.add(new ImportStaticDataTx.StaticRoadRel(
                     roadId,
-                    crossIdMap.get(tgraph.getRoadEndCross(r)),
                     crossIdMap.get(tgraph.getRoadStartCross(r)),
+                    crossIdMap.get(tgraph.getRoadEndCross(r)),
                     r.id, r.length, r.angle, r.getType()));
 //            roadIdMap.put(r.id, roadId);
             roadId++;

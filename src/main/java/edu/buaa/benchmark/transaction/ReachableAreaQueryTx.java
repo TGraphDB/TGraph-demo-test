@@ -10,7 +10,7 @@ public class ReachableAreaQueryTx extends AbstractTransaction {
     private int departureTime;
     private int travelTime;
 
-    public ReachableAreaQueryTx(){}
+//    public ReachableAreaQueryTx(){}
     public ReachableAreaQueryTx(long startCrossId, int departureTime, int travelTime){
         this.setTxType(TxType.tx_query_reachable_area);
         this.startCrossId = startCrossId;

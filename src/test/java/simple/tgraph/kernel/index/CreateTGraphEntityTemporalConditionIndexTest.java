@@ -17,6 +17,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -59,6 +60,7 @@ public class CreateTGraphEntityTemporalConditionIndexTest {
         CreateTGraphTemporalValueIndexTx tx =new CreateTGraphTemporalValueIndexTx();
         tx.setStart(Helper.timeStr2int(indexStartTime));
         tx.setEnd(Helper.timeStr2int(indexEndTime));
+        tx.setProps(Collections.singletonList("travel_time"));
         DBProxy.ServerResponse response = post.processSync(client.execute(tx), tx);
         AbstractTransaction.Result result = response.getResult();
         CreateTGraphTemporalValueIndexTx.Result res = (CreateTGraphTemporalValueIndexTx.Result) result;
