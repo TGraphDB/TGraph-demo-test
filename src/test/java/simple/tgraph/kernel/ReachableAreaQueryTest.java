@@ -3,17 +3,25 @@ package simple.tgraph.kernel;
 import com.alibaba.fastjson.parser.ParserConfig;
 import com.aliyun.openservices.aliyun.log.producer.Producer;
 import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
+import com.google.common.base.Preconditions;
 import edu.buaa.benchmark.BenchmarkTxResultProcessor;
 import edu.buaa.benchmark.client.DBProxy;
 import edu.buaa.benchmark.client.TGraphExecutorClient;
+import edu.buaa.benchmark.transaction.ImportStaticDataTx;
 import edu.buaa.benchmark.transaction.ReachableAreaQueryTx;
 import edu.buaa.utils.Helper;
+import org.act.temporalProperty.index.value.IndexMetaData;
+import org.checkerframework.framework.qual.PreconditionAnnotation;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -23,9 +31,8 @@ public class ReachableAreaQueryTest {
     private static boolean verifyResult = Boolean.parseBoolean(Helper.mustEnv("VERIFY_RESULT"));
     private static String resultFile = Helper.mustEnv("SERVER_RESULT_FILE");
     private static String dataFilePath = Helper.mustEnv("RESULT_DATA_PATH");
-    private static long testStartCrossId = Long.parseLong(Helper.mustEnv("TEST_START_CROSS_ID"));
     private static String startTime = Helper.mustEnv("TEMPORAL_DATA_START");
-    private static String testTravelTime = Helper.mustEnv("TRAVEL_TIME");
+    private static Integer testTravelTime = Integer.parseInt(Helper.mustEnv("TRAVEL_TIME"));
     private static String logTestName = Helper.mustEnv("LOG_TEST_NAME");
 
     private static Producer logger;
@@ -48,12 +55,12 @@ public class ReachableAreaQueryTest {
     @Test
     public void reachableAreaQueryInfo() throws Exception {
         for(int i=0;i<200;i++) {
-            query(testStartCrossId, Helper.timeStr2int(startTime), Helper.timeStr2int(testTravelTime));
-        }        //query("travel_time", Helper.timeStr2int("201006300830"), Helper.timeStr2int("201006300930"));
+            query(47294, Helper.timeStr2int(startTime), testTravelTime);
+        }
     }
 
     private void query(long propertyName, int st, int tt) throws Exception {
-            ReachableAreaQueryTx tx = new ReachableAreaQueryTx();
+            ReachableAreaQueryTx tx = new ReachableAreaQueryTx(propertyName,st,tt);
             tx.setStartCrossId(propertyName);
             tx.setDepartureTime(st);
             tx.setTravelTime(tt);
