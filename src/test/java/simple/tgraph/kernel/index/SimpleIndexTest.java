@@ -1,8 +1,6 @@
 package simple.tgraph.kernel.index;
 
 import com.google.common.base.Preconditions;
-import edu.buaa.benchmark.BenchmarkTxGenerator;
-import edu.buaa.benchmark.transaction.AbstractTransaction;
 import edu.buaa.benchmark.transaction.ImportStaticDataTx;
 import edu.buaa.benchmark.transaction.ImportTemporalDataTx;
 import edu.buaa.model.CrossNode;
@@ -24,10 +22,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
-import org.neo4j.temporal.IntervalEntry;
-import org.neo4j.temporal.TemporalIndexManager;
-import org.neo4j.temporal.TemporalRangeQuery;
-import org.neo4j.temporal.TimePoint;
+import org.neo4j.temporal.*;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 import java.io.File;
@@ -41,11 +36,15 @@ import java.util.stream.Collectors;
 public class SimpleIndexTest {
     private static GraphDatabaseService db;
     private static Map<String, Long> roadMap;
+    private static int beginIndex = Helper.timeStr2int("201005070000");
+    private static int endIndex   = Helper.timeStr2int("201005072300");
+    private static int beginQuery = Helper.timeStr2int("201005070800");
+    private static int endQuery   = Helper.timeStr2int("201005072000");
 
     @BeforeClass
     public static void connectdb(){
         roadMap = new HashMap<>();
-        db = new GraphDatabaseFactory().newEmbeddedDatabase( new File("D:\\tgraph\\testdb") );
+        db = new GraphDatabaseFactory().newEmbeddedDatabase( new File("D:\\tgraph\\db\\Tgraph-bj60c-7day") );
     }
 
     private void execute(ImportStaticDataTx tx){
@@ -147,7 +146,10 @@ public class SimpleIndexTest {
     @Test
     public void dropTemporalPropertyIndex(){
         try(Transaction tx = db.beginTx()){
-            db.temporalIndex().relDropIndex(0);
+            db.temporalIndex().relDropIndex(4);
+            db.temporalIndex().relDropIndex(1);
+            db.temporalIndex().relDropIndex(2);
+            db.temporalIndex().relDropIndex(3);
             tx.success();
         }
         try(Transaction tx = db.beginTx()){
@@ -160,8 +162,8 @@ public class SimpleIndexTest {
     public void createAggrMinMaxIndex() throws InterruptedException {
         try(Transaction tx = db.beginTx()){
             long indexId = db.temporalIndex().relCreateMinMaxIndex(
-                    Helper.time(Helper.timeStr2int("201005020800")),
-                    Helper.time(Helper.timeStr2int("201005021200")),
+                    Helper.time(beginIndex),
+                    Helper.time(endIndex),
                     "travel_time", 1, Calendar.HOUR, IndexType.AGGR_MAX);
             tx.success();
             System.out.println(indexId);
@@ -175,16 +177,16 @@ public class SimpleIndexTest {
     Set<Pair<Long, Integer>> resultSet = new HashSet<>();
     @Test
     public void queryAggrMinMaxIndex(){
-        long indexId = 228;
+        long indexId = 0;
         int cnt = 0;
         try(Transaction tx = db.beginTx()){
             for(Relationship r : GlobalGraphOperations.at(db).getAllRelationships()){
                 if(cnt++ > 200) break;
                 AggregationIndexQueryResult val = r.getTemporalPropertyWithIndex("travel_time",
-                        Helper.time(Helper.timeStr2int("201005020800")),
-                        Helper.time(Helper.timeStr2int("201005021200")), indexId);
+                        Helper.time(beginQuery),
+                        Helper.time(endQuery), indexId);
                 if(val==null) continue;
-                Slice result = val.getMinMaxResult().get(0);
+                Slice result = val.getMinMaxResult().get(1); //0-> min, 1-> max
                 if(result!=null) resultSet.add(Pair.of(r.getId(), result.getInt(0)));
             }
             tx.success();
@@ -195,22 +197,27 @@ public class SimpleIndexTest {
     @Test
     public void queryAggrMinMaxWithoutIndex(){
         Set<Pair<Long, Integer>> resultMap = new HashSet<>();
+        System.out.println(beginQuery+"~"+endQuery);
         try(Transaction tx = db.beginTx()){
             int cnt = 0;
             for(Relationship r : GlobalGraphOperations.at(db).getAllRelationships()){
                 if(cnt++ > 200) break;
-                Object result = r.getTemporalProperty("travel_time", Helper.time(Helper.timeStr2int("201005020800")), Helper.time(Helper.timeStr2int("201005021200")), new TemporalRangeQuery() {
+                Object result = r.getTemporalProperty("travel_time",
+                        Helper.time(beginQuery),
+                        Helper.time(endQuery), new TemporalRangeQuery() {
                     int max = -1;
                     @Override
                     public boolean onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
                         if (val != null) {
                             int vInt = (Integer) val;
                             if (vInt > max) max = vInt;
+                            if(entityId==12) System.out.print(time+":"+vInt+", ");
                         }
                         return true;
                     }
                     @Override
                     public Object onReturn() {
+                        if(r.getId()==12) System.out.println();
                         return max;
                     }
                 });
@@ -220,7 +227,67 @@ public class SimpleIndexTest {
             System.out.println(resultMap.size());
         }
         queryAggrMinMaxIndex();
-        Helper.compareSets(resultMap, resultSet);
+        System.out.println(Helper.compareSets(resultMap, resultSet));
+    }
+
+
+    @Test
+    public void createAggrDurationIndex() throws InterruptedException {
+        try(Transaction tx = db.beginTx()){
+            long indexId = db.temporalIndex().relCreateMinMaxIndex(
+                    Helper.time(beginIndex),
+                    Helper.time(endIndex),
+                    "full_status", 1, Calendar.HOUR, IndexType.AGGR_DURATION);
+            tx.success();
+            System.out.println(indexId);
+        }
+        Thread.sleep(10_000);
+        listTemporalPropertyIndex();
+//        listTemporalPropertyIndex();
+//        queryAggrMinMaxIndex();
+    }
+    Set<Triple<Long, Integer, Integer>> durationResultSet = new HashSet<>();
+    @Test
+    public void queryAggrDurationIndex(){
+        long indexId = 1;
+        int cnt = 0;
+        try(Transaction tx = db.beginTx()){
+            for(Relationship r : GlobalGraphOperations.at(db).getAllRelationships()){
+                if(cnt++ > 200) break;
+                AggregationIndexQueryResult val = r.getTemporalPropertyWithIndex("full_status",
+                        Helper.time(beginQuery),
+                        Helper.time(endQuery), indexId);
+                if(val==null) continue;
+                Map<Integer, Integer> result = val.getDurationResult();
+                if(result!=null) {
+                    result.forEach((k,v) -> durationResultSet.add(Triple.of(r.getId(), k, v)));
+                }
+            }
+            tx.success();
+            System.out.println(durationResultSet.size());
+        }
+    }
+
+    @Test
+    public void queryAggrDurationWithoutIndex(){
+        Set<Triple<Long, Integer, Integer>> resultMap = new HashSet<>();
+        try(Transaction tx = db.beginTx()){
+            int cnt = 0;
+            for(Relationship r : GlobalGraphOperations.at(db).getAllRelationships()){
+                if(cnt++ > 200) break;
+                TimePoint begin = Helper.time(beginQuery);
+                TimePoint end = Helper.time(endQuery);
+                Object result = r.getTemporalProperty("full_status", begin, end, new TimeIntervalRangeQuery.Duration(begin, end));
+                if(result instanceof Map){
+                    Map<Object, Integer> rr = (Map<Object, Integer>) result;
+                    rr.forEach((k,v)-> resultMap.add(Triple.of(r.getId(), (Integer) k, v)));
+                }
+            }
+            tx.success();
+            System.out.println(resultMap.size());
+        }
+        queryAggrDurationIndex();
+        System.out.println(Helper.compareSets(resultMap, durationResultSet));
     }
 
 
@@ -429,8 +496,8 @@ public class SimpleIndexTest {
     @Test
     public void test(){
         try(Transaction tx = db.beginTx()) {
-            Relationship r = db.getRelationshipById(49822); //65556);
-            System.out.println(r.getProperty("name"));
+            Relationship r = db.getRelationshipById(12); //65556);
+//            System.out.println(r.getProperty("name"));
 //            Object result = r.getTemporalProperty("travel_time", new TimePoint(1272772800));
 //            System.out.println(result);
 //            result = r.getTemporalProperty("travel_time", new TimePoint(1272772801));
@@ -446,8 +513,10 @@ public class SimpleIndexTest {
                         public boolean onNewEntry(long entityId, int propertyId, TimePointL time, Object val) {
                             int iVal = (Integer) val;
 //                            if (100 <= iVal && iVal<=200){
-                            Date c = new Date(time.val()*1000);
-                                System.out.println(c.getHours()+":"+c.getMinutes()+":"+c.getSeconds()+" "+iVal);
+                            Calendar c = Calendar.getInstance(TimeZone.getTimeZone("GMT+08:00"));
+                            c.setTimeInMillis(time.val()*1000);
+//                            System.out.println(c.getHours()+":"+c.getMinutes()+":"+c.getSeconds()+" "+iVal);
+                            System.out.println(c.getTime()+" ( "+time.val()+" ) "+iVal);
 //                            }
                             return true;
                         }
@@ -458,6 +527,8 @@ public class SimpleIndexTest {
                     });
             tx.success();
         }
+        System.out.println(beginQuery+"~"+endQuery);
+        System.out.println(beginIndex+"~"+endIndex);
 //        System.out.println(Helper.time(Helper.timeStr2int("201005020800"))+" "+ Helper.time(Helper.timeStr2int("201005021200")));
     }
 
