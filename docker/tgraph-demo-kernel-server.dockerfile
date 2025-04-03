@@ -1,19 +1,33 @@
 FROM registry.cn-beijing.aliyuncs.com/songjinghe/tgraph-cache:latest
 MAINTAINER Jinghe Song <songjh@act.buaa.edu.cn>
 
-WORKDIR /tgraph/temporal-storage
-RUN git pull && mvn -B install -Dmaven.test.skip=true
+# ENV MAVEN_OPTS "-Xmx512m"
 
-WORKDIR /tgraph/temporal-neo4j
-RUN git pull && mvn -B install -Dmaven.test.skip=true -Dlicense.skip=true -Dlicensing.skip=true -pl org.neo4j:neo4j-cypher -am
+# cache TGraph source code & maven packages & built java classes and jars
 
-WORKDIR /tgraph/TGraph-demo-test
-RUN git pull && mvn -B install -DskipTests
+RUN mkdir -p /db
+WORKDIR /db
 
-VOLUME /tgraph/db
-EXPOSE 8438
-ENV DB_PATH /tgraph/db
+RUN git clone --depth=1 https://gitee.com/tgraphdb/temporal-neo4j.git -b TGraph2.3latest --single-branch
+RUN git clone --depth=1 https://gitee.com/tgraphdb/temporal-storage.git -b TGraph2.3latest --single-branch
+RUN git clone --depth=1 https://gitee.com/tgraphdb/demo-test.git -b dev-sjh --single-branch
 
-WORKDIR /tgraph/TGraph-demo-test
+WORKDIR /db/temporal-storage
+# RUN mvn -B dependency:resolve
+RUN mvn -B install -Dmaven.test.skip=true
+
+WORKDIR /db/temporal-neo4j
+RUN mvn -B install -DskipTests -Dlicense.skip=true -Dlicensing.skip=true -pl org.neo4j:neo4j-cypher -am
+
+WORKDIR /db/demo-test
+RUN mvn -B install -Dmaven.test.skip=true
+
+VOLUME /db/data
+ENV DB_PATH /db/data
+
+EXPOSE 9438
+ENV DB_PORT 9438
+
+WORKDIR /db/demo-test
 ENTRYPOINT /bin/bash
-CMD ["mvn", "-B", "--offline", "exec:java", "-Dexec.mainClass=edu.buaa.server.TGraphKernelTcpServer" ]
+CMD ["mvn", "-B", "--offline", "exec:java", "-Dexec.mainClass=edu.buaa.server.TGraphKernelSnappyServer" ]
