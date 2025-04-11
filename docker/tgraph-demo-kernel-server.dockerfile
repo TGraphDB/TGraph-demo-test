@@ -17,7 +17,7 @@ WORKDIR /db/temporal-storage
 RUN mvn -B install -Dmaven.test.skip=true
 
 WORKDIR /db/temporal-neo4j
-RUN mvn -B install -DskipTests -Dlicense.skip=true -Dlicensing.skip=true -pl org.neo4j:neo4j-cypher -am
+RUN mvn -B install -Dmaven.test.skip=true -DskipTests -Dlicense.skip=true -Dlicensing.skip=true -pl org.neo4j:neo4j-cypher -am
 
 WORKDIR /db/demo-test
 RUN mvn -B install -Dmaven.test.skip=true
