@@ -1,4 +1,4 @@
-# for non-sql servers only. i.e. Neo4j, TGraphDB
+# for non-jdbc servers only. i.e. Neo4j, TGraphDB
 
 FROM registry.cn-beijing.aliyuncs.com/songjinghe/tgraph-cache:latest
 MAINTAINER Jinghe Song <songjh@buaa.edu.cn>
@@ -11,6 +11,7 @@ ENV CLASS_SERVER edu.buaa.server.TGraphKernelSnappyServer
 ENV DB_PATH /database
 ENV DB_PORT 8441
 
-ENTRYPOINT /bin/bash
+EXPOSE $DB_PORT
 WORKDIR /db/demo-test
+ENTRYPOINT /bin/bash
 CMD mvn -B --offline exec:java -Dexec.mainClass=$CLASS_SERVER -Dexec.cleanupDaemonThreads=false
