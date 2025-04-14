@@ -7,7 +7,7 @@ RUN mkdir /db
 WORKDIR /db
 
 RUN git clone --depth=1 https://gitee.com/tgraphdb/temporal-storage.git -b TGraph2.3latest --single-branch
-RUN git clone --depth=1 https://gitee.com/tgraphdb/temporal-neo4j.git -b TGraph2.3latest --single-branch
+RUN git clone --depth=1 https://gitee.com/tgraphdb/temporal-neo4j.git -b TGraph2.3latest --single-branch && rm -rf /db/temporal-neo4j/community/unsafe/src/test && rf -rf /db/temporal-neo4j/community/io/src/test
 RUN git clone --depth=1 https://gitee.com/tgraphdb/demo-test.git -b dev-sjh --single-branch
 
 WORKDIR /db/temporal-storage
