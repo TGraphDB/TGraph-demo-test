@@ -1,21 +1,20 @@
 FROM registry.cn-beijing.aliyuncs.com/songjinghe/tgraph-cache:latest
-MAINTAINER Jinghe Song <songjh@act.buaa.edu.cn>
+MAINTAINER Jinghe Song <songjh@buaa.edu.cn>
 
-WORKDIR /tgraph/temporal-storage
-RUN git pull && mvn -B install -Dmaven.test.skip=true
-WORKDIR /tgraph/temporal-neo4j
-RUN git pull && mvn -B install -Dmaven.test.skip=true -Dlicense.skip=true -Dlicensing.skip=true -pl org.neo4j:neo4j-cypher -am
-WORKDIR /tgraph/TGraph-demo-test
-RUN git pull && mvn -B install -DskipTests
+VOLUME /benchmark
 
-VOLUME /tgraph/test
-
-ENV DB_TYPE tgraph_kernel
-ENV DB_HOST localhost
-ENV BENCHMARK_FILE_INPUT /tgraph/test/benchmark-with-result.gz
+ENV DB_TYPE TGS
+ENV DB_HOST t630
+ENV DB_PORT 8441
+ENV DB_NAME only.need.in.jdbc
+ENV BENCHMARK_FULL_PATH /benchmark/benchmark.json
+ENV BENCHMARK_RESULT_PATH /benchmark/TGS.result.json
+ENV VERIFY_RESULT false
+ENV CLASS_CLIENT edu.buaa.client.NeoTGraphExecutorClient
 ENV MAX_CONNECTION_CNT 1
-ENV VERIFY_RESULT true
+ENV REQ_RATE -1
+ENV DEVICE unknown
 
-WORKDIR /tgraph/TGraph-demo-test
+WORKDIR /db/demo-test
 ENTRYPOINT /bin/bash
-CMD ["mvn", "-B", "--offline", "exec:java", "-Dexec.mainClass=edu.buaa.benchmark.BenchmarkRunner" ]
+CMD mvn -B --offline exec:java -Dexec.mainClass=edu.buaa.benchmark.BenchmarkRunner
