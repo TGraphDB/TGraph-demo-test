@@ -1,23 +1,20 @@
-FROM registry.cn-beijing.aliyuncs.com/songjinghe/tgraph:latest
-MAINTAINER Jinghe Song <songjh@act.buaa.edu.cn>
+FROM registry.cn-beijing.aliyuncs.com/songjinghe/tgraph-cache:latest
+MAINTAINER Jinghe Song <songjh@buaa.edu.cn>
 
-WORKDIR /tgraph/temporal-storage
-RUN git pull && mvn -B install -Dmaven.test.skip=true
-WORKDIR /tgraph/temporal-neo4j
-RUN git pull && mvn -B install -Dmaven.test.skip=true -Dlicense.skip=true -Dlicensing.skip=true -pl org.neo4j:neo4j-cypher -am
-WORKDIR /tgraph/TGraph-demo-test
+VOLUME /dataset
+VOLUME /benchmark
+
+WORKDIR /db/demo-test
 RUN git pull && mvn -B install -DskipTests
 
+ENV DIR_DATA /dataset
+ENV BENCHMARK_FULL_PATH /benchmark/benchmark.json
+ENV DATASET energy
+ENV CLASS_DATA_GEN edu.buaa.dataset.EnergyWriteTxGenerator
+ENV DATA_SIZE 20120101~20150101
+ENV QUERY_CNT 10000
+ENV APPEND_TX_SIZE 100
+ENV RQ_DISTRIBUTION 100,0,0,0,0,0,0,0
+
 ENTRYPOINT /bin/bash
-VOLUME /tgraph/test
-
-ENV WORK_DIR /tgraph/test
-ENV BENCHMARK_WITH_RESULT true
-ENV BENCHMARK_FILE_OUTPUT benchmark
-ENV TEMPORAL_DATA_PER_TX 100
-ENV TEMPORAL_DATA_START 0503
-ENV TEMPORAL_DATA_END   0507
-ENV REACHABLE_AREA_TX_CNT 20
-
-WORKDIR /tgraph/TGraph-demo-test
-CMD ["mvn", "-B", "--offline", "exec:java", "-Dexec.mainClass=edu.buaa.benchmark.BenchmarkTxGenerator" ]
+CMD ["mvn", "-B", "--offline", "exec:java", "-Dexec.mainClass=edu.buaa.common.benchmark.BenchmarkBuilder" ]
