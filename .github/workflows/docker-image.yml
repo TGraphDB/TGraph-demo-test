@@ -24,8 +24,8 @@ jobs:
     - name: Build and Push Docker Image
       uses: docker/build-push-action@v5
       with:
-        context: docker                # Dockerfile 所在目录
-        file: ubuntu-oraclejdk-maven.dockerfile        # Dockerfile 路径（如果不在根目录需修改）
+        context: .                # Dockerfile 所在目录
+        file: docker/ubuntu-oraclejdk-maven.dockerfile        # Dockerfile 路径（如果不在根目录需修改）
         push: true                # 构建后自动推送
         tags: songjinghe/ubuntu-oraclejdk8-maven:latest
             
