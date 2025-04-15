@@ -16,6 +16,7 @@ RUN git clone --depth=1 https://github.com/TGraphDB/temporal-neo4j.git -b TGraph
     rm /db/temporal-neo4j/community/unsafe/src/test/java/sun/nio/ch/DelegateFileDispatcher.java && \
     rm -rf /db/temporal-neo4j/community/io/src/test/java/org/neo4j/adversaries && \
     rm -rf /db/temporal-neo4j/community/io/src/test/java/org/neo4j/io && \
+    rm -rf /db/temporal-neo4j/community/io/src/test/java/org/neo4j/test/LinearHistoryPageCacheTracerTest.java && \
     mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -DskipTests=true       -pl org.neo4j:neo4j-io -am && \
     mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -Dmaven.test.skip=true -pl org.neo4j:neo4j-cypher -am && \
     rm -rf /db/temporal-neo4j
