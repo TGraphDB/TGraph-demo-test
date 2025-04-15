@@ -14,6 +14,7 @@ RUN git clone --depth=1 https://gitee.com/tgraphdb/temporal-storage.git -b TGrap
 RUN git clone --depth=1 https://github.com/TGraphDB/temporal-neo4j.git -b TGraph2.3latest --single-branch && \
     cd /db/temporal-neo4j/community && \
     rm /db/temporal-neo4j/community/unsafe/src/test/java/sun/nio/ch/DelegateFileDispatcher.java && \
+    rm /db/temporal-neo4j/community/io/src/test/java/org/neo4j/adversaries/fs/AdversarialFileChannel.java && \
     rm /db/temporal-neo4j/community/io/src/test/java/org/neo4j/adversaries/fs/AdversarialFileDispatcherFactory.java && \
     mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -DskipTests=true       -pl org.neo4j:neo4j-io -am && \
     mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -Dmaven.test.skip=true -pl org.neo4j:neo4j-cypher -am && \
