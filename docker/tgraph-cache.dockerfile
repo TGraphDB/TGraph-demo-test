@@ -12,8 +12,9 @@ RUN git clone --depth=1 https://gitee.com/tgraphdb/temporal-storage.git -b TGrap
     rm -rf /db/temporal-storage
 
 RUN git clone --depth=1 https://gitee.com/tgraphdb/temporal-neo4j.git -b TGraph2.3latest --single-branch && \
-    cd /db/temporal-neo4j && \
-    mvn -B install -Dmaven.test.skip=true -Dlicense.skip=true -Dlicensing.skip=true -pl org.neo4j:neo4j-cypher -am && \
+    cd /db/temporal-neo4j/community && \
+    mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -DskipTests=true       -pl org.neo4j:neo4j-unsafe -am && \
+    mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -Dmaven.test.skip=true -pl org.neo4j:neo4j-cypher -am && \
     rm -rf /db/temporal-neo4j
 
 RUN git clone --depth=1 https://gitee.com/tgraphdb/demo-test.git -b dev-sjh --single-branch && \
