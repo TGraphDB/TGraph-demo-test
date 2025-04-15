@@ -11,7 +11,7 @@ RUN git clone --depth=1 https://gitee.com/tgraphdb/temporal-storage.git -b TGrap
     mvn -B install -Dmaven.test.skip=true && \
     rm -rf /db/temporal-storage
 
-RUN git clone --depth=1 https://gitee.com/tgraphdb/temporal-neo4j.git -b TGraph2.3latest --single-branch && \
+RUN git clone --depth=1 https://github.com/TGraphDB/temporal-neo4j.git -b TGraph2.3latest --single-branch && \
     cd /db/temporal-neo4j/community && \
     rm /db/temporal-neo4j/community/unsafe/src/test/java/sun/nio/ch/DelegateFileDispatcher.java && \
     mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -DskipTests=true       -pl org.neo4j:neo4j-io -am && \
