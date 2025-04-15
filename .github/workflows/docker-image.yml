@@ -21,11 +21,19 @@ jobs:
         username: songjinghe
         password: ${{ secrets.dockerhub }}
 
-    - name: Build and Push Docker Image
+    - name: Build and Push Docker Image (ubuntu-oraclejdk8-maven)
       uses: docker/build-push-action@v5
       with:
         context: .                # Dockerfile 所在目录
         file: docker/ubuntu-oraclejdk-maven.dockerfile        # Dockerfile 路径（如果不在根目录需修改）
         push: true                # 构建后自动推送
         tags: songjinghe/ubuntu-oraclejdk8-maven:latest
-            
+    
+    - name: Build and Push Docker Image (tgraph2.3-maven-cache)
+      uses: docker/build-push-action@v5
+      with:
+        context: .                # Dockerfile 所在目录
+        file: docker/tgraph-cache.dockerfile        # Dockerfile 路径（如果不在根目录需修改）
+        push: true                # 构建后自动推送
+        tags: songjinghe/tgraph-cache:latest
+     
