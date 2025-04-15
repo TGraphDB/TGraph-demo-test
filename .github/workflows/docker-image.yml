@@ -33,7 +33,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .                # Dockerfile 所在目录
-        file: docker/tgraph-cache.dockerfile        # Dockerfile 路径（如果不在根目录需修改）
+        file: docker/tgraph-maven-cache.dockerfile        # Dockerfile 路径（如果不在根目录需修改）
         push: true                # 构建后自动推送
-        tags: songjinghe/tgraph-cache:latest
+        tags: songjinghe/tgraph-maven-cache:latest
      
