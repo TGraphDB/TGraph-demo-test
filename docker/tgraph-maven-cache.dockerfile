@@ -18,17 +18,23 @@ RUN git clone --depth=1 https://github.com/TGraphDB/temporal-neo4j.git -b TGraph
     rm -rf /db/temporal-neo4j/community/io/src/test/java/org/neo4j/io && \
     rm -rf /db/temporal-neo4j/community/io/src/test/java/org/neo4j/test/LinearHistoryPageCacheTracerTest.java && \
     rm -rf /db/temporal-neo4j/community/logging/src/test/java/org/neo4j/logging/RotatingFileOutputStreamSupplierTest.java && \
-    mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -DskipTests=true       -pl org.neo4j:neo4j-logging -am && \
+    rm -rf /db/temporal-neo4j/community/kernel/src/test/java/org/neo4j/test/PageCacheRule.java && \
+    rm -rf /db/temporal-neo4j/community/kernel/src/test/java/org/neo4j/kernel/impl/transaction/log/BatchingTransactionAppenderConcurrencyTest.java && \
+    rm -rf /db/temporal-neo4j/community/kernel/src/test/java/org/neo4j/kernel/impl/store/kvstore/KeyValueStoreFileTest.java && \
+    rm -rf /db/temporal-neo4j/community/kernel/src/test/java/org/neo4j/kernel/impl/transaction/PartialTransactionFailureIT.java && \
+    rm -rf /db/temporal-neo4j/community/kernel/src/test/java/org/neo4j/kernel/impl/api/store/StorePropertyPayloadCursorTest.java && \
+    mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -DskipTests=true       -pl org.neo4j:neo4j-kernel -am && \
     mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -Dmaven.test.skip=true -pl org.neo4j:neo4j-cypher -am && \
     rm -rf /db/temporal-neo4j
 
 # mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -DskipTests=true       -pl org.neo4j:neo4j-unsafe -am && \
 # mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -DskipTests=true       -pl org.neo4j:neo4j-io -am && \
-# mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -Dmaven.test.skip=true -pl org.neo4j:neo4j-kernel -am && \
+# mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -DskipTests=true       -pl org.neo4j:neo4j-logging -am && \
 
 RUN git clone --depth=1 https://gitee.com/tgraphdb/demo-test.git -b dev-sjh --single-branch && \
     cd /db/demo-test && \
-    mvn -B dependency:resolve && \
-    rm -rf /db/demo-test
+    mvn -B dependency:resolve
+
+# rm -rf /db/demo-test
 
 ENTRYPOINT /bin/bash
