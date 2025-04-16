@@ -6,12 +6,12 @@ MAINTAINER Jinghe Song <songjh@buaa.edu.cn>
 RUN mkdir /db
 WORKDIR /db
 
-RUN git clone --depth=1 https://gitee.com/tgraphdb/temporal-storage.git -b TGraph2.3latest --single-branch && \
+RUN git clone --depth=1 https://github.com/TGraphDB/temporal-storage.git -b TGraph2.3latest --single-branch && \
     cd /db/temporal-storage && \
     mvn -B install -Dmaven.test.skip=true && \
     rm -rf /db/temporal-storage
 
-RUN git clone --depth=1 https://gitee.com/tgraphdb/temporal-neo4j.git -b TGraph2.3latest --single-branch && \
+RUN git clone --depth=1 https://github.com/TGraphDB/temporal-neo4j.git -b TGraph2.3latest --single-branch && \
     cd /db/temporal-neo4j/community && \
     rm /db/temporal-neo4j/community/unsafe/src/test/java/sun/nio/ch/DelegateFileDispatcher.java && \
     rm -rf /db/temporal-neo4j/community/io/src/test/java/org/neo4j/adversaries && \
