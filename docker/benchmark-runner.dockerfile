@@ -16,5 +16,5 @@ ENV REQ_RATE -1
 ENV DEVICE unknown
 
 WORKDIR /db/bin/demo-test
-ENTRYPOINT /bin/bash
+# ENTRYPOINT /bin/bash
 CMD mvn -B --offline exec:java -Dexec.mainClass=edu.buaa.benchmark.BenchmarkRunner
