@@ -1,4 +1,4 @@
-FROM registry.cn-beijing.aliyuncs.com/songjinghe/tgraph-cache:latest
+FROM songjinghe/tgraph-demo-test:2.3
 MAINTAINER Jinghe Song <songjh@buaa.edu.cn>
 
 VOLUME /benchmark
@@ -15,6 +15,6 @@ ENV MAX_CONNECTION_CNT 1
 ENV REQ_RATE -1
 ENV DEVICE unknown
 
-WORKDIR /db/demo-test
+WORKDIR /db/bin/demo-test
 ENTRYPOINT /bin/bash
 CMD mvn -B --offline exec:java -Dexec.mainClass=edu.buaa.benchmark.BenchmarkRunner
