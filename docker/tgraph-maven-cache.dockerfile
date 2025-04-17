@@ -18,11 +18,8 @@ RUN git clone --depth=1 https://github.com/TGraphDB/temporal-neo4j.git -b TGraph
     rm -rf /db/temporal-neo4j/community/io/src/test/java/org/neo4j/io && \
     rm -rf /db/temporal-neo4j/community/io/src/test/java/org/neo4j/test/LinearHistoryPageCacheTracerTest.java && \
     rm -rf /db/temporal-neo4j/community/logging/src/test/java/org/neo4j/logging/RotatingFileOutputStreamSupplierTest.java && \
-    rm -rf /db/temporal-neo4j/community/kernel/src/test/java/org/neo4j/test/ && \
-    rm -rf /db/temporal-neo4j/community/kernel/src/test/java/org/neo4j/graphdb/ && \
-    rm -rf /db/temporal-neo4j/community/kernel/src/test/java/org/neo4j/kernel/ && \
-    rm -rf /db/temporal-neo4j/community/kernel/src/test/java/org/neo4j/unsafe/ && \
-    rm -rf /db/temporal-neo4j/community/kernel/src/test/java/examples/CreateAndLoadDenseNodeIT.java && \
+    rm -rf /db/temporal-neo4j/community/kernel/src/test/java/org/ && \
+    rm -rf /db/temporal-neo4j/community/kernel/src/test/java/examples/ && \
     mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -DskipTests=true       -pl org.neo4j:neo4j-kernel -am && \
     mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -Dmaven.test.skip=true -pl org.neo4j:neo4j-cypher -am && \
     rm -rf /db/temporal-neo4j
