@@ -15,5 +15,4 @@ ENV DATA_SIZE T0.1
 ENV DATA_PATH /dataset
 ENV DB_PATH /workspace
 
-ENTRYPOINT /bin/bash
 CMD ["mvn", "-B", "--offline", "exec:java", "-Dexec.mainClass=edu.buaa.common.benchmark.MilestoneBuilder", "-Dexec.cleanupDaemonThreads=false" ]
