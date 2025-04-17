@@ -18,4 +18,4 @@ RUN mvn -B install -Dmaven.test.skip=true -Dlicense.skip=true -Dlicensing.skip=t
 WORKDIR /db/bin/demo-test
 RUN mvn -B exec:java -Dexec.mainClass=edu.buaa.common.RuntimeEnv -Dexec.cleanupDaemonThreads=false
 
-ENTRYPOINT /bin/bash
+CMD /bin/bash
