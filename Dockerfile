@@ -16,6 +16,6 @@ WORKDIR /db/bin/temporal-neo4j
 RUN mvn -B install -Dmaven.test.skip=true -Dlicense.skip=true -Dlicensing.skip=true -pl org.neo4j:neo4j-cypher -am
 
 WORKDIR /db/bin/demo-test
-RUN mvn -B install -Dmaven.test.skip=true
+RUN mvn -B exec:java -Dexec.mainClass=edu.buaa.common.RuntimeEnv -Dexec.cleanupDaemonThreads=false
 
 ENTRYPOINT /bin/bash
