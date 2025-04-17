@@ -3,11 +3,11 @@ MAINTAINER Jinghe Song <songjh@buaa.edu.cn>
 
 # cache TGraph source code & maven packages & built java classes and jars
 
-RUN mkdir /db
-WORKDIR /db
-
 RUN wget -q "http://tgraphdb.water-crystal.org/repo.tar.gz" && \
+    mkdir /root/.m2 && \
     tar xzf "repo.tar.gz" -C /root/.m2/
+
+WORKDIR /db
 
 RUN git clone --depth=1 https://github.com/TGraphDB/temporal-storage.git -b TGraph2.3latest --single-branch && \
     cd /db/temporal-storage && \
