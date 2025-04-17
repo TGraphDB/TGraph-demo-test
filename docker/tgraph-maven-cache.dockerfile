@@ -20,10 +20,10 @@ RUN git clone --depth=1 https://github.com/TGraphDB/temporal-neo4j.git -b TGraph
     rm -rf /db/temporal-neo4j/community/logging/src/test/java/org/neo4j/logging/RotatingFileOutputStreamSupplierTest.java && \
     rm -rf /db/temporal-neo4j/community/kernel/src/test/java/org/ && \
     rm -rf /db/temporal-neo4j/community/kernel/src/test/java/examples/ && \
-    mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -DskipTests=true       -pl org.neo4j:neo4j-kernel -am && \
-    mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -Dmaven.test.skip=true -pl org.neo4j:neo4j-cypher -am && \
+    mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -DskipTests=true       -pl org.neo4j:neo4j-cypher -am && \
     rm -rf /db/temporal-neo4j
 
+# mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -Dmaven.test.skip=true -pl org.neo4j:neo4j-cypher -am && \
 # mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -DskipTests=true       -pl org.neo4j:neo4j-unsafe -am && \
 # mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -DskipTests=true       -pl org.neo4j:neo4j-io -am && \
 # mvn -B install -Dlicense.skip=true -Dlicensing.skip=true -DskipTests=true       -pl org.neo4j:neo4j-logging -am && \
