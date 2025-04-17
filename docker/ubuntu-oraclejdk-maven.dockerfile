@@ -18,4 +18,4 @@ RUN wget -q "https://archive.apache.org/dist/maven/maven-3/$MAVEN_VERSION/binari
 # COPY maven-settings.xml /usr/share/maven/conf/settings.xml
 ENV MAVEN_HOME /usr/share/maven
 
-ENTRYPOINT /bin/bash
+CMD /bin/bash
