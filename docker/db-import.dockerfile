@@ -1,9 +1,8 @@
-FROM registry.cn-beijing.aliyuncs.com/songjinghe/tgraph-cache:latest
+FROM songjinghe/tgraph-demo-test:2.3
 MAINTAINER Jinghe Song <songjh@buaa.edu.cn>
 # ENV MAVEN_OPTS "-Xmx512m"
 
-WORKDIR /db/demo-test
-ENTRYPOINT /bin/bash
+WORKDIR /db/bin/demo-test
 
 # input dataset folder & output db milestone folder
 VOLUME /dataset
@@ -16,4 +15,5 @@ ENV DATA_SIZE T0.1
 ENV DATA_PATH /dataset
 ENV DB_PATH /workspace
 
+ENTRYPOINT /bin/bash
 CMD ["mvn", "-B", "--offline", "exec:java", "-Dexec.mainClass=edu.buaa.common.benchmark.MilestoneBuilder", "-Dexec.cleanupDaemonThreads=false" ]
