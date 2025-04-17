@@ -26,7 +26,7 @@ RUN git clone --depth=1 https://github.com/TGraphDB/temporal-neo4j.git -b TGraph
 
 RUN git clone --depth=1 https://gitee.com/tgraphdb/demo-test.git -b dev-sjh --single-branch && \
     cd /db/demo-test && \
-    mvn -B dependency:resolve && \
+    mvn -B exec:java -Dexec.mainClass=edu.buaa.common.RuntimeEnv -Dexec.cleanupDaemonThreads=false && \
     rm -rf /db/demo-test
 
-ENTRYPOINT /bin/bash
+CMD /bin/bash
