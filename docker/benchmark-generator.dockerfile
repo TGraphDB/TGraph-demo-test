@@ -1,11 +1,10 @@
-FROM registry.cn-beijing.aliyuncs.com/songjinghe/tgraph-cache:latest
+FROM songjinghe/tgraph-demo-test:2.3
 MAINTAINER Jinghe Song <songjh@buaa.edu.cn>
 
 VOLUME /dataset
 VOLUME /benchmark
 
-WORKDIR /db/demo-test
-RUN git pull && mvn -B install -DskipTests
+WORKDIR /db/bin/demo-test
 
 ENV DIR_DATA /dataset
 ENV BENCHMARK_FULL_PATH /benchmark/benchmark.json
