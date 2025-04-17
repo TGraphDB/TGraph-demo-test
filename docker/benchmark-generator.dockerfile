@@ -15,5 +15,5 @@ ENV QUERY_CNT 10000
 ENV APPEND_TX_SIZE 100
 ENV RQ_DISTRIBUTION 100,0,0,0,0,0,0,0
 
-ENTRYPOINT /bin/bash
+# ENTRYPOINT /bin/bash
 CMD ["mvn", "-B", "--offline", "exec:java", "-Dexec.mainClass=edu.buaa.common.benchmark.BenchmarkBuilder" ]
