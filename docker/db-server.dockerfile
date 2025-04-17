@@ -17,5 +17,5 @@ ENV DB_PORT 8441
 
 EXPOSE $DB_PORT
 
-ENTRYPOINT /bin/bash
+# ENTRYPOINT /bin/bash
 CMD mvn -B --offline exec:java -Dexec.mainClass=$CLASS_SERVER -Dexec.cleanupDaemonThreads=false
