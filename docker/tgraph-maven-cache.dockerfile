@@ -1,4 +1,4 @@
-FROM songjinghe/ubuntu-oraclejdk8-maven:latest
+FROM songjinghe/ubuntu-oraclejdk-maven:latest
 MAINTAINER Jinghe Song <songjh@buaa.edu.cn>
 
 # cache TGraph source code & maven packages & built java classes and jars
