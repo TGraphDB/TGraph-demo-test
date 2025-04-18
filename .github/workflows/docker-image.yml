@@ -38,27 +38,27 @@ jobs:
           songjinghe/ubuntu-oraclejdk-maven:${{env.BUILD_TIME}}
           songjinghe/ubuntu-oraclejdk-maven:${{env.COMMIT_SHA_SHORT}}
     
-    # - name: Build and Push Docker Image (tgraph2.3-maven-cache)
-    #   uses: docker/build-push-action@v5
-    #   with:
-    #     context: .
-    #     file: docker/tgraph-maven-cache.dockerfile
-    #     push: true
-    #     tags: |
-    #       songjinghe/tgraph-maven-cache:2.3-latest
-    #       songjinghe/tgraph-maven-cache:2.3-${{env.BUILD_TIME}}
-    #       songjinghe/tgraph-maven-cache:2.3-${{env.COMMIT_SHA_SHORT}}
+    - name: Build and Push Docker Image (tgraph2.3-maven-cache)
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: docker/tgraph-maven-cache.dockerfile
+        push: true
+        tags: |
+          songjinghe/tgraph-maven-cache:2.3-latest
+          songjinghe/tgraph-maven-cache:2.3-${{env.BUILD_TIME}}
+          songjinghe/tgraph-maven-cache:2.3-${{env.COMMIT_SHA_SHORT}}
     
-    # - name: Build and Push Docker Image (tgraph2.3-demo-test)
-    #   uses: docker/build-push-action@v5
-    #   with:
-    #     context: .
-    #     file: Dockerfile
-    #     push: true
-    #     tags: |
-    #       songjinghe/tgraph-demo-test:2.3-latest
-    #       songjinghe/tgraph-demo-test:2.3-${{env.BUILD_TIME}}
-    #       songjinghe/tgraph-demo-test:2.3-${{env.COMMIT_SHA_SHORT}}
+    - name: Build and Push Docker Image (tgraph2.3-demo-test)
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: Dockerfile
+        push: true
+        tags: |
+          songjinghe/tgraph-demo-test:2.3-latest
+          songjinghe/tgraph-demo-test:2.3-${{env.BUILD_TIME}}
+          songjinghe/tgraph-demo-test:2.3-${{env.COMMIT_SHA_SHORT}}
 
     # - name: Build and Push Docker Image (tgraph2.3-demo-test:server)
     #   uses: docker/build-push-action@v5
