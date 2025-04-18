@@ -3,7 +3,7 @@ MAINTAINER Jinghe Song <songjh@act.buaa.edu.cn>
 
 # install necessary software for neo4j. # emacs23-nox
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  subversion wget curl \
+  7zip wget curl \
   graphviz nodejs-legacy npm devscripts debhelper rpm unzip git \
   debhelper devscripts dos2unix dpkg make xmlstarlet \
   && rm -rf /var/lib/apt/lists/*
