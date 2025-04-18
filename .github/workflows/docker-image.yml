@@ -13,6 +13,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Set env variable
+      run:
+        echo "BUILD_TIME=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_ENV
+        calculatedSha=$(git rev-parse --short ${{ github.sha }})
+        echo "COMMIT_SHA_SHORT=$calculatedSha" >> $GITHUB_ENV
+      
     - name: Checkout default branch
       uses: actions/checkout@v4
     
@@ -22,13 +28,16 @@ jobs:
         username: songjinghe
         password: ${{ secrets.dockerhub }}
 
-    # - name: Build and Push Docker Image (ubuntu-oraclejdk8-maven)
-    #   uses: docker/build-push-action@v5
-    #   with:
-    #     context: .                # Dockerfile 所在目录
-    #     file: docker/ubuntu-oraclejdk-maven.dockerfile        # Dockerfile 路径（如果不在根目录需修改）
-    #     push: true                # 构建后自动推送
-    #     tags: songjinghe/ubuntu-oraclejdk8-maven:latest
+    - name: Build and Push Docker Image (ubuntu-oraclejdk8-maven)
+      uses: docker/build-push-action@v5
+      with:
+        context: .                # Dockerfile 所在目录
+        file: docker/ubuntu-oraclejdk-maven.dockerfile        # Dockerfile 路径（如果不在根目录需修改）
+        push: true                # 构建后自动推送
+        tags: |
+          songjinghe/ubuntu-oraclejdk-maven:latest
+          songjinghe/ubuntu-oraclejdk-maven:${{env.BUILD_TIME}}
+          songjinghe/ubuntu-oraclejdk-maven:${{env.COMMIT_SHA_SHORT}}
     
     - name: Build and Push Docker Image (tgraph2.3-maven-cache)
       uses: docker/build-push-action@v5
@@ -36,7 +45,10 @@ jobs:
         context: .
         file: docker/tgraph-maven-cache.dockerfile
         push: true
-        tags: songjinghe/tgraph-maven-cache:2.3
+        tags: |
+          songjinghe/tgraph-maven-cache:2.3
+          songjinghe/tgraph-maven-cache:2.3-${{env.BUILD_TIME}}
+          songjinghe/tgraph-maven-cache:2.3-${{env.COMMIT_SHA_SHORT}}
     
     - name: Build and Push Docker Image (tgraph2.3-demo-test)
       uses: docker/build-push-action@v5
@@ -44,39 +56,42 @@ jobs:
         context: .
         file: Dockerfile
         push: true
-        tags: songjinghe/tgraph-demo-test:2.3
+        tags: |
+          songjinghe/tgraph-demo-test:2.3
+          songjinghe/tgraph-demo-test:2.3-${{env.BUILD_TIME}}
+          songjinghe/tgraph-demo-test:2.3-${{env.COMMIT_SHA_SHORT}}
 
-    - name: Build and Push Docker Image (tgraph2.3-demo-test:server)
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: docker/db-server.dockerfile
-        push: true
-        tags: songjinghe/tgraph-demo-test:2.3-server
+    # - name: Build and Push Docker Image (tgraph2.3-demo-test:server)
+    #   uses: docker/build-push-action@v5
+    #   with:
+    #     context: .
+    #     file: docker/db-server.dockerfile
+    #     push: true
+    #     tags: songjinghe/tgraph-demo-test:2.3-server
 
-    - name: Build and Push Docker Image (tgraph2.3-demo-test:benchmark-runner)
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: docker/benchmark-runner.dockerfile
-        push: true
-        tags: songjinghe/tgraph-demo-test:2.3-benchmark-runner
+    # - name: Build and Push Docker Image (tgraph2.3-demo-test:benchmark-runner)
+    #   uses: docker/build-push-action@v5
+    #   with:
+    #     context: .
+    #     file: docker/benchmark-runner.dockerfile
+    #     push: true
+    #     tags: songjinghe/tgraph-demo-test:2.3-benchmark-runner
     
-    - name: Build and Push Docker Image (tgraph2.3-demo-test:benchmark-generator)
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: docker/benchmark-generator.dockerfile
-        push: true
-        tags: songjinghe/tgraph-demo-test:2.3-benchmark-generator
+    # - name: Build and Push Docker Image (tgraph2.3-demo-test:benchmark-generator)
+    #   uses: docker/build-push-action@v5
+    #   with:
+    #     context: .
+    #     file: docker/benchmark-generator.dockerfile
+    #     push: true
+    #     tags: songjinghe/tgraph-demo-test:2.3-benchmark-generator
     
-    - name: Build and Push Docker Image (tgraph2.3-demo-test:import)
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: docker/db-import.dockerfile
-        push: true
-        tags: songjinghe/tgraph-demo-test:2.3-db-import
+    # - name: Build and Push Docker Image (tgraph2.3-demo-test:import)
+    #   uses: docker/build-push-action@v5
+    #   with:
+    #     context: .
+    #     file: docker/db-import.dockerfile
+    #     push: true
+    #     tags: songjinghe/tgraph-demo-test:2.3-db-import
 
     
     # - name: Checkout TGraph 4.4 branch
