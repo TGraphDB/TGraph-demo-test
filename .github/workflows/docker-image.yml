@@ -12,7 +12,7 @@ jobs:
 
     steps:
     - name: Set env variable
-      run:
+      run: |
         echo "BUILD_TIME=$(date +'%Y%m%d')" >> $GITHUB_ENV
         echo "COMMIT_SHA_SHORT=$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_ENV
         echo ${{env.BUILD_TIME}}
