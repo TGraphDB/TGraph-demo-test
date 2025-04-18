@@ -7,18 +7,17 @@ on:
     branches: [ "master" ]
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     steps:
     - name: Set env variable
       run:
-        echo "BUILD_TIME=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_ENV
-        calculatedSha=$(git rev-parse --short ${{ github.sha }})
-        echo "COMMIT_SHA_SHORT=$calculatedSha" >> $GITHUB_ENV
-      
+        echo "BUILD_TIME=$(date +'%Y%m%d')" >> $GITHUB_ENV
+        echo "COMMIT_SHA_SHORT=$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_ENV
+        echo ${{env.BUILD_TIME}}
+        echo ${{env.COMMIT_SHA_SHORT}}
+    
     - name: Checkout default branch
       uses: actions/checkout@v4
     
@@ -39,27 +38,27 @@ jobs:
           songjinghe/ubuntu-oraclejdk-maven:${{env.BUILD_TIME}}
           songjinghe/ubuntu-oraclejdk-maven:${{env.COMMIT_SHA_SHORT}}
     
-    - name: Build and Push Docker Image (tgraph2.3-maven-cache)
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: docker/tgraph-maven-cache.dockerfile
-        push: true
-        tags: |
-          songjinghe/tgraph-maven-cache:2.3
-          songjinghe/tgraph-maven-cache:2.3-${{env.BUILD_TIME}}
-          songjinghe/tgraph-maven-cache:2.3-${{env.COMMIT_SHA_SHORT}}
+    # - name: Build and Push Docker Image (tgraph2.3-maven-cache)
+    #   uses: docker/build-push-action@v5
+    #   with:
+    #     context: .
+    #     file: docker/tgraph-maven-cache.dockerfile
+    #     push: true
+    #     tags: |
+    #       songjinghe/tgraph-maven-cache:2.3-latest
+    #       songjinghe/tgraph-maven-cache:2.3-${{env.BUILD_TIME}}
+    #       songjinghe/tgraph-maven-cache:2.3-${{env.COMMIT_SHA_SHORT}}
     
-    - name: Build and Push Docker Image (tgraph2.3-demo-test)
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: Dockerfile
-        push: true
-        tags: |
-          songjinghe/tgraph-demo-test:2.3
-          songjinghe/tgraph-demo-test:2.3-${{env.BUILD_TIME}}
-          songjinghe/tgraph-demo-test:2.3-${{env.COMMIT_SHA_SHORT}}
+    # - name: Build and Push Docker Image (tgraph2.3-demo-test)
+    #   uses: docker/build-push-action@v5
+    #   with:
+    #     context: .
+    #     file: Dockerfile
+    #     push: true
+    #     tags: |
+    #       songjinghe/tgraph-demo-test:2.3-latest
+    #       songjinghe/tgraph-demo-test:2.3-${{env.BUILD_TIME}}
+    #       songjinghe/tgraph-demo-test:2.3-${{env.COMMIT_SHA_SHORT}}
 
     # - name: Build and Push Docker Image (tgraph2.3-demo-test:server)
     #   uses: docker/build-push-action@v5
