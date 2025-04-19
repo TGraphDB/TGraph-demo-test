@@ -1,6 +1,8 @@
 FROM neo4j:4.4-community
 MAINTAINER Jinghe Song <songjh@buaa.edu.cn>
 
+USER root
+
 # install necessary software for neo4j.
 RUN apt-get update && apt-get install -y --no-install-recommends \
   wget curl unzip git \
@@ -8,6 +10,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # install jdk
 RUN wget -nv https://download.oracle.com/java/21/latest/jdk-21_linux-x64_bin.deb && dpkg -i jdk-21_linux-x64_bin.deb && rm jdk-21_linux-x64_bin.deb
+
+RUN update-alternatives --set java $(update-alternatives --list java) && \
+    update-alternatives --set javac $(update-alternatives --list javac)
 
 # install maven
 ENV MAVEN_VERSION 3.9.9
