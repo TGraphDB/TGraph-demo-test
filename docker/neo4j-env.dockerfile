@@ -3,7 +3,7 @@ MAINTAINER Jinghe Song <songjh@buaa.edu.cn>
 
 # install necessary software for neo4j.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  7zip wget curl unzip git \
+  wget curl unzip git \
   && rm -rf /var/lib/apt/lists/*
 
 # install jdk
