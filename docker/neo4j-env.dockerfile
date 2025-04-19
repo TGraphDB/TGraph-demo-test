@@ -11,7 +11,7 @@ RUN wget -nv https://download.oracle.com/java/21/latest/jdk-21_linux-x64_bin.deb
 
 # install maven
 ENV MAVEN_VERSION 3.9.9
-RUN wget "https://dlcdn.apache.org/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz" \
+RUN wget -q --show-progress "https://dlcdn.apache.org/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz" \
   && tar xzf "apache-maven-$MAVEN_VERSION-bin.tar.gz" -C /usr/share \
   && mv "/usr/share/apache-maven-$MAVEN_VERSION" /usr/share/maven \
   && ln -s /usr/share/maven/bin/mvn /usr/bin/mvn \
