@@ -11,8 +11,6 @@ RUN git clone --depth=1 https://github.com/TGraphDB/temporal-storage.git -b TGra
 RUN git clone --depth=1 https://gitee.com/tgraphdb/temporal-neo4j-4.4.git -b TGraph-4.4 --single-branch && \
     cd /db/temporal-neo4j-4.4 && \
     mvn -B install -DskipTests -Dcheckstyle.skip -Dlicense.skip=true -Dlicensing.skip=true -Doverwrite && \
-    cd /db/temporal-neo4j-4.4/community && \
-    mvn -B install -Dmaven.test.skip=true -Dcheckstyle.skip -Dlicense.skip=true -Dlicensing.skip=true -Doverwrite -pl org.neo4j:neo4j-kernel -am && \
     rm -rf /db/temporal-neo4j-4.4
 
 # mvn -B dependency:resolve && \
