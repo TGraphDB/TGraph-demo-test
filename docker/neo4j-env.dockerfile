@@ -8,14 +8,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   debhelper devscripts dos2unix dpkg xmlstarlet \
   && rm -rf /var/lib/apt/lists/*
 
+# install jdk
+RUN wget https://download.oracle.com/java/21/latest/jdk-21_linux-x64_bin.deb && dpkg -i jdk-21_linux-x64_bin.deb && rm jdk-21_linux-x64_bin.deb
+
 # install maven
 ENV MAVEN_VERSION 3.9.9
-RUN wget -q "https://dlcdn.apache.org/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz" \
+RUN wget "https://dlcdn.apache.org/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz" \
   && tar xzf "apache-maven-$MAVEN_VERSION-bin.tar.gz" -C /usr/share \
   && mv "/usr/share/apache-maven-$MAVEN_VERSION" /usr/share/maven \
   && ln -s /usr/share/maven/bin/mvn /usr/bin/mvn \
   && rm "apache-maven-$MAVEN_VERSION-bin.tar.gz"
+
 # COPY maven-settings.xml /usr/share/maven/conf/settings.xml
+
 ENV MAVEN_HOME /usr/share/maven
 
 CMD /bin/bash
