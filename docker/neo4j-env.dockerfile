@@ -1,11 +1,9 @@
-FROM neo4j:4.4-community⁠
+FROM neo4j:4.4-community
 MAINTAINER Jinghe Song <songjh@buaa.edu.cn>
 
 # install necessary software for neo4j.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  7zip wget curl gcc jq make procps tini \
-  graphviz nodejs-legacy npm devscripts debhelper rpm unzip git \
-  debhelper devscripts dos2unix dpkg xmlstarlet \
+  7zip wget curl unzip git \
   && rm -rf /var/lib/apt/lists/*
 
 # install jdk
