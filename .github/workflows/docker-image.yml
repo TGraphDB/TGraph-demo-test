@@ -73,16 +73,15 @@ jobs:
           songjinghe/tgraph-maven-cache:4.4-${{env.COMMIT_SHA_SHORT}}
     
     
-    # - name: Build and Push Docker Image (tgraph2.3-demo-test)
-    #   uses: docker/build-push-action@v5
-    #   with:
-    #     context: .
-    #     file: Dockerfile
-    #     push: true
-    #     tags: |
-    #       songjinghe/tgraph-demo-test:2.3-latest
-    #       songjinghe/tgraph-demo-test:2.3-${{env.BUILD_TIME}}
-    #       songjinghe/tgraph-demo-test:2.3-${{env.COMMIT_SHA_SHORT}}
+    - name: Build and Push Docker Image (tgraph2.3-demo-test)
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: Dockerfile
+        push: true
+        tags: |
+          songjinghe/tgraph-demo-test:2.3-latest
+          songjinghe/tgraph-demo-test:2.3-${{env.COMMIT_SHA_SHORT}}
 
     - name: Build and Push Docker Image (tgraph4.4-demo-test)
       uses: docker/build-push-action@v5
@@ -92,16 +91,17 @@ jobs:
         push: true
         tags: |
           songjinghe/tgraph-demo-test:4.4-latest
-          songjinghe/tgraph-demo-test:4.4-${{env.BUILD_TIME}}
           songjinghe/tgraph-demo-test:4.4-${{env.COMMIT_SHA_SHORT}}
 
-    # - name: Build and Push Docker Image (tgraph2.3-demo-test:server)
-    #   uses: docker/build-push-action@v5
-    #   with:
-    #     context: .
-    #     file: docker/db-server.dockerfile
-    #     push: true
-    #     tags: songjinghe/tgraph-demo-test:2.3-server
+    - name: Build and Push Docker Image (tgraph2.3-demo-test:server)
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: docker/db-server.dockerfile
+        push: true
+        tags: |
+          songjinghe/tgraph-demo-test:2.3-server-latest
+          songjinghe/tgraph-demo-test:2.3-server-${{env.COMMIT_SHA_SHORT}}
 
     # - name: Build and Push Docker Image (tgraph2.3-demo-test:benchmark-runner)
     #   uses: docker/build-push-action@v5
