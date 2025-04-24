@@ -103,6 +103,16 @@ jobs:
           songjinghe/tgraph-demo-test:2.3-server-latest
           songjinghe/tgraph-demo-test:2.3-server-${{env.COMMIT_SHA_SHORT}}
 
+    - name: Build and Push Docker Image (tgraph4.4-demo-test:server)
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: docker/db-server-4.4.dockerfile
+        push: true
+        tags: |
+          songjinghe/tgraph-demo-test:4.4-server-latest
+          songjinghe/tgraph-demo-test:4.4-server-${{env.COMMIT_SHA_SHORT}}
+
     # - name: Build and Push Docker Image (tgraph2.3-demo-test:benchmark-runner)
     #   uses: docker/build-push-action@v5
     #   with:
