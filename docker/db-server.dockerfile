@@ -1,6 +1,6 @@
 # for non-jdbc servers only. i.e. Neo4j, TGraphDB
 
-FROM songjinghe/tgraph-demo-test:2.3
+FROM songjinghe/tgraph-demo-test:2.3-latest
 MAINTAINER Jinghe Song <songjh@buaa.edu.cn>
 
 # ENV MAVEN_OPTS "-Xmx512m"
@@ -17,5 +17,5 @@ ENV DB_PORT 8441
 
 EXPOSE $DB_PORT
 
-# ENTRYPOINT /bin/bash
-CMD mvn -B --offline exec:java -Dexec.mainClass=$CLASS_SERVER -Dexec.cleanupDaemonThreads=false
+ENTRYPOINT mvn
+CMD -B --offline compile exec:java -Dexec.mainClass=$CLASS_SERVER -Dexec.cleanupDaemonThreads=false
