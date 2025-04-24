@@ -7,12 +7,13 @@ WORKDIR /db/bin
 
 RUN git clone --depth=1 https://gitee.com/tgraphdb/temporal-storage.git -b TGraph2.3latest --single-branch && \
     git clone --depth=1 https://gitee.com/tgraphdb/temporal-neo4j-4.4.git -b TGraph-4.4 --single-branch   && \
-    git clone --depth=1 https://gitee.com/tgraphdb/demo-test.git -b dev-zzy --single-branch
+    git clone --depth=1 https://gitee.com/tgraphdb/demo-test.git -b dev-zzy --single-branch && \
+    mv temporal-neo4j-4.4 temporal-neo4j
 
 WORKDIR /db/bin/temporal-storage
 RUN mvn -B install -Dmaven.test.skip=true
 
-WORKDIR /db/bin/temporal-neo4j-4.4
+WORKDIR /db/bin/temporal-neo4j
 RUN mvn -B install -Dmaven.test.skip=true -Dlicense.skip=true -Dlicensing.skip=true -Dcheckstyle.skip -Doverwrite -pl org.neo4j:neo4j-kernel -am
 
 WORKDIR /db/bin/demo-test
