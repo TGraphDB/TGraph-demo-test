@@ -1,6 +1,6 @@
 # for non-jdbc servers only. i.e. Neo4j, TGraphDB
 
-FROM songjinghe/tgraph-demo-test:2.3-latest
+FROM songjinghe/tgraph-demo-test:4.4-latest
 MAINTAINER Jinghe Song <songjh@buaa.edu.cn>
 
 # ENV MAVEN_OPTS "-Xmx512m"
