@@ -14,7 +14,8 @@ RUN wget -nv https://download.oracle.com/java/21/latest/jdk-21_linux-x64_bin.deb
 RUN update-alternatives --set java $(update-alternatives --list java) && \
     update-alternatives --set javac $(update-alternatives --list javac)
 
-ENV JAVA_HOME /usr/lib/jvm/jdk-21.0.7-oracle-x64
+# ENV JAVA_HOME /usr/lib/jvm/jdk-21.0.7-oracle-x64
+# must use openjdk to compile or error in "openCypher Test Utils" module. so we declare the JAVA_HOME env later.
 
 # install maven
 ENV MAVEN_VERSION 3.9.9
