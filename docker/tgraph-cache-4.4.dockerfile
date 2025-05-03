@@ -19,5 +19,3 @@ RUN git clone --depth=1 https://gitee.com/tgraphdb/demo-test.git -b dev-zzy --si
     cd /db/demo-test && \
     mvn -B compile exec:java -Dexec.mainClass=edu.buaa.common.RuntimeEnv -Dexec.cleanupDaemonThreads=false && \
     rm -rf /db/demo-test
-
-CMD /bin/bash
