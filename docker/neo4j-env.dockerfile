@@ -30,4 +30,4 @@ RUN wget -nv "https://dlcdn.apache.org/maven/maven-3/$MAVEN_VERSION/binaries/apa
 ENV MAVEN_HOME /usr/share/maven
 
 ENTRYPOINT []
-CMD /bin/bash
+CMD []
