@@ -21,5 +21,4 @@ ENV JAVA_HOME /usr/lib/jvm/jdk-21.0.7-oracle-x64
 WORKDIR /db/bin/demo-test
 RUN mvn -B compile exec:java -Dexec.mainClass=edu.buaa.common.RuntimeEnv -Dexec.cleanupDaemonThreads=false
 
-ENTRYPOINT []
-CMD /bin/bash
+ENTRYPOINT ["/db/bin/demo-test/docker-entrypoint.sh"]
