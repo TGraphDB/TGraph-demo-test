@@ -19,4 +19,6 @@ RUN mvn -B install -Dmaven.test.skip=true -Dlicense.skip=true -Dlicensing.skip=t
 WORKDIR /db/bin/demo-test
 RUN mvn -B compile exec:java -Dexec.mainClass=edu.buaa.common.RuntimeEnv -Dexec.cleanupDaemonThreads=false
 
+RUN chmod 755 /db/bin/demo-test/docker-entrypoint.sh
+
 ENTRYPOINT ["/db/bin/demo-test/docker-entrypoint.sh"]
