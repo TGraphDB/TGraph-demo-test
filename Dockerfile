@@ -16,6 +16,6 @@ WORKDIR /db/bin/temporal-neo4j
 RUN mvn -B install -Dmaven.test.skip=true -Dlicense.skip=true -Dlicensing.skip=true -pl org.neo4j:neo4j-cypher -am
 
 WORKDIR /db/bin/demo-test
-RUN mvn -B compile exec:java -Dexec.mainClass=edu.buaa.common.RuntimeEnv -Dexec.cleanupDaemonThreads=false
+RUN chmod 755 docker-entrypoint.sh && mvn -B compile exec:java -Dexec.mainClass=edu.buaa.common.RuntimeEnv -Dexec.cleanupDaemonThreads=false
 
 ENTRYPOINT ["/db/bin/demo-test/docker-entrypoint.sh"]
