@@ -16,8 +16,6 @@ RUN mvn -B install -Dmaven.test.skip=true
 WORKDIR /db/bin/temporal-neo4j
 RUN mvn -B install -Dmaven.test.skip=true -Dlicense.skip=true -Dlicensing.skip=true -Dcheckstyle.skip -Doverwrite -pl org.neo4j:neo4j-kernel -am
 
-ENV JAVA_HOME /usr/lib/jvm/jdk-21.0.7-oracle-x64
-
 WORKDIR /db/bin/demo-test
 RUN mvn -B compile exec:java -Dexec.mainClass=edu.buaa.common.RuntimeEnv -Dexec.cleanupDaemonThreads=false
 
