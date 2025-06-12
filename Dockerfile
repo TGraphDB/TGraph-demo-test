@@ -10,7 +10,7 @@ RUN git clone --depth=1 https://gitee.com/tgraphdb/temporal-storage.git -b TGrap
     git clone --depth=1 https://gitee.com/tgraphdb/demo-test.git -b dev-sjh --single-branch
 
 WORKDIR /db/bin/temporal-storage
-RUN mvn -B install -Dmaven.test.skip=true
+RUN mvn -B clean install -Dmaven.test.skip=true
 
 WORKDIR /db/bin/temporal-neo4j
 RUN mvn -B install -Dmaven.test.skip=true -Dlicense.skip=true -Dlicensing.skip=true -pl org.neo4j:neo4j-cypher -am
