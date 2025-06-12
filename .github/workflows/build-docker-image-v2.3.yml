@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Docker Image v2.3
 
 on:
   push:
@@ -38,18 +38,6 @@ jobs:
     #       songjinghe/ubuntu-oraclejdk-maven:${{env.BUILD_TIME}}
     #       songjinghe/ubuntu-oraclejdk-maven:latest
 
-    # - name: Build and Push Docker Image (neo4j4.4-oraclejdk21-maven)
-    #   uses: docker/build-push-action@v5
-    #   with:
-    #     context: .
-    #     file: docker/neo4j-env.dockerfile
-    #     push: true
-    #     tags: |
-    #       songjinghe/neo4j-env:${{env.COMMIT_SHA_SHORT}}
-    #       songjinghe/neo4j-env:${{env.BUILD_TIME}}
-    #       songjinghe/neo4j-env:4.4-latest
-
-    
     # - name: Build and Push Docker Image (tgraph2.3-maven-cache)
     #   uses: docker/build-push-action@v5
     #   with:
@@ -60,18 +48,6 @@ jobs:
     #       songjinghe/tgraph-maven-cache:2.3-${{env.COMMIT_SHA_SHORT}}
     #       songjinghe/tgraph-maven-cache:2.3-${{env.BUILD_TIME}}
     #       songjinghe/tgraph-maven-cache:2.3-latest
-
-    # - name: Build and Push Docker Image (tgraph4.4-maven-cache)
-    #   uses: docker/build-push-action@v5
-    #   with:
-    #     context: .
-    #     file: docker/tgraph-cache-4.4.dockerfile
-    #     push: true
-    #     tags: |
-    #       songjinghe/tgraph-maven-cache:4.4-${{env.COMMIT_SHA_SHORT}}
-    #       songjinghe/tgraph-maven-cache:4.4-${{env.BUILD_TIME}}
-    #       songjinghe/tgraph-maven-cache:4.4-latest
-    
     
     - name: Build and Push Docker Image (tgraph2.3-demo-test)
       uses: docker/build-push-action@v5
@@ -82,14 +58,3 @@ jobs:
         tags: |
           songjinghe/tgraph-demo-test:2.3-${{env.COMMIT_SHA_SHORT}}
           songjinghe/tgraph-demo-test:2.3-latest
-
-    - name: Build and Push Docker Image (tgraph4.4-demo-test)
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: docker/tgraph-demo-test-4.4.dockerfile
-        push: true
-        tags: |
-          songjinghe/tgraph-demo-test:4.4-${{env.COMMIT_SHA_SHORT}}
-          songjinghe/tgraph-demo-test:4.4-latest
-
