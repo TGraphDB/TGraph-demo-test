@@ -6,7 +6,7 @@ MAINTAINER Jinghe Song <songjh@buaa.edu.cn>
 WORKDIR /db/bin
 
 RUN git clone --depth=1 https://github.com/zhaohaisun/TGraph-DB-HTTP-Server.git -b master --single-branch && \
-    mv TGraph-DB-HTTP-Server tgraphdb-http-server & \
+    mv TGraph-DB-HTTP-Server tgraphdb-http-server && \
     cd /db/bin/tgraphdb-http-server && \
     mvn -B install -Dmaven.test.skip=true
 
