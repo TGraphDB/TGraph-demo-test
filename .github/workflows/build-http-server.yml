@@ -36,3 +36,13 @@ jobs:
         tags: |
           songjinghe/tgraphdb:http-4.4-${{env.COMMIT_SHA_SHORT}}
           songjinghe/tgraphdb:http-4.4-latest
+    
+    - name: Build and Push Docker Image (tgraph4.4-http-frontend)
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: docker/tgraphdb-http-server-v4.4-front.dockerfile
+        push: true
+        tags: |
+          songjinghe/tgraphdb:http-front-4.4-${{env.COMMIT_SHA_SHORT}}
+          songjinghe/tgraphdb:http-front-4.4-latest
