@@ -1,4 +1,4 @@
-FROM songjinghe/tgraph-demo-test:4.4-latest
+FROM songjinghe/tgraph-maven-cache:4.4-latest
 MAINTAINER Jinghe Song <songjh@buaa.edu.cn>
 
 # ENV MAVEN_OPTS "-Xmx512m"
@@ -17,5 +17,4 @@ WORKDIR /db/bin/tgraphdb-http-server
 VOLUME /db/bin/tgraphdb-http-server/target
 EXPOSE 7474
 
-ENTRYPOINT mvn
-CMD -B --offline compile exec:java -Dexec.mainClass=app.Application
+ENTRYPOINT mvn -B --offline compile exec:java -Dexec.mainClass=app.Application
