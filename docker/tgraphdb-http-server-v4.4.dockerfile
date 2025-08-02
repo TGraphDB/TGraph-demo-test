@@ -10,8 +10,12 @@ RUN git clone --depth=1 https://github.com/zhaohaisun/TGraph-DB-HTTP-Server.git 
     cd /db/bin/tgraphdb-http-server && \
     mvn -B install -Dmaven.test.skip=true
 
-RUN git clone --depth=1 https://github.com/zhaohaisun/vue-project.git -b dist --single-branch && \
-    mv vue-project/release/* /db/bin/tgraphdb-http-server/src/main/resources/static/
+RUN wget -r https://zhaohaisun.github.io/vue-project/ && \
+    mv zhaohaisun.github.io/vue-project/* /db/bin/tgraphdb-http-server/src/main/resources/static/ && \
+    rm -rf zhaohaisun.github.io/vue-project/
+
+# RUN git clone --depth=1 https://github.com/zhaohaisun/vue-project.git -b dist --single-branch && \
+#     mv vue-project/release/* /db/bin/tgraphdb-http-server/src/main/resources/static/
 
 WORKDIR /db/bin/tgraphdb-http-server
 VOLUME /db/bin/tgraphdb-http-server/target
