@@ -1,7 +1,13 @@
-FROM songjinghe/tgraph-maven-cache:4.4-latest
+FROM songjinghe/tgraph-demo-test:4.4-latest
 MAINTAINER Jinghe Song <songjh@buaa.edu.cn>
 
 # ENV MAVEN_OPTS "-Xmx512m"
+
+WORKDIR /db/bin/temporal-storage
+RUN git pull && mvn -B install -Dmaven.test.skip=true
+
+WORKDIR /db/bin/temporal-neo4j
+RUN git pull && mvn -B install -Dmaven.test.skip=true -Dlicense.skip=true -Dlicensing.skip=true -Dcheckstyle.skip -Doverwrite -pl org.neo4j:neo4j-kernel -am
 
 WORKDIR /db/bin
 
