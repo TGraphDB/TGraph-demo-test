@@ -1,0 +1,105 @@
+name: Docker Image v4.4
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout default branch
+      uses: actions/checkout@v4
+    
+    - name: Set env variable
+      run: |
+        echo "BUILD_TIME=$(date +'%Y%m%d')" >> $GITHUB_ENV
+        echo "COMMIT_SHA_SHORT=$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_ENV
+        echo ${{env.BUILD_TIME}}
+        echo ${{env.COMMIT_SHA_SHORT}}
+    
+    - name: Login to hub.docker.com
+      uses: docker/login-action@v3
+      with:
+        username: songjinghe
+        password: ${{ secrets.dockerhub }}
+
+    ########################### TGraphDB 2.3 ############################
+    # - name: Build and Push Docker Image (ubuntu-oraclejdk8-maven)
+    #   uses: docker/build-push-action@v5
+    #   with:
+    #     context: .                # Dockerfile 所在目录
+    #     file: docker/ubuntu-oraclejdk-maven.dockerfile        # Dockerfile 路径（如果不在根目录需修改）
+    #     push: true                # 构建后自动推送
+    #     tags: |
+    #       songjinghe/ubuntu-oraclejdk-maven:${{env.COMMIT_SHA_SHORT}}
+    #       songjinghe/ubuntu-oraclejdk-maven:${{env.BUILD_TIME}}
+    #       songjinghe/ubuntu-oraclejdk-maven:latest
+
+    # - name: Build and Push Docker Image (tgraph2.3-maven-cache)
+    #   uses: docker/build-push-action@v5
+    #   with:
+    #     context: .
+    #     file: docker/tgraph-maven-cache.dockerfile
+    #     push: true
+    #     tags: |
+    #       songjinghe/tgraph-maven-cache:2.3-${{env.COMMIT_SHA_SHORT}}
+    #       songjinghe/tgraph-maven-cache:2.3-${{env.BUILD_TIME}}
+    #       songjinghe/tgraph-maven-cache:2.3-latest
+    
+    - name: Build and Push Docker Image (tgraph2.3-demo-test)
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: Dockerfile
+        push: true
+        tags: |
+          songjinghe/tgraph-demo-test:2.3-${{env.COMMIT_SHA_SHORT}}
+          songjinghe/tgraph-demo-test:2.3-latest
+
+    ########################### TGraphDB 4.4 ############################
+    
+    # - name: Build and Push Docker Image (neo4j4.4-oraclejdk21-maven)
+    #   uses: docker/build-push-action@v5
+    #   with:
+    #     context: .
+    #     file: docker/neo4j-env.dockerfile
+    #     push: true
+    #     tags: |
+    #       songjinghe/neo4j-env:${{env.COMMIT_SHA_SHORT}}
+    #       songjinghe/neo4j-env:${{env.BUILD_TIME}}
+    #       songjinghe/neo4j-env:4.4-latest
+
+    # - name: Build and Push Docker Image (tgraph4.4-maven-cache)
+    #   uses: docker/build-push-action@v5
+    #   with:
+    #     context: .
+    #     file: docker/tgraph-cache-4.4.dockerfile
+    #     push: true
+    #     tags: |
+    #       songjinghe/tgraph-maven-cache:4.4-${{env.COMMIT_SHA_SHORT}}
+    #       songjinghe/tgraph-maven-cache:4.4-${{env.BUILD_TIME}}
+    #       songjinghe/tgraph-maven-cache:4.4-latest
+    
+    - name: Build and Push Docker Image (tgraph4.4-demo-test)
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: docker/tgraph-demo-test-4.4.dockerfile
+        push: true
+        tags: |
+          songjinghe/tgraph-demo-test:4.4-${{env.COMMIT_SHA_SHORT}}
+          songjinghe/tgraph-demo-test:4.4-latest
+    
+    # - name: Build and Push Docker Image (tgraph4.4-http-server)
+    #   uses: docker/build-push-action@v5
+    #   with:
+    #     context: .
+    #     file: docker/tgraphdb-http-server-v4.4.dockerfile
+    #     push: true
+    #     tags: |
+    #       songjinghe/tgraphdb:http-4.4-${{env.COMMIT_SHA_SHORT}}
+    #       songjinghe/tgraphdb:http-4.4-latest
