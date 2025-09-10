@@ -1,4 +1,4 @@
-name: Docker Image v4.4
+name: Build Docker Images
 
 on:
   push:
