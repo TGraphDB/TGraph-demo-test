@@ -50,15 +50,15 @@ jobs:
     #       songjinghe/tgraph-maven-cache:2.3-${{env.BUILD_TIME}}
     #       songjinghe/tgraph-maven-cache:2.3-latest
     
-    - name: Build and Push Docker Image (tgraph2.3-demo-test)
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: Dockerfile
-        push: true
-        tags: |
-          songjinghe/tgraph-demo-test:2.3-${{env.COMMIT_SHA_SHORT}}
-          songjinghe/tgraph-demo-test:2.3-latest
+    # - name: Build and Push Docker Image (tgraph2.3-demo-test)
+    #   uses: docker/build-push-action@v5
+    #   with:
+    #     context: .
+    #     file: Dockerfile
+    #     push: true
+    #     tags: |
+    #       songjinghe/tgraph-demo-test:2.3-${{env.COMMIT_SHA_SHORT}}
+    #       songjinghe/tgraph-demo-test:2.3-latest
 
     ########################### TGraphDB 4.4 ############################
     
