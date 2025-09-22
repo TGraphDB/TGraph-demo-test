@@ -1,6 +1,8 @@
 FROM songjinghe/tgraph-maven-cache:2.3-latest
 MAINTAINER Jinghe Song <songjh@buaa.edu.cn>
 
+RUN echo Asia/Shanghai > /etc/timezone
+
 # cache TGraph source code & maven packages & built java classes and jars
 
 WORKDIR /db/bin
