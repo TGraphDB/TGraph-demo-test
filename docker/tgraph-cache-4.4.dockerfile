@@ -3,7 +3,7 @@ MAINTAINER Jinghe Song <songjh@buaa.edu.cn>
 
 WORKDIR /db/bin
 
-RUN git clone --depth=1 https://github.com/TGraphDB/temporal-storage.git -b TGraph2.3latest --single-branch && \
+RUN git clone --depth=1 https://gitee.com/TGraphDB/temporal-storage.git -b TGraph4.4 --single-branch && \
     cd /db/bin/temporal-storage && \
     mvn -B install -Dmaven.test.skip=true
 
