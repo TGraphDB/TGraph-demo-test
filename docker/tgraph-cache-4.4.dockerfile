@@ -3,6 +3,9 @@ MAINTAINER Jinghe Song <songjh@buaa.edu.cn>
 
 WORKDIR /db/bin
 
+RUN wget -q "https://github.com/async-profiler/async-profiler/releases/download/v4.1/async-profiler-4.1-linux-x64.tar.gz" && \
+    tar xzf "async-profiler-4.1-linux-x64.tar.gz"
+
 RUN git clone --depth=1 https://gitee.com/TGraphDB/temporal-storage.git -b TGraph4.4 --single-branch && \
     cd /db/bin/temporal-storage && \
     mvn -B install -Dmaven.test.skip=true
