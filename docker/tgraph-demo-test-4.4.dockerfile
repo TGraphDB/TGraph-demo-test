@@ -9,7 +9,7 @@ RUN echo Asia/Shanghai > /etc/timezone
 
 # RUN git clone --depth=1 https://gitee.com/tgraphdb/temporal-storage.git -b TGraph2.3latest --single-branch && \
 #     git clone --depth=1 https://gitee.com/tgraphdb/temporal-neo4j-4.4.git -b TGraph-4.4 --single-branch   && \
-#     git clone --depth=1 https://gitee.com/tgraphdb/demo-test.git -b dev-zzy --single-branch && \
+#     git clone --depth=1 https://gitee.com/tgraphdb/demo-test.git -b jdk11 --single-branch && \
 #     mv temporal-neo4j-4.4 temporal-neo4j
 
 WORKDIR /db/bin/temporal-storage

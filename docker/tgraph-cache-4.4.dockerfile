@@ -12,6 +12,6 @@ RUN git clone --depth=1 https://gitee.com/tgraphdb/temporal-neo4j-4.4.git -b TGr
     mvn -B install -DskipTests -Dcheckstyle.skip -Dlicense.skip=true -Dlicensing.skip=true -Doverwrite && \
     mv /db/bin/temporal-neo4j-4.4 /db/bin/temporal-neo4j
 
-RUN git clone --depth=1 https://gitee.com/tgraphdb/demo-test.git -b dev-zzy --single-branch && \
+RUN git clone --depth=1 https://gitee.com/tgraphdb/demo-test.git -b jdk11 --single-branch && \
     cd /db/bin/demo-test && \
     mvn -B compile exec:java -Dexec.mainClass=edu.buaa.common.RuntimeEnv -Dexec.cleanupDaemonThreads=false
