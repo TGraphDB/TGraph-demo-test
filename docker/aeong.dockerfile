@@ -8,5 +8,6 @@ COPY docker/aeong.docker-entrypoint.sh /home/AeonG/build/docker-entrypoint.sh
 RUN mkdir -p /database
 
 WORKDIR /home/AeonG/build
+RUN chmod 755 /home/AeonG/build/docker-entrypoint.sh
 
 ENTRYPOINT [ "/home/AeonG/build/docker-entrypoint.sh" ]
