@@ -18,6 +18,35 @@ start() {
    --real-time-flag=false
 }
 
+
+clean_lock_file(){
+   local lock_dir="/database"
+   echo "[$(date +%Y-%m-%d\ %H:%M:%S)] 开始检查并清理$lock_dir下的LOCK文件..."
+    if [ -d "$lock_dir" ]; then
+        # 查找所有目录下的LOCK文件（仅找文件，排除目录）
+        lock_files=$(find "$lock_dir" -name "LOCK" -type f)
+        
+        if [ -n "$lock_files" ]; then
+            # 遍历并删除每个LOCK文件
+            for lock_file in $lock_files; do
+                echo "[$(date +%Y-%m-%d\ %H:%M:%S)] 删除锁文件：$lock_file"
+                rm -f "$lock_file" 2>/dev/null
+                # 检查删除是否成功
+                if [ -f "$lock_file" ]; then
+                    echo "[$(date +%Y-%m-%d\ %H:%M:%S)] 警告：无法删除锁文件 $lock_file（权限不足或文件不存在）"
+                fi
+            done
+            echo "[$(date +%Y-%m-%d\ %H:%M:%S)] LOCK文件清理完成"
+        else
+            echo "[$(date +%Y-%m-%d\ %H:%M:%S)] $lock_dir下未找到任何LOCK文件"
+        fi
+    else
+        echo "[$(date +%Y-%m-%d\ %H:%M:%S)] 警告：目录 $lock_dir 不存在，跳过LOCK文件清理"
+    fi
+    find "$lock_dir"
+    return 0
+}
+
 # 安全退出memgraph进程的函数
 stop() {
     # 定义重试次数和等待时间
@@ -47,7 +76,7 @@ stop() {
         # 检查进程是否已退出
         if ! ps -p "$memgraph_pid" >/dev/null 2>&1; then
             echo "[$(date +%Y-%m-%d\ %H:%M:%S)] memgraph进程(PID: $memgraph_pid)已退出"
-            find /database
+            clean_lock_file
             return 0
         fi
 
@@ -64,17 +93,18 @@ stop() {
         sleep 2
         if ps -p "$memgraph_pid" >/dev/null 2>&1; then
             echo "[$(date +%Y-%m-%d\ %H:%M:%S)] 警告：TERM信号发送后memgraph进程仍未退出"
-            find /database
+            clean_lock_file
             return 1
         else
             echo "[$(date +%Y-%m-%d\ %H:%M:%S)] memgraph进程已通过TERM信号终止"
-            find /database
+            clean_lock_file
             return 0
         fi
     fi
-    find /database
+    clean_lock_file
     return 0
 }
+
 
 # 处理命令行参数
 main() {
