@@ -18,6 +18,25 @@ start() {
    --real-time-flag=false
 }
 
+start_batch() {
+   /home/AeonG/build/memgraph --bolt-port 7687 \
+   --data-directory /database/      \
+   --log-file=/database/aeong.log  \
+   --log-level=DEBUG           \
+   --also-log-to-stderr        \
+   --bolt-server-name-for-init=Neo4j/5.2.0 \
+   --storage-recover-on-startup=true       \
+   --storage-snapshot-retention-count 1    \
+   --storage-snapshot-on-exit=true         \
+   --storage-snapshot-interval-sec 300     \
+   --storage-wal-enabled=false \
+   --storage-gc-cycle-sec 30   \
+   --storage-properties-on-edges=true     \
+   --memory-limit 0            \
+   --anchor-num 10             \
+   --real-time-flag=false
+}
+
 
 clean_lock_file(){
    local lock_dir="/database"
@@ -50,8 +69,8 @@ clean_lock_file(){
 # 安全退出memgraph进程的函数
 stop() {
     # 定义重试次数和等待时间
-    local max_interrupt_attempts=4
-    local wait_seconds=5
+    local max_interrupt_attempts=3
+    local wait_seconds=7
     local attempt=0
     local memgraph_pid
 
@@ -76,7 +95,6 @@ stop() {
         # 检查进程是否已退出
         if ! ps -p "$memgraph_pid" >/dev/null 2>&1; then
             echo "[$(date +%Y-%m-%d\ %H:%M:%S)] memgraph进程(PID: $memgraph_pid)已退出"
-            clean_lock_file
             return 0
         fi
 
@@ -90,18 +108,16 @@ stop() {
         kill -TERM "$memgraph_pid" 2>/dev/null
         
         # 最后检查一次进程状态
-        sleep 2
+        sleep $wait_seconds
         if ps -p "$memgraph_pid" >/dev/null 2>&1; then
-            echo "[$(date +%Y-%m-%d\ %H:%M:%S)] 警告：TERM信号发送后memgraph进程仍未退出"
-            clean_lock_file
+            echo "[$(date +%Y-%m-%d\ %H:%M:%S)] 警告：TERM信号发送7s后memgraph进程仍未退出"
+            kill -KILL "$memgraph_pid" 2>/dev/null
             return 1
         else
             echo "[$(date +%Y-%m-%d\ %H:%M:%S)] memgraph进程已通过TERM信号终止"
-            clean_lock_file
             return 0
         fi
     fi
-    clean_lock_file
     return 0
 }
 
@@ -110,7 +126,7 @@ stop() {
 main() {
     # 如果没有参数，执行默认函数
     if [ $# -eq 0 ]; then
-        start_aeong_server
+        start
     else
         # 遍历所有参数并执行对应的函数
         for arg in "$@"; do
