@@ -13,9 +13,10 @@ start() {
    --storage-snapshot-interval-sec 30      \
    --storage-gc-cycle-sec 30   \
    --storage-properties-on-edges=true     \
-   --memory-limit 0            \
+   --memory-limit 49152            \
    --anchor-num 10             \
    --real-time-flag=false
+   echo 'AEONG SERVER EXIT SUCCESS'
 }
 
 start_batch() {
@@ -35,6 +36,7 @@ start_batch() {
    --memory-limit 0            \
    --anchor-num 10             \
    --real-time-flag=false
+   echo 'AEONG SERVER EXIT SUCCESS'
 }
 
 
