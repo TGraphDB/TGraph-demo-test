@@ -10,7 +10,7 @@ RUN wget -q "https://github.com/async-profiler/async-profiler/releases/download/
 
 RUN --mount=type=ssh \
     mkdir -p /root/.ssh && chmod 700 /root/.ssh && \
-    ssh-keyscan github.com >> /root/.ssh/known_hosts && \
+    ssh-keyscan gitee.com >> /root/.ssh/known_hosts && \
     chmod 644 /root/.ssh/known_hosts && \
     git clone --depth=1 git@gitee.com:tgraphdb/temporal-storage.git -b TGraph4.4 --single-branch && \
     git clone --depth=1 git@gitee.com:tgraphdb/temporal-neo4j-4.4.git -b TGraph-4.4 --single-branch && \
