@@ -5,7 +5,7 @@ USER root
 
 # install necessary software for neo4j.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  wget curl unzip git miller \
+  wget curl unzip git miller openssh-client \
   && rm -rf /var/lib/apt/lists/*
 
 # install maven
