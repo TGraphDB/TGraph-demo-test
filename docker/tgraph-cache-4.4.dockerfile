@@ -16,15 +16,15 @@ RUN --mount=type=ssh \
     git clone --depth=1 git@gitee.com:tgraphdb/temporal-neo4j-4.4.git -b TGraph-4.4 --single-branch && \
     git clone --depth=1 git@gitee.com:tgraphdb/demo-test.git -b jdk11 --single-branch
 
-RUN --mount=type=cache,target=/root/.m2/repository \
-    cd /db/bin/temporal-storage && \
+# RUN --mount=type=cache,target=/root/.m2/repository \
+
+RUN cd /db/bin/temporal-storage && \
     mvn -B install -Dmaven.test.skip=true
 
-RUN --mount=type=cache,target=/root/.m2/repository \
-    cd /db/bin/temporal-neo4j-4.4 && \
+RUN cd /db/bin/temporal-neo4j-4.4 && \
     mvn -B install -DskipTests -Dcheckstyle.skip -Dlicense.skip=true -Dlicensing.skip=true -Doverwrite && \
     mv /db/bin/temporal-neo4j-4.4 /db/bin/temporal-neo4j
 
-RUN --mount=type=cache,target=/root/.m2/repository \
-    cd /db/bin/demo-test && \
+RUN cd /db/bin/demo-test && \
+    mvn -q dependency:go-offline && \
     mvn -B compile exec:java -Dexec.mainClass=edu.buaa.common.RuntimeEnv -Dexec.cleanupDaemonThreads=false
