@@ -1,6 +1,8 @@
 FROM neo4j:4.4-community
 MAINTAINER Jinghe Song <songjh@buaa.edu.cn>
 
+RUN echo Asia/Shanghai > /etc/timezone
+
 USER root
 
 # install necessary software for neo4j.
