@@ -62,36 +62,36 @@ jobs:
 
     ########################### TGraphDB 4.4 ############################
     
-    # - name: Build and Push Docker Image (neo4j4.4-oraclejdk21-maven)
-    #   uses: docker/build-push-action@v5
-    #   with:
-    #     context: .
-    #     file: docker/neo4j-env.dockerfile
-    #     push: true
-    #     tags: |
-    #       songjinghe/neo4j-env:${{env.COMMIT_SHA_SHORT}}
-    #       songjinghe/neo4j-env:${{env.BUILD_TIME}}
-    #       songjinghe/neo4j-env:4.4-latest
+    - name: Build and Push Docker Image (neo4j4.4-oraclejdk21-maven)
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: docker/neo4j-env.dockerfile
+        push: true
+        tags: |
+          songjinghe/neo4j-env:${{env.COMMIT_SHA_SHORT}}
+          songjinghe/neo4j-env:${{env.BUILD_TIME}}
+          songjinghe/neo4j-env:4.4-latest
 
-    # - name: Build and Push Docker Image (tgraph4.4-maven-cache)
-    #   uses: docker/build-push-action@v5
-    #   with:
-    #     context: .
-    #     file: docker/tgraph-cache-4.4.dockerfile
-    #     push: true
-    #     tags: |
-    #       songjinghe/tgraph-maven-cache:4.4-${{env.COMMIT_SHA_SHORT}}
-    #       songjinghe/tgraph-maven-cache:4.4-latest
+    - name: Build and Push Docker Image (tgraph4.4-maven-cache)
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: docker/tgraph-cache-4.4.dockerfile
+        push: true
+        tags: |
+          songjinghe/tgraph-maven-cache:4.4-${{env.COMMIT_SHA_SHORT}}
+          songjinghe/tgraph-maven-cache:4.4-latest
     
-    # - name: Build and Push Docker Image (tgraph4.4-demo-test)
-    #   uses: docker/build-push-action@v5
-    #   with:
-    #     context: .
-    #     file: docker/tgraph-demo-test-4.4.dockerfile
-    #     push: true
-    #     tags: |
-    #       songjinghe/tgraph-demo-test:4.4-${{env.COMMIT_SHA_SHORT}}
-    #       songjinghe/tgraph-demo-test:4.4-latest
+    - name: Build and Push Docker Image (tgraph4.4-demo-test)
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: docker/tgraph-demo-test-4.4.dockerfile
+        push: true
+        tags: |
+          songjinghe/tgraph-demo-test:4.4-${{env.COMMIT_SHA_SHORT}}
+          songjinghe/tgraph-demo-test:4.4-latest
     
     # - name: Build and Push Docker Image (tgraph4.4-http-server)
     #   uses: docker/build-push-action@v5
@@ -102,13 +102,14 @@ jobs:
     #     tags: |
     #       songjinghe/tgraphdb:http-4.4-${{env.COMMIT_SHA_SHORT}}
     #       songjinghe/tgraphdb:http-4.4-latest
-    - name: Build and Push Docker Image (aeong)
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: docker/aeong.dockerfile
-        push: true
-        tags: |
-          songjinghe/temporal-graph-dbms:aeong-2.2-${{env.COMMIT_SHA_SHORT}}
-          songjinghe/temporal-graph-dbms:aeong-2.2-latest
+    
+    # - name: Build and Push Docker Image (aeong)
+    #   uses: docker/build-push-action@v5
+    #   with:
+    #     context: .
+    #     file: docker/aeong.dockerfile
+    #     push: true
+    #     tags: |
+    #       songjinghe/temporal-graph-dbms:aeong-2.2-${{env.COMMIT_SHA_SHORT}}
+    #       songjinghe/temporal-graph-dbms:aeong-2.2-latest
     
