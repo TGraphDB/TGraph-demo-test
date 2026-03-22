@@ -12,9 +12,9 @@ RUN --mount=type=ssh \
     mkdir -p /root/.ssh && chmod 700 /root/.ssh && \
     ssh-keyscan gitee.com >> /root/.ssh/known_hosts && \
     chmod 644 /root/.ssh/known_hosts && \
-    git clone --depth=1 git@gitee.com:tgraphdb/temporal-storage.git -b TGraph4.4 --single-branch && \
-    git clone --depth=1 git@gitee.com:tgraphdb/temporal-neo4j-4.4.git -b TGraph-4.4 --single-branch && \
-    git clone --depth=1 git@gitee.com:tgraphdb/demo-test.git -b jdk11 --single-branch
+    git clone --depth=1 --single-branch git@gitee.com:tgraphdb/temporal-storage.git -b TGraph4.4 && sleep 7 && \
+    git clone --depth=1 --single-branch git@gitee.com:tgraphdb/temporal-neo4j-4.4.git -b TGraph-4.4 && sleep 17 && \
+    git clone --depth=1 --single-branch git@gitee.com:tgraphdb/demo-test.git -b jdk11
 
 # RUN --mount=type=cache,target=/root/.m2/repository \
 
@@ -26,5 +26,5 @@ RUN cd /db/bin/temporal-neo4j-4.4 && \
     mv /db/bin/temporal-neo4j-4.4 /db/bin/temporal-neo4j
 
 RUN cd /db/bin/demo-test && \
-    mvn -q dependency:go-offline && \
+    mvn -B dependency:go-offline && \
     mvn -B compile exec:java -Dexec.mainClass=edu.buaa.common.RuntimeEnv -Dexec.cleanupDaemonThreads=false
