@@ -10,7 +10,7 @@ RUN echo Asia/Shanghai > /etc/timezone
 WORKDIR /db/bin
 
 RUN --mount=type=ssh \
-    cd /db/bin/demo-test && \
+    cd /db/bin/demo-test && git restore docker-entrypoint.sh && \
     git config remote.origin.fetch "+refs/heads/bolt-server:refs/remotes/origin/bolt-server" && \
     git fetch origin && git checkout -b bolt-server origin/bolt-server && \
     cd /db/bin/temporal-neo4j   && git pull --ff-only && \
